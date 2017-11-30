@@ -1,5 +1,7 @@
 package kbgp
 
+import "bytes"
+
 // Network Working Group                                    Y. Rekhter, Ed.
 // Request for Comments: 4271                                    T. Li, Ed.
 // Obsoletes: 1771                                            S. Hares, Ed.
@@ -496,11 +498,9 @@ package kbgp
 //    All multi-octet fields are in network byte order.
 
 // 4.1.  Message Header Format
-
 //    Each message has a fixed-size header.  There may or may not be a data
 //    portion following the header, depending on the message type.  The
 //    layout of these fields is shown below:
-
 //       0                   1                   2                   3
 //       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -515,10 +515,25 @@ package kbgp
 //       |          Length               |      Type     |
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+type messageHeader struct {
+	marker      [markerLength]byte
+	length      uint16
+	messageType byte
+}
+
 //       Marker:
 
 //          This 16-octet field is included for compatibility; it MUST be
 //          set to all ones.
+
+const markerLength = 16
+
+func marker() [markerLength]byte {
+	b := bytes.Repeat([]byte{0xFF}, markerLength)
+	var m [markerLength]byte
+	copy(m[:], b)
+	return m
+}
 
 //       Length:
 
@@ -532,6 +547,9 @@ package kbgp
 //          have the smallest value required, given the rest of the
 //          message.
 
+const minMessageLength = 19
+const maxMessageLength = 4096
+
 //       Type:
 
 //          This 1-octet unsigned integer indicates the type code of the
@@ -543,6 +561,15 @@ package kbgp
 //                               4 - KEEPALIVE
 
 //          [RFC2918] defines one more type code.
+
+const (
+	_ = iota
+	open
+	update
+	notification
+	keepalive
+	// routeRefresh (RFC2918)
+)
 
 // 4.2.  OPEN Message Format
 
