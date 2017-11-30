@@ -1,6 +1,13 @@
 package kbgp
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"math"
+	"net"
+	"time"
+)
 
 // Network Working Group                                    Y. Rekhter, Ed.
 // Request for Comments: 4271                                    T. Li, Ed.
@@ -598,10 +605,21 @@ const (
 //        |                                                               |
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+type openMessage struct {
+	version       byte
+	myAS          uint16
+	holdTime      uint16
+	bgpIdentifier uint32
+	optParmLen    byte
+	optParameters []byte
+}
+
 //       Version:
 
 //          This 1-octet unsigned integer indicates the protocol version
 //          number of the message.  The current BGP version number is 4.
+
+const version = 4
 
 //       My Autonomous System:
 
@@ -621,6 +639,22 @@ const (
 //          seconds that may elapse between the receipt of successive
 //          KEEPALIVE and/or UPDATE messages from the sender.
 
+var maxHoldTime = time.Duration(int(math.Pow(2, 16))) * time.Second
+
+func isValidHoldTime(hold time.Duration) bool {
+	if hold > maxHoldTime {
+		return false
+	}
+	if hold > 0 && hold < 3*time.Second {
+		return false
+	}
+	return true
+}
+
+func durationToUint16(t time.Duration) uint16 {
+	return uint16(t.Seconds())
+}
+
 //       BGP Identifier:
 
 //          This 4-octet unsigned integer indicates the BGP Identifier of
@@ -629,11 +663,63 @@ const (
 //          speaker.  The value of the BGP Identifier is determined upon
 //          startup and is the same for every local interface and BGP peer.
 
+func findBGPIdentifier() (uint32, error) {
+	ifs, err := net.Interfaces()
+	if err != nil {
+		return 0, err
+	}
+	// Note: this selection process is arbitrary
+	for _, v := range ifs {
+		addrs, err := v.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			ip, _, err := net.ParseCIDR(addr.String())
+			if err != nil {
+				continue
+			}
+			// Make sure we have an IPv4 address
+			if ip.To4() == nil {
+				continue
+			}
+			// If it's routable, we have a winner!
+			if ip.IsGlobalUnicast() {
+				return ipToUint32(ip), nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("No valid BGP identifier found")
+}
+
+func ipToUint32(ip net.IP) uint32 {
+	// ip could be 4 or 16 bytes, let's be sure it's 4
+	ip4 := ip.To4()
+	u := binary.BigEndian.Uint32(ip4)
+	return u
+}
+
 //       Optional Parameters Length:
 
 //          This 1-octet unsigned integer indicates the total length of the
 //          Optional Parameters field in octets.  If the value of this
 //          field is zero, no Optional Parameters are present.
+
+const minOptParametersLength = 0
+const maxOptParametersLength = 255
+
+func parametersLength(parms []parameter) (byte, error) {
+	var length uint16
+	for _, p := range parms {
+		length += uint16(p.parmLength)
+	}
+	if length > maxOptParametersLength {
+		return 0x00, fmt.Errorf("Parameters length exceeds %d", maxOptParametersLength)
+	}
+	bs := make([]byte, 2)
+	binary.BigEndian.PutUint16(bs, length)
+	return bs[0], nil
+}
 
 //       Optional Parameters:
 
@@ -647,6 +733,22 @@ const (
 //          |  Parm. Type   | Parm. Length  |  Parameter Value (variable)
 //          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
 
+const maxParameterLength = 255
+
+type parameter struct {
+	parmType   byte
+	parmLength byte
+	parmValue  []byte
+}
+
+func newParameter(t byte, v []byte) (parameter, error) {
+	if len(v) > maxParameterLength {
+		return parameter{}, fmt.Errorf("Parameter exceeds maximum length of %d", maxParameterLength)
+	}
+	length := byte(len(v))
+	return parameter{t, length, v}, nil
+}
+
 //          Parameter Type is a one octet field that unambiguously
 //          identifies individual parameters.  Parameter Length is a one
 //          octet field that contains the length of the Parameter Value
@@ -658,6 +760,8 @@ const (
 
 //    The minimum length of the OPEN message is 29 octets (including the
 //    message header).
+
+const minOpenMessageLength = 29
 
 // 4.3.  UPDATE Message Format
 
