@@ -792,6 +792,14 @@ const minOpenMessageLength = 29
 //       |   Network Layer Reachability Information (variable) |
 //       +-----------------------------------------------------+
 
+type updateMessage struct {
+	withdrawnRoutesLength uint16
+	withdrawnRoutes       []withdrawnRoute
+	pathAttributesLength  uint16
+	pathAttributes        []pathAttribute
+	nlris                 []nlri
+}
+
 //       Withdrawn Routes Length:
 
 //          This 2-octets unsigned integer indicates the total length of
@@ -802,6 +810,8 @@ const minOpenMessageLength = 29
 //          A value of 0 indicates that no routes are being withdrawn from
 //          service, and that the WITHDRAWN ROUTES field is not present in
 //          this UPDATE message.
+
+const noWithdrawnRoutes = 0
 
 //       Withdrawn Routes:
 
@@ -815,6 +825,11 @@ const minOpenMessageLength = 29
 //                   +---------------------------+
 //                   |   Prefix (variable)       |
 //                   +---------------------------+
+
+type withdrawnRoute struct {
+	length   byte
+	prefixes []byte
+}
 
 //          The use and the meaning of these fields are as follows:
 
@@ -851,6 +866,12 @@ const minOpenMessageLength = 29
 //          <attribute type, attribute length, attribute value> of variable
 //          length.
 
+type pathAttribute struct {
+	attributeType   attributeType
+	attributeLength byte
+	attributeValue  []byte
+}
+
 //          Attribute Type is a two-octet field that consists of the
 //          Attribute Flags octet, followed by the Attribute Type Code
 //          octet.
@@ -861,14 +882,25 @@ const minOpenMessageLength = 29
 //                |  Attr. Flags  |Attr. Type Code|
 //                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+type attributeType struct {
+	flags byte
+	code  byte
+}
+
 //          The high-order bit (bit 0) of the Attribute Flags octet is the
 //          Optional bit.  It defines whether the attribute is optional (if
 //          set to 1) or well-known (if set to 0).
+
+const optional = 1 << 7
+const wellknown = 0
 
 //          The second high-order bit (bit 1) of the Attribute Flags octet
 //          is the Transitive bit.  It defines whether an optional
 //          attribute is transitive (if set to 1) or non-transitive (if set
 //          to 0).
+
+const transitive = 1 << 6
+const nontransitive = 0
 
 //          For well-known attributes, the Transitive bit MUST be set to 1.
 //          (See Section 5 for a discussion of transitive attributes.)
@@ -880,9 +912,15 @@ const minOpenMessageLength = 29
 //          and for optional non-transitive attributes, the Partial bit
 //          MUST be set to 0.
 
+const partial = 1 << 5
+const complete = 0
+
 //          The fourth high-order bit (bit 3) of the Attribute Flags octet
 //          is the Extended Length bit.  It defines whether the Attribute
 //          Length is one octet (if set to 0) or two octets (if set to 1).
+
+const extendedLength = 1 << 4
+const notextendedLength = 0
 
 //          The lower-order four bits of the Attribute Flags octet are
 //          unused.  They MUST be zero when sent and MUST be ignored when
@@ -922,6 +960,12 @@ const minOpenMessageLength = 29
 //                2         INCOMPLETE - Network Layer Reachability
 //                             Information learned by some other means
 
+const (
+	igp = iota
+	egp
+	incomplete
+)
+
 //             Usage of this attribute is defined in 5.1.1.
 
 //          b) AS_PATH (Type Code 2):
@@ -941,6 +985,12 @@ const minOpenMessageLength = 29
 
 //                2         AS_SEQUENCE: ordered set of ASes a route in
 //                             the UPDATE message has traversed
+
+const (
+	_ = iota
+	asSet
+	asSequence
+)
 
 //             The path segment length is a 1-octet length field,
 //             containing the number of ASes (not the number of octets) in
@@ -995,6 +1045,17 @@ const minOpenMessageLength = 29
 //             (encoded as 4 octets).  This SHOULD be the same address as
 //             the one used for the BGP Identifier of the speaker.
 
+const (
+	_ = iota
+	origin
+	asPath
+	nextHop
+	multiExitDisc
+	localPref
+	atomicAggregate
+	aggregator
+)
+
 //             Usage of this attribute is defined in 5.1.7.
 
 //       Network Layer Reachability Information:
@@ -1022,6 +1083,11 @@ const minOpenMessageLength = 29
 //                   +---------------------------+
 //                   |   Prefix (variable)       |
 //                   +---------------------------+
+
+type nlri struct {
+	length byte
+	prefix []byte
+}
 
 //          The use and the meaning of these fields are as follows:
 
