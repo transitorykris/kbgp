@@ -1974,7 +1974,7 @@ type fsm struct {
 	state int
 
 	connectRetryCounter int
-	connectRetryTimer   time.Timer
+	connectRetryTimer   *time.Timer
 	connectRetryTime    time.Time
 	holdTimer           time.Timer
 	holdTime            time.Time
@@ -1994,6 +1994,38 @@ type fsm struct {
 	passiveTCPEstablishment            bool
 	sendNotificationwithoutOpen        bool
 	trackTCPState                      bool
+}
+
+func (f *fsm) stopConnectRetryTimer() {
+	// Note: see https://golang.org/pkg/time/#Timer about not doing this
+	// concurrently with other receives from the timer's channel
+	if !f.connectRetryTimer.Stop() {
+		<-f.connectRetryTimer.C
+	}
+}
+
+func (f *fsm) restartConnectRetryTimer() {
+	// Note: see https://golang.org/pkg/time/#Timer about not doing this
+	// concurrently with other receives from the timer's channel
+	if !f.connectRetryTimer.Stop() {
+		<-f.connectRetryTimer.C
+	}
+	f.connectRetryTimer.Reset(defaultConnectRetryTime)
+}
+
+func (f *fsm) connectRetryExpiry() {
+	switch f.state {
+	case idle:
+		f.idle(connectRetryTimerExpires)
+	case connect:
+		f.connect(connectRetryTimerExpires)
+	case active:
+		f.active(connectRetryTimerExpires)
+	case openConfirm:
+		f.openConfirm(connectRetryTimerExpires)
+	case established:
+		f.established(connectRetryTimerExpires)
+	}
 }
 
 // 8.1.  Events for the BGP FSM
@@ -2708,6 +2740,7 @@ func (f *fsm) idle(event int) {
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
+		f.connectRetryTimer = time.AfterFunc(defaultConnectRetryTime, f.connectRetryExpiry)
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
@@ -2727,6 +2760,7 @@ func (f *fsm) idle(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
+		f.connectRetryTimer = time.AfterFunc(defaultConnectRetryTime, f.connectRetryExpiry)
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		//         - changes its state to Active.
@@ -2741,6 +2775,7 @@ func (f *fsm) idle(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
+		f.connectRetryTimer = time.AfterFunc(defaultConnectRetryTime, f.connectRetryExpiry)
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		//         - changes its state to Active.
@@ -2813,6 +2848,9 @@ func (f *fsm) connect(event int) {
 		f.connectRetryCounter = 0
 		//         - stops the ConnectRetryTimer and sets ConnectRetryTimer to
 		//           zero, and
+		// Note: see https://golang.org/pkg/time/#Timer about not doing this
+		// concurrently with other receives from the timer's channel
+		f.stopConnectRetryTimer()
 		//         - changes its state to Idle.
 		f.state = idle
 	case connectRetryTimerExpires:
@@ -2820,6 +2858,7 @@ func (f *fsm) connect(event int) {
 		//       local system:
 		//         - drops the TCP connection,
 		//         - restarts the ConnectRetryTimer,
+		f.restartConnectRetryTimer()
 		//         - stops the DelayOpenTimer and resets the timer to zero,
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - continues to listen for a connection that may be initiated by
@@ -2846,12 +2885,14 @@ func (f *fsm) connect(event int) {
 		//       DelayOpen attribute is set to TRUE, the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - sets the DelayOpenTimer to the initial value, and
 		//         - stays in the Connect state.
 
 		//       If the DelayOpen attribute is set to FALSE, the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - completes BGP initialization
 		//         - sends an OPEN message to its peer,
 		//         - sets the HoldTimer to a large value, and
@@ -2864,6 +2905,7 @@ func (f *fsm) connect(event int) {
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
 		//       system:
 		//         - restarts the ConnectRetryTimer with the initial value,
+		f.restartConnectRetryTimer()
 		//         - stops the DelayOpenTimer and resets its value to zero,
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
@@ -2872,6 +2914,7 @@ func (f *fsm) connect(event int) {
 
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - drops the TCP connection,
 		//         - releases all BGP resources, and
 		//         - changes its state to Idle.
@@ -2882,12 +2925,14 @@ func (f *fsm) connect(event int) {
 		//       DelayOpen attribute is set to TRUE, the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - sets the DelayOpenTimer to the initial value, and
 		//         - stays in the Connect state.
 
 		//       If the DelayOpen attribute is set to FALSE, the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - completes BGP initialization
 		//         - sends an OPEN message to its peer,
 		//         - sets the HoldTimer to a large value, and
@@ -2900,6 +2945,7 @@ func (f *fsm) connect(event int) {
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
 		//       system:
 		//         - restarts the ConnectRetryTimer with the initial value,
+		f.restartConnectRetryTimer()
 		//         - stops the DelayOpenTimer and resets its value to zero,
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
@@ -2908,6 +2954,7 @@ func (f *fsm) connect(event int) {
 
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - drops the TCP connection,
 		//         - releases all BGP resources, and
 		//         - changes its state to Idle.
@@ -2917,6 +2964,7 @@ func (f *fsm) connect(event int) {
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
 		//       system:
 		//         - restarts the ConnectRetryTimer with the initial value,
+		f.restartConnectRetryTimer()
 		//         - stops the DelayOpenTimer and resets its value to zero,
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
@@ -2924,6 +2972,7 @@ func (f *fsm) connect(event int) {
 		f.state = active
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - drops the TCP connection,
 		//         - releases all BGP resources, and
 		//         - changes its state to Idle.
@@ -2933,6 +2982,7 @@ func (f *fsm) connect(event int) {
 		//       (Event 20), the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - completes the BGP initialization,
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		//         - sends an OPEN message,
@@ -2956,6 +3006,7 @@ func (f *fsm) connect(event int) {
 		//           message with the appropriate error code, and then
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -2972,6 +3023,7 @@ func (f *fsm) connect(event int) {
 		//           message with the appropriate error code, and then
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -2986,6 +3038,7 @@ func (f *fsm) connect(event int) {
 		//       DelayOpenTimer is running, the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - stops and resets the DelayOpenTimer (sets to zero),
 		//         - releases all BGP resources,
 		//         - drops the TCP connection, and
@@ -2995,6 +3048,7 @@ func (f *fsm) connect(event int) {
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer and sets the ConnectRetryTimer to
 		//           zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3007,6 +3061,7 @@ func (f *fsm) connect(event int) {
 		//       25-28), the local system:
 		//         - if the ConnectRetryTimer is running, stops and resets the
 		//           ConnectRetryTimer (sets to zero),
+		f.stopConnectRetryTimer()
 		//         - if the DelayOpenTimer is running, stops and resets the
 		//           DelayOpenTimer (sets to zero),
 		//         - releases all BGP resources,
@@ -3051,12 +3106,14 @@ func (f *fsm) active(event int) {
 		f.connectRetryCounter = 0
 		//         - stops the ConnectRetryTimer and sets the ConnectRetryTimer to
 		//           zero, and
+		f.stopConnectRetryTimer()
 		//         - changes its state to Idle.
 		f.state = idle
 	case connectRetryTimerExpires:
 		//       In response to a ConnectRetryTimer_Expires event (Event 9), the
 		//       local system:
 		//         - restarts the ConnectRetryTimer (with initial value),
+		f.restartConnectRetryTimer()
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - continues to listen for a TCP connection that may be initiated
 		//           by a remote BGP peer, and
@@ -3066,6 +3123,7 @@ func (f *fsm) active(event int) {
 		//       If the local system receives a DelayOpenTimer_Expires event (Event
 		//       12), the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - stops and clears the DelayOpenTimer (set to zero),
 		//         - completes the BGP initialization,
 		//         - sends the OPEN message to its remote peer,
@@ -3090,12 +3148,14 @@ func (f *fsm) active(event int) {
 		//         If the DelayOpen attribute is set to TRUE, the local system:
 		//           - stops the ConnectRetryTimer and sets the ConnectRetryTimer
 		//             to zero,
+		f.stopConnectRetryTimer()
 		//           - sets the DelayOpenTimer to the initial value
 		//             (DelayOpenTime), and
 		//           - stays in the Active state.
 
 		//         If the DelayOpen attribute is set to FALSE, the local system:
 		//           - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//           - completes the BGP initialization,
 		//           - sends the OPEN message to its peer,
 		//           - sets its HoldTimer to a large value, and
@@ -3111,12 +3171,14 @@ func (f *fsm) active(event int) {
 		//         If the DelayOpen attribute is set to TRUE, the local system:
 		//           - stops the ConnectRetryTimer and sets the ConnectRetryTimer
 		//             to zero,
+		f.stopConnectRetryTimer()
 		//           - sets the DelayOpenTimer to the initial value
 		//             (DelayOpenTime), and
 		//           - stays in the Active state.
 
 		//         If the DelayOpen attribute is set to FALSE, the local system:
 		//           - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//           - completes the BGP initialization,
 		//           - sends the OPEN message to its peer,
 		//           - sets its HoldTimer to a large value, and
@@ -3128,6 +3190,7 @@ func (f *fsm) active(event int) {
 		//       If the local system receives a TcpConnectionFails event (Event
 		//       18), the local system:
 		//         - restarts the ConnectRetryTimer (with the initial value),
+		f.restartConnectRetryTimer()
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		//         - releases all BGP resource,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3141,6 +3204,7 @@ func (f *fsm) active(event int) {
 		//       (Event 20), the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - stops and clears the DelayOpenTimer (sets to zero),
 		//         - completes the BGP initialization,
 		//         - sends an OPEN message,
@@ -3163,6 +3227,7 @@ func (f *fsm) active(event int) {
 		//           error code if the SendNOTIFICATIONwithoutOPEN attribute is set
 		//           to TRUE,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3178,6 +3243,7 @@ func (f *fsm) active(event int) {
 		//           error code if the SendNOTIFICATIONwithoutOPEN attribute is set
 		//           to TRUE,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3192,6 +3258,7 @@ func (f *fsm) active(event int) {
 		//       DelayOpenTimer is running, the local system:
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - stops and resets the DelayOpenTimer (sets to zero),
 		//         - releases all BGP resources,
 		//         - drops the TCP connection, and
@@ -3199,6 +3266,7 @@ func (f *fsm) active(event int) {
 		f.state = idle
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3211,6 +3279,7 @@ func (f *fsm) active(event int) {
 		//       In response to any other event (Events 8, 10-11, 13, 19, 23,
 		//       25-28), the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by one,
@@ -3245,6 +3314,7 @@ func (f *fsm) openSent(event int) {
 		//       the local system:
 		//         - sends the NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - sets the ConnectRetryCounter to zero, and
@@ -3256,6 +3326,7 @@ func (f *fsm) openSent(event int) {
 		//       state, the local system:
 		//         - sends the NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3269,6 +3340,7 @@ func (f *fsm) openSent(event int) {
 		//         - sends a NOTIFICATION message with the error code Hold Timer
 		//           Expired,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter,
@@ -3303,6 +3375,7 @@ func (f *fsm) openSent(event int) {
 		//       system:
 		//         - closes the BGP connection,
 		//         - restarts the ConnectRetryTimer,
+		f.restartConnectRetryTimer()
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
 		//         - changes its state to Active.
@@ -3313,6 +3386,7 @@ func (f *fsm) openSent(event int) {
 		//       19), the local system:
 		//         - resets the DelayOpenTimer to zero,
 		//         - sets the BGP ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - sends a KEEPALIVE message, and
 		//         - sets a KeepaliveTimer (via the text below)
 		//         - sets the HoldTimer according to the negotiated value (see
@@ -3332,6 +3406,7 @@ func (f *fsm) openSent(event int) {
 		//       system:
 		//         - sends a NOTIFICATION message with the appropriate error code,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3353,6 +3428,7 @@ func (f *fsm) openSent(event int) {
 		//       the OpenSent state, the local system:
 		//         - sends a NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3365,6 +3441,7 @@ func (f *fsm) openSent(event int) {
 		//       If a NOTIFICATION message is received with a version error (Event
 		//       24), the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection, and
 		//         - changes its state to Idle.
@@ -3375,6 +3452,7 @@ func (f *fsm) openSent(event int) {
 		//         - sends the NOTIFICATION with the Error Code Finite State
 		//           Machine Error,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3413,6 +3491,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - sets the ConnectRetryTimer to zero, and
+		f.stopConnectRetryTimer()
 		//         - changes its state to Idle.
 		f.state = idle
 	case automaticStop:
@@ -3420,6 +3499,7 @@ func (f *fsm) openConfirm(event int) {
 		//       (Event 8), the local system:
 		//         - sends the NOTIFICATION message with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3434,6 +3514,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - sends the NOTIFICATION message with the Error Code Hold Timer
 		//           Expired,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3471,6 +3552,7 @@ func (f *fsm) openConfirm(event int) {
 		//       from the underlying TCP or a NOTIFICATION message (Event 25), the
 		//       local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3484,6 +3566,7 @@ func (f *fsm) openConfirm(event int) {
 		//       from the underlying TCP or a NOTIFICATION message (Event 25), the
 		//       local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3496,6 +3579,7 @@ func (f *fsm) openConfirm(event int) {
 		//       If the local system receives a NOTIFICATION message with a version
 		//       error (NotifMsgVerErr (Event 24)), the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection, and
 		//         - changes its state to Idle.
@@ -3507,6 +3591,7 @@ func (f *fsm) openConfirm(event int) {
 		//       the local system:
 		//         - sends a NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection (send TCP FIN),
 		//         - increments the ConnectRetryCounter by 1,
@@ -3522,6 +3607,7 @@ func (f *fsm) openConfirm(event int) {
 		//       6.2) (BGPOpenMsgErr (Event 22)), the local system:
 		//         - sends a NOTIFICATION message with the appropriate error code,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3537,6 +3623,7 @@ func (f *fsm) openConfirm(event int) {
 		//       6.2) (BGPOpenMsgErr (Event 22)), the local system:
 		//         - sends a NOTIFICATION message with the appropriate error code,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3554,6 +3641,7 @@ func (f *fsm) openConfirm(event int) {
 		//       receives an OpenCollisionDump event (Event 23), the local system:
 		//         - sends a NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3574,6 +3662,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - sends a NOTIFICATION with a code of Finite State Machine
 		//           Error,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3609,6 +3698,7 @@ func (f *fsm) established(event int) {
 		//       (Event 2), the local system:
 		//         - sends the NOTIFICATION message with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases BGP resources,
 		//         - drops the TCP connection,
@@ -3620,6 +3710,7 @@ func (f *fsm) established(event int) {
 		//       In response to an AutomaticStop event (Event 8), the local system:
 		//         - sends a NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
@@ -3640,6 +3731,7 @@ func (f *fsm) established(event int) {
 		//         - sends a NOTIFICATION message with the Error Code Hold Timer
 		//           Expired,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
@@ -3682,6 +3774,7 @@ func (f *fsm) established(event int) {
 		//       needs to be terminated, the local system:
 		//         - sends a NOTIFICATION with a Cease,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
@@ -3696,6 +3789,7 @@ func (f *fsm) established(event int) {
 		//       Event 25) or a TcpConnectionFails (Event 18) from the underlying
 		//       TCP, the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
@@ -3708,6 +3802,7 @@ func (f *fsm) established(event int) {
 		//       Event 25) or a TcpConnectionFails (Event 18) from the underlying
 		//       TCP, the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
@@ -3720,6 +3815,7 @@ func (f *fsm) established(event int) {
 		//       Event 25) or a TcpConnectionFails (Event 18) from the underlying
 		//       TCP, the local system:
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
@@ -3748,6 +3844,7 @@ func (f *fsm) established(event int) {
 		//       error (Event 28), the local system:
 		//         - sends a NOTIFICATION message with an Update error,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - deletes all routes associated with this connection,
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
@@ -3764,6 +3861,7 @@ func (f *fsm) established(event int) {
 		//           Machine Error,
 		//         - deletes all routes associated with this connection,
 		//         - sets the ConnectRetryTimer to zero,
+		f.stopConnectRetryTimer()
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
