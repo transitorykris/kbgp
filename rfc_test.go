@@ -102,3 +102,17 @@ func TestNewKeepalive(t *testing.T) {
 		t.Errorf("Keepalive messages must have 0 length")
 	}
 }
+
+func TestNewNotificationMessage(t *testing.T) {
+	data := []byte{0x03, 0x14, 0x25}
+	n := newNotificationMessage(messageHeaderError, badMessageType, data)
+	if n.code != messageHeaderError {
+		t.Errorf("Expected error code %d but got %d", messageHeaderError, n.code)
+	}
+	if n.subcode != badMessageType {
+		t.Errorf("Expected error subcode %d but got %d", badMessageType, n.subcode)
+	}
+	if bytes.Compare(n.data, data) != 0 {
+		t.Errorf("Expected data %v but got %v", data, n.data)
+	}
+}

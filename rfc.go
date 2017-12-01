@@ -1192,6 +1192,21 @@ func newKeepaliveMessage() keepaliveMessage {
 //       | Error code    | Error subcode |   Data (variable)             |
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+type notificationMessage struct {
+	code    byte
+	subcode byte
+	data    []byte
+}
+
+func newNotificationMessage(code int, subcode int, data []byte) notificationMessage {
+	n := notificationMessage{
+		code:    byte(code),
+		subcode: byte(subcode),
+		data:    data,
+	}
+	return n
+}
+
 //       Error Code:
 
 //          This 1-octet unsigned integer indicates the type of
@@ -1211,6 +1226,16 @@ func newKeepaliveMessage() keepaliveMessage {
 
 //               6         Cease                            Section 6.7
 
+const (
+	_ = iota
+	messageHeaderError
+	openMessageError
+	updateMessageError
+	holdTimerExpired
+	finiteStateMachineError
+	cease
+)
+
 //       Error subcode:
 
 //          This 1-octet unsigned integer provides more specific
@@ -1225,6 +1250,13 @@ func newKeepaliveMessage() keepaliveMessage {
 //                2 - Bad Message Length.
 //                3 - Bad Message Type.
 
+const (
+	_ = iota
+	connectionNotSynchronized
+	badMessageLength
+	badMessageType
+)
+
 //       OPEN Message Error subcodes:
 
 //                1 - Unsupported Version Number.
@@ -1233,6 +1265,16 @@ func newKeepaliveMessage() keepaliveMessage {
 //                4 - Unsupported Optional Parameter.
 //                5 - [Deprecated - see Appendix A].
 //                6 - Unacceptable Hold Time.
+
+const (
+	_ = iota
+	unsupportedVersionNumber
+	badPeerAS
+	badBGPIdentifier
+	unsupportedOptionalParameter
+	_
+	unacceptableHoldTime
+)
 
 //       UPDATE Message Error subcodes:
 
@@ -1247,6 +1289,21 @@ func newKeepaliveMessage() keepaliveMessage {
 //                9 - Optional Attribute Error.
 //               10 - Invalid Network Field.
 //               11 - Malformed AS_PATH.
+
+const (
+	_ = iota
+	malformedAttributeList
+	unrecognizedWellKnownAttribute
+	missingWellKnownAttribute
+	attributeFlagsError
+	attributeLengthError
+	_
+	_
+	invalidNextHopAttribute
+	optionalAttributeError
+	invalidNetworkField
+	malformedASPath
+)
 
 //       Data:
 
