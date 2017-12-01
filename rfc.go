@@ -3800,6 +3800,9 @@ func (f *fsm) established(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 
@@ -3820,6 +3823,9 @@ func (f *fsm) established(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case keepaliveTimerExpires:
@@ -3864,6 +3870,9 @@ func (f *fsm) established(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsgVerErr:
@@ -3934,6 +3943,9 @@ func (f *fsm) established(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	default:
@@ -3950,6 +3962,9 @@ func (f *fsm) established(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	}
