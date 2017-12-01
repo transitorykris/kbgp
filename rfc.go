@@ -1105,11 +1105,27 @@ type nlri struct {
 //             octet boundary.  Note that the value of the trailing bits is
 //             irrelevant.
 
+func newNLRI(length int, prefix net.IP) nlri {
+	n := nlri{
+		length: byte(length),
+		prefix: packPrefix(length, prefix),
+	}
+	return n
+}
+
+func packPrefix(length int, ip net.IP) []byte {
+	ip4 := ip.To4()
+	bs := []byte{ip4[0], ip4[1], ip4[2], ip4[3]}
+	return bs[:int(math.Ceil(math.Max(float64(length)/8.0, 1)))]
+}
+
 //    The minimum length of the UPDATE message is 23 octets -- 19 octets
 //    for the fixed header + 2 octets for the Withdrawn Routes Length + 2
 //    octets for the Total Path Attribute Length (the value of Withdrawn
 //    Routes Length is 0 and the value of Total Path Attribute Length is
 //    0).
+
+const minUpdateMessageLength = 23
 
 //    An UPDATE message can advertise, at most, one set of path attributes,
 //    but multiple destinations, provided that the destinations share these

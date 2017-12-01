@@ -1,6 +1,7 @@
 package kbgp
 
 import (
+	"bytes"
 	"encoding/binary"
 	"net"
 	"testing"
@@ -50,5 +51,46 @@ func TestIPToBGPIdentifier(t *testing.T) {
 	ip4 := binary.BigEndian.Uint32(ip.To4())
 	if ip4 != id {
 		t.Errorf("Incorrect identifier %d != %d", ip4, id)
+	}
+}
+
+func TestPackPrefix(t *testing.T) {
+	b := packPrefix(32, net.ParseIP("1.2.3.4"))
+	if len(b) != 4 {
+		t.Errorf("Expected 1.2.3.4/32 to be 4 bytes but got %d", b)
+	}
+	b = packPrefix(25, net.ParseIP("1.2.3.4"))
+	if len(b) != 4 {
+		t.Errorf("Expected 1.2.3.4/25 to be 4 bytes but got %d", b)
+	}
+	b = packPrefix(24, net.ParseIP("1.2.3.4"))
+	if len(b) != 3 {
+		t.Errorf("Expected 1.2.3.4/24 to be 3 bytes but got %d", b)
+	}
+	b = packPrefix(16, net.ParseIP("1.2.3.4"))
+	if len(b) != 2 {
+		t.Errorf("Expected 1.2.3.4/16 to be 2 bytes but got %d", b)
+	}
+	b = packPrefix(8, net.ParseIP("1.2.3.4"))
+	if len(b) != 1 {
+		t.Errorf("Expected 1.2.3.4/8 to be 2 bytes but got %d", b)
+	}
+	b = packPrefix(1, net.ParseIP("1.2.3.4"))
+	if len(b) != 1 {
+		t.Errorf("Expected 1.2.3.4/1 to be 1 bytes but got %d", b)
+	}
+	b = packPrefix(0, net.ParseIP("1.2.3.4"))
+	if len(b) != 1 {
+		t.Errorf("Expected 1.2.3.4/0 to be 1 bytes but got %d", b)
+	}
+}
+
+func TestNewNLRI(t *testing.T) {
+	n := newNLRI(23, net.ParseIP("1.2.3.4"))
+	if n.length != 23 {
+		t.Errorf("Expected length to be 23 but got %d", n.length)
+	}
+	if bytes.Compare(n.prefix, []byte{1, 2, 3}) != 0 {
+		t.Errorf("Expected bytes to be [1,2,3] but got %v", n.prefix)
 	}
 }
