@@ -2015,8 +2015,9 @@ const minNotificationMessageLength = 21
 //    state machine.  Section 8.2.1.3 also provides a short overview of the
 //    different types of optional attributes (flags or timers).
 
-type session struct {
-	fsm                 *fsm
+type fsm struct {
+	state int
+
 	connectRetryCounter int
 	connectRetryTimer   time.Timer
 	connectRetryTime    time.Time
@@ -2038,10 +2039,6 @@ type session struct {
 	passiveTCPEstablishment            bool
 	sendNotificationwithoutOpen        bool
 	trackTCPState                      bool
-}
-
-type fsm struct {
-	state int
 }
 
 // 8.1.  Events for the BGP FSM
@@ -2825,6 +2822,7 @@ func (f *fsm) idle(event int) {
 		//       3), the local system:
 		//         - initializes all BGP resources for the peer connection,
 		//         - sets ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - listens for a connection that may be initiated by the remote
@@ -2838,6 +2836,7 @@ func (f *fsm) idle(event int) {
 		//       3), the local system:
 		//         - initializes all BGP resources for the peer connection,
 		//         - sets ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - listens for a connection that may be initiated by the remote
@@ -2856,6 +2855,7 @@ func (f *fsm) idle(event int) {
 		//       (Event 5), the local system:
 		//         - initializes all BGP resources,
 		//         - sets the ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
@@ -2869,6 +2869,7 @@ func (f *fsm) idle(event int) {
 		//       (Event 5), the local system:
 		//         - initializes all BGP resources,
 		//         - sets the ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
@@ -2939,6 +2940,7 @@ func (f *fsm) connect(event int) {
 		//         - drops the TCP connection,
 		//         - releases all BGP resources,
 		//         - sets ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - stops the ConnectRetryTimer and sets ConnectRetryTimer to
 		//           zero, and
 		//         - changes its state to Idle.
@@ -3087,6 +3089,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3102,6 +3105,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3138,6 +3142,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - performs peer oscillation damping if the DampPeerOscillations
 		//           attribute is set to True, and
 		//         - changes its state to Idle.
@@ -3173,6 +3178,7 @@ func (f *fsm) active(event int) {
 		//           DelayOpenTimer
 		//         - drops the TCP connection,
 		//         - sets ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - stops the ConnectRetryTimer and sets the ConnectRetryTimer to
 		//           zero, and
 		//         - changes its state to Idle.
@@ -3255,6 +3261,7 @@ func (f *fsm) active(event int) {
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		//         - releases all BGP resource,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - optionally performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3289,6 +3296,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3303,6 +3311,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3323,6 +3332,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3334,6 +3344,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by one,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3367,6 +3378,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - sets the ConnectRetryCounter to zero, and
+		f.connectRetryCounter = 0
 		//         - changes its state to Idle.
 		f.state = idle
 	case automaticStop:
@@ -3377,6 +3389,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3389,6 +3402,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3451,6 +3465,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is TRUE, and
 		//         - changes its state to Idle.
@@ -3471,6 +3486,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3492,6 +3508,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3524,6 +3541,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - sets the ConnectRetryCounter to zero,
+		f.connectRetryCounter = 0
 		//         - sets the ConnectRetryTimer to zero, and
 		//         - changes its state to Idle.
 		f.state = idle
@@ -3535,6 +3553,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3548,6 +3567,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3584,6 +3604,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3596,6 +3617,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3618,6 +3640,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection (send TCP FIN),
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3632,6 +3655,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3646,6 +3670,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3662,6 +3687,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3681,6 +3707,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3716,6 +3743,7 @@ func (f *fsm) established(event int) {
 		//         - releases BGP resources,
 		//         - drops the TCP connection,
 		//         - sets the ConnectRetryCounter to zero, and
+		f.connectRetryCounter = 0
 		//          - changes its state to Idle.
 		f.state = idle
 	case automaticStop:
@@ -3726,6 +3754,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3744,6 +3773,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3786,6 +3816,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3799,6 +3830,7 @@ func (f *fsm) established(event int) {
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsg:
@@ -3810,6 +3842,7 @@ func (f *fsm) established(event int) {
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - changes its state to Idle.
 		f.state = idle
 	case tcpConnectionFails:
@@ -3821,6 +3854,7 @@ func (f *fsm) established(event int) {
 		//         - releases all the BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - changes its state to Idle.
 		f.state = idle
 	case keepAliveMsg:
@@ -3848,6 +3882,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
@@ -3862,6 +3897,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
 		//         - changes its state to Idle.
