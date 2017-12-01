@@ -2729,6 +2729,7 @@ func (f *fsm) idle(event int) {
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
+		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.connectRetryExpiry)
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
