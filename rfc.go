@@ -1320,6 +1320,8 @@ const (
 //    The minimum length of the NOTIFICATION message is 21 octets
 //    (including message header).
 
+const minNotificationMessageLength = 21
+
 // 5.  Path Attributes
 
 //    This section discusses the path attributes of the UPDATE message.
