@@ -1163,7 +1163,7 @@ const minUpdateMessageLength = 23
 //    Time interval.
 
 const defaultHoldTime = 3 * time.Second
-const defaultKeepaliveInterval = holdTime / 3
+const defaultKeepaliveInterval = 1 * time.Second
 const minKeepaliveInterval = 1 * time.Second
 
 //    If the negotiated Hold Time interval is zero, then periodic KEEPALIVE
