@@ -522,7 +522,6 @@ import (
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //       |          Length               |      Type     |
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 type messageHeader struct {
 	//       Marker:
 	//          This 16-octet field is included for compatibility; it MUST be
@@ -579,14 +578,11 @@ const (
 )
 
 // 4.2.  OPEN Message Format
-
 //    After a TCP connection is established, the first message sent by each
 //    side is an OPEN message.  If the OPEN message is acceptable, a
 //    KEEPALIVE message confirming the OPEN is sent back.
-
 //    In addition to the fixed-size BGP header, the OPEN message contains
 //    the following fields:
-
 //        0                   1                   2                   3
 //        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 //        +-+-+-+-+-+-+-+-+
@@ -604,7 +600,6 @@ const (
 //        |             Optional Parameters (variable)                    |
 //        |                                                               |
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 type openMessage struct {
 	//       Version:
 	//          This 1-octet unsigned integer indicates the protocol version
@@ -789,14 +784,12 @@ func newParameter(t byte, v []byte) (parameter, error) {
 const minOpenMessageLength = 29
 
 // 4.3.  UPDATE Message Format
-
 //    UPDATE messages are used to transfer routing information between BGP
 //    peers.  The information in the UPDATE message can be used to
 //    construct a graph that describes the relationships of the various
 //    Autonomous Systems.  By applying rules to be discussed, routing
 //    information loops and some other anomalies may be detected and
 //    removed from inter-AS routing.
-
 //    An UPDATE message is used to advertise feasible routes that share
 //    common path attributes to a peer, or to withdraw multiple unfeasible
 //    routes from service (see 3.1).  An UPDATE message MAY simultaneously
@@ -804,7 +797,6 @@ const minOpenMessageLength = 29
 //    from service.  The UPDATE message always includes the fixed-size BGP
 //    header, and also includes the other fields, as shown below (note,
 //    some of the shown fields may not be present in every UPDATE message):
-
 //       +-----------------------------------------------------+
 //       |   Withdrawn Routes Length (2 octets)                |
 //       +-----------------------------------------------------+
@@ -816,7 +808,6 @@ const minOpenMessageLength = 29
 //       +-----------------------------------------------------+
 //       |   Network Layer Reachability Information (variable) |
 //       +-----------------------------------------------------+
-
 type updateMessage struct {
 	withdrawnRoutesLength uint16
 	withdrawnRoutes       []withdrawnRoute
@@ -826,31 +817,25 @@ type updateMessage struct {
 }
 
 //       Withdrawn Routes Length:
-
 //          This 2-octets unsigned integer indicates the total length of
 //          the Withdrawn Routes field in octets.  Its value allows the
 //          length of the Network Layer Reachability Information field to
 //          be determined, as specified below.
-
 //          A value of 0 indicates that no routes are being withdrawn from
 //          service, and that the WITHDRAWN ROUTES field is not present in
 //          this UPDATE message.
-
 const noWithdrawnRoutes = 0
 
 //       Withdrawn Routes:
-
 //          This is a variable-length field that contains a list of IP
 //          address prefixes for the routes that are being withdrawn from
 //          service.  Each IP address prefix is encoded as a 2-tuple of the
 //          form <length, prefix>, whose fields are described below:
-
 //                   +---------------------------+
 //                   |   Length (1 octet)        |
 //                   +---------------------------+
 //                   |   Prefix (variable)       |
 //                   +---------------------------+
-
 //          The use and the meaning of these fields are as follows:
 type withdrawnRoute struct {
 	//          a) Length:
@@ -869,7 +854,6 @@ type withdrawnRoute struct {
 }
 
 //       Total Path Attribute Length:
-
 //          This 2-octet unsigned integer indicates the total length of the
 //          Path Attributes field in octets.  Its value allows the length
 //          of the Network Layer Reachability field to be determined as
@@ -894,13 +878,11 @@ type pathAttribute struct {
 //          Attribute Type is a two-octet field that consists of the
 //          Attribute Flags octet, followed by the Attribute Type Code
 //          octet.
-
 //                0                   1
 //                0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
 //                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //                |  Attr. Flags  |Attr. Type Code|
 //                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 type attributeType struct {
 	flags byte
 	code  byte
@@ -1052,51 +1034,41 @@ const (
 //             Usage of this attribute is defined in 5.1.7.
 
 //       Network Layer Reachability Information:
-
 //          This variable length field contains a list of IP address
 //          prefixes.  The length, in octets, of the Network Layer
 //          Reachability Information is not encoded explicitly, but can be
 //          calculated as:
-
 //                UPDATE message Length - 23 - Total Path Attributes Length
 //                - Withdrawn Routes Length
-
 //          where UPDATE message Length is the value encoded in the fixed-
 //          size BGP header, Total Path Attribute Length, and Withdrawn
 //          Routes Length are the values encoded in the variable part of
 //          the UPDATE message, and 23 is a combined length of the fixed-
 //          size BGP header, the Total Path Attribute Length field, and the
 //          Withdrawn Routes Length field.
-
 //          Reachability information is encoded as one or more 2-tuples of
 //          the form <length, prefix>, whose fields are described below:
-
 //                   +---------------------------+
 //                   |   Length (1 octet)        |
 //                   +---------------------------+
 //                   |   Prefix (variable)       |
 //                   +---------------------------+
-
+//          The use and the meaning of these fields are as follows:
 type nlri struct {
+	//          a) Length:
+	//             The Length field indicates the length in bits of the IP
+	//             address prefix.  A length of zero indicates a prefix that
+	//             matches all IP addresses (with prefix, itself, of zero
+	//             octets).
 	length byte
+
+	//          b) Prefix:
+	//             The Prefix field contains an IP address prefix, followed by
+	//             enough trailing bits to make the end of the field fall on an
+	//             octet boundary.  Note that the value of the trailing bits is
+	//             irrelevant.
 	prefix []byte
 }
-
-//          The use and the meaning of these fields are as follows:
-
-//          a) Length:
-
-//             The Length field indicates the length in bits of the IP
-//             address prefix.  A length of zero indicates a prefix that
-//             matches all IP addresses (with prefix, itself, of zero
-//             octets).
-
-//          b) Prefix:
-
-//             The Prefix field contains an IP address prefix, followed by
-//             enough trailing bits to make the end of the field fall on an
-//             octet boundary.  Note that the value of the trailing bits is
-//             irrelevant.
 
 func newNLRI(length int, prefix net.IP) nlri {
 	n := nlri{
@@ -1163,7 +1135,6 @@ const minKeepaliveInterval = 1 * time.Second
 
 //    A KEEPALIVE message consists of only the message header and has a
 //    length of 19 octets.
-
 type keepaliveMessage struct{}
 
 func newKeepaliveMessage() keepaliveMessage {
@@ -1171,19 +1142,15 @@ func newKeepaliveMessage() keepaliveMessage {
 }
 
 // 4.5.  NOTIFICATION Message Format
-
 //    A NOTIFICATION message is sent when an error condition is detected.
 //    The BGP connection is closed immediately after it is sent.
-
 //    In addition to the fixed-size BGP header, the NOTIFICATION message
 //    contains the following fields:
-
 //       0                   1                   2                   3
 //       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //       | Error code    | Error subcode |   Data (variable)             |
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 type notificationMessage struct {
 	code    byte
 	subcode byte
@@ -1310,7 +1277,6 @@ const (
 
 //    The minimum length of the NOTIFICATION message is 21 octets
 //    (including message header).
-
 const minNotificationMessageLength = 21
 
 // 5.  Path Attributes
