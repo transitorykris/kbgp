@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"math/rand"
 	"net"
 	"time"
 )
@@ -4677,6 +4678,11 @@ const minRouteAdvertisementIntervalTimerIBGP = 5 * time.Second
 //    factor, which is uniformly distributed in the range from 0.75 to 1.0.
 //    A new random value SHOULD be picked each time the timer is set.  The
 //    range of the jitter's random value MAY be configurable.
+func jitter() time.Duration {
+	v := ((rand.Float64() / 4.0) + .75) * 1000
+	j := time.Duration(v) * time.Millisecond
+	return j
+}
 
 // Appendix A.  Comparison with RFC 1771
 

@@ -123,3 +123,16 @@ func TestNewFSM(t *testing.T) {
 		t.Errorf("New FSMs start in the idle state, instead it's state %d", f.state)
 	}
 }
+
+func TestJitter(t *testing.T) {
+	// This needs to be a random value [.75,1) so we'll just run this loop
+	// a bunch of times and hope.
+	const min float64 = 750
+	const max float64 = 1000
+	for i := 0; i < 1000; i++ {
+		j := jitter()
+		if j < time.Duration(min)*time.Millisecond || j > time.Duration(max)*time.Millisecond {
+			t.Errorf("Jitter must be [.75,1) seconds, we got %v", j)
+		}
+	}
+}
