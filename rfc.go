@@ -3032,6 +3032,9 @@ func (f *fsm) connect(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case bgpOpenMsgErr:
@@ -3049,6 +3052,9 @@ func (f *fsm) connect(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsgVerErr:
@@ -3075,6 +3081,9 @@ func (f *fsm) connect(event int) {
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
 		//         - performs peer oscillation damping if the DampPeerOscillations
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//           attribute is set to True, and
 		//         - changes its state to Idle.
 		f.state = idle
@@ -3093,6 +3102,9 @@ func (f *fsm) connect(event int) {
 		f.connectRetryCounter++
 		//         - performs peer oscillation damping if the DampPeerOscillations
 		//           attribute is set to True, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	}
@@ -3228,6 +3240,9 @@ func (f *fsm) active(event int) {
 		f.connectRetryCounter++
 		//         - optionally performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case bgpOpenWithDelayOpenTimerRunning:
@@ -3269,6 +3284,9 @@ func (f *fsm) active(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case bgpOpenMsgErr:
@@ -3285,6 +3303,9 @@ func (f *fsm) active(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsgVerErr:
@@ -3312,6 +3333,9 @@ func (f *fsm) active(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	default:
@@ -3325,6 +3349,9 @@ func (f *fsm) active(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	}
@@ -3367,6 +3394,9 @@ func (f *fsm) openSent(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case holdTimerExpires:
@@ -3381,6 +3411,9 @@ func (f *fsm) openSent(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case tcpConnectionValid:
@@ -3448,6 +3481,9 @@ func (f *fsm) openSent(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 		//       Collision detection mechanisms (Section 6.8) need to be applied
@@ -3470,6 +3506,9 @@ func (f *fsm) openSent(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsgVerErr:
@@ -3494,6 +3533,9 @@ func (f *fsm) openSent(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	}
@@ -3536,6 +3578,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case holdTimerExpires:
@@ -3551,6 +3596,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case keepaliveTimerExpires:
@@ -3589,6 +3637,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsg:
@@ -3603,6 +3654,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case notifMsgVerErr:
@@ -3628,6 +3682,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case bgpHeaderErr:
@@ -3644,6 +3701,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case bgpOpenMsgErr:
@@ -3660,6 +3720,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case openCollisionDump:
@@ -3678,6 +3741,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	case keepAliveMsg:
@@ -3699,6 +3765,9 @@ func (f *fsm) openConfirm(event int) {
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
 		//           DampPeerOscillations attribute is set to TRUE, and
+		if f.dampPeerOscillations {
+			// TODO: Implement me
+		}
 		//         - changes its state to Idle.
 		f.state = idle
 	}
