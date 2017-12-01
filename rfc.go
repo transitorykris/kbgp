@@ -524,15 +524,29 @@ import (
 //       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 type messageHeader struct {
-	marker      [markerLength]byte
-	length      uint16
+	//       Marker:
+	//          This 16-octet field is included for compatibility; it MUST be
+	//          set to all ones.
+	marker [markerLength]byte
+
+	//       Length:
+	//          This 2-octet unsigned integer indicates the total length of the
+	//          message, including the header in octets.  Thus, it allows one
+	//          to locate the (Marker field of the) next message in the TCP
+	//          stream.  The value of the Length field MUST always be at least
+	//          19 and no greater than 4096, and MAY be further constrained,
+	//          depending on the message type.  "padding" of extra data after
+	//          the message is not allowed.  Therefore, the Length field MUST
+	//          have the smallest value required, given the rest of the
+	//          message.
+	length uint16
+
+	//       Type:
+	//          This 1-octet unsigned integer indicates the type code of the
+	//          message.  This document defines the following type codes:
+
 	messageType byte
 }
-
-//       Marker:
-
-//          This 16-octet field is included for compatibility; it MUST be
-//          set to all ones.
 
 const markerLength = 16
 
@@ -543,40 +557,25 @@ func marker() [markerLength]byte {
 	return m
 }
 
-//       Length:
-
-//          This 2-octet unsigned integer indicates the total length of the
-//          message, including the header in octets.  Thus, it allows one
-//          to locate the (Marker field of the) next message in the TCP
-//          stream.  The value of the Length field MUST always be at least
-//          19 and no greater than 4096, and MAY be further constrained,
-//          depending on the message type.  "padding" of extra data after
-//          the message is not allowed.  Therefore, the Length field MUST
-//          have the smallest value required, given the rest of the
-//          message.
-
 const minMessageLength = 19
 const maxMessageLength = 4096
 
 //       Type:
-
 //          This 1-octet unsigned integer indicates the type code of the
 //          message.  This document defines the following type codes:
-
-//                               1 - OPEN
-//                               2 - UPDATE
-//                               3 - NOTIFICATION
-//                               4 - KEEPALIVE
-
-//          [RFC2918] defines one more type code.
-
 const (
 	_ = iota
+	//                               1 - OPEN
 	open
+	//                               2 - UPDATE
 	update
+	//                               3 - NOTIFICATION
 	notification
+	//                               4 - KEEPALIVE
 	keepalive
-	// routeRefresh (RFC2918)
+
+//          [RFC2918] defines one more type code.
+// routeRefresh
 )
 
 // 4.2.  OPEN Message Format
@@ -607,28 +606,61 @@ const (
 //        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 type openMessage struct {
-	version       byte
-	myAS          uint16
-	holdTime      uint16
+	//       Version:
+	//          This 1-octet unsigned integer indicates the protocol version
+	//          number of the message.  The current BGP version number is 4.
+	version byte
+
+	//       My Autonomous System:
+	//          This 2-octet unsigned integer indicates the Autonomous System
+	//          number of the sender.
+	myAS uint16
+
+	//       Hold Time:
+	//          This 2-octet unsigned integer indicates the number of seconds
+	//          the sender proposes for the value of the Hold Timer.  Upon
+	//          receipt of an OPEN message, a BGP speaker MUST calculate the
+	//          value of the Hold Timer by using the smaller of its configured
+	//          Hold Time and the Hold Time received in the OPEN message.  The
+	//          Hold Time MUST be either zero or at least three seconds.  An
+	//          implementation MAY reject connections on the basis of the Hold
+	//          Time.  The calculated value indicates the maximum number of
+	//          seconds that may elapse between the receipt of successive
+	//          KEEPALIVE and/or UPDATE messages from the sender.
+	holdTime uint16
+
+	//       BGP Identifier:
+	//          This 4-octet unsigned integer indicates the BGP Identifier of
+	//          the sender.  A given BGP speaker sets the value of its BGP
+	//          Identifier to an IP address that is assigned to that BGP
+	//          speaker.  The value of the BGP Identifier is determined upon
+	//          startup and is the same for every local interface and BGP peer.
 	bgpIdentifier uint32
-	optParmLen    byte
+
+	//       Optional Parameters Length:
+	//          This 1-octet unsigned integer indicates the total length of the
+	//          Optional Parameters field in octets.  If the value of this
+	//          field is zero, no Optional Parameters are present.
+	optParmLen byte
+
+	//       Optional Parameters:
+	//          This field contains a list of optional parameters, in which
+	//          each parameter is encoded as a <Parameter Type, Parameter
+	//          Length, Parameter Value> triplet.
+	//          0                   1
+	//          0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+	//          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
+	//          |  Parm. Type   | Parm. Length  |  Parameter Value (variable)
+	//          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
 	optParameters []byte
 }
 
 //       Version:
-
 //          This 1-octet unsigned integer indicates the protocol version
 //          number of the message.  The current BGP version number is 4.
-
 const version = 4
 
-//       My Autonomous System:
-
-//          This 2-octet unsigned integer indicates the Autonomous System
-//          number of the sender.
-
 //       Hold Time:
-
 //          This 2-octet unsigned integer indicates the number of seconds
 //          the sender proposes for the value of the Hold Timer.  Upon
 //          receipt of an OPEN message, a BGP speaker MUST calculate the
@@ -639,7 +671,6 @@ const version = 4
 //          Time.  The calculated value indicates the maximum number of
 //          seconds that may elapse between the receipt of successive
 //          KEEPALIVE and/or UPDATE messages from the sender.
-
 var maxHoldTime = time.Duration(int(math.Pow(2, 16))) * time.Second
 
 const largeHoldTimer = 4 * time.Minute // See 8.2.2
@@ -659,13 +690,11 @@ func durationToUint16(t time.Duration) uint16 {
 }
 
 //       BGP Identifier:
-
 //          This 4-octet unsigned integer indicates the BGP Identifier of
 //          the sender.  A given BGP speaker sets the value of its BGP
 //          Identifier to an IP address that is assigned to that BGP
 //          speaker.  The value of the BGP Identifier is determined upon
 //          startup and is the same for every local interface and BGP peer.
-
 func findBGPIdentifier() (uint32, error) {
 	ifs, err := net.Interfaces()
 	if err != nil {
@@ -703,11 +732,9 @@ func ipToUint32(ip net.IP) uint32 {
 }
 
 //       Optional Parameters Length:
-
 //          This 1-octet unsigned integer indicates the total length of the
 //          Optional Parameters field in octets.  If the value of this
 //          field is zero, no Optional Parameters are present.
-
 const minOptParametersLength = 0
 const maxOptParametersLength = 255
 
@@ -724,25 +751,30 @@ func parametersLength(parms []parameter) (byte, error) {
 	return bs[0], nil
 }
 
-//       Optional Parameters:
+const maxParameterLength = 255
 
+//       Optional Parameters:
 //          This field contains a list of optional parameters, in which
 //          each parameter is encoded as a <Parameter Type, Parameter
 //          Length, Parameter Value> triplet.
-
 //          0                   1
 //          0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
 //          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
 //          |  Parm. Type   | Parm. Length  |  Parameter Value (variable)
 //          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
-
-const maxParameterLength = 255
-
 type parameter struct {
+	//          Parameter Type is a one octet field that unambiguously
+	//          identifies individual parameters.  Parameter Length is a one
+	//          octet field that contains the length of the Parameter Value
+	//          field in octets.  Parameter Value is a variable length field
+	//          that is interpreted according to the value of the Parameter
+	//          Type field.
 	parmType   byte
 	parmLength byte
 	parmValue  []byte
 }
+
+//          [RFC3392] defines the Capabilities Optional Parameter.
 
 func newParameter(t byte, v []byte) (parameter, error) {
 	if len(v) > maxParameterLength {
@@ -752,18 +784,8 @@ func newParameter(t byte, v []byte) (parameter, error) {
 	return parameter{t, length, v}, nil
 }
 
-//          Parameter Type is a one octet field that unambiguously
-//          identifies individual parameters.  Parameter Length is a one
-//          octet field that contains the length of the Parameter Value
-//          field in octets.  Parameter Value is a variable length field
-//          that is interpreted according to the value of the Parameter
-//          Type field.
-
-//          [RFC3392] defines the Capabilities Optional Parameter.
-
 //    The minimum length of the OPEN message is 29 octets (including the
 //    message header).
-
 const minOpenMessageLength = 29
 
 // 4.3.  UPDATE Message Format
@@ -829,26 +851,22 @@ const noWithdrawnRoutes = 0
 //                   |   Prefix (variable)       |
 //                   +---------------------------+
 
+//          The use and the meaning of these fields are as follows:
 type withdrawnRoute struct {
-	length   byte
+	//          a) Length:
+	//             The Length field indicates the length in bits of the IP
+	//             address prefix.  A length of zero indicates a prefix that
+	//             matches all IP addresses (with prefix, itself, of zero
+	//             octets).
+	length byte
+
+	//          b) Prefix:
+	//             The Prefix field contains an IP address prefix, followed by
+	//             the minimum number of trailing bits needed to make the end
+	//             of the field fall on an octet boundary.  Note that the value
+	//             of trailing bits is irrelevant.
 	prefixes []byte
 }
-
-//          The use and the meaning of these fields are as follows:
-
-//          a) Length:
-
-//             The Length field indicates the length in bits of the IP
-//             address prefix.  A length of zero indicates a prefix that
-//             matches all IP addresses (with prefix, itself, of zero
-//             octets).
-
-//          b) Prefix:
-
-//             The Prefix field contains an IP address prefix, followed by
-//             the minimum number of trailing bits needed to make the end
-//             of the field fall on an octet boundary.  Note that the value
-//             of trailing bits is irrelevant.
 
 //       Total Path Attribute Length:
 
@@ -862,13 +880,11 @@ type withdrawnRoute struct {
 //          present in this UPDATE message.
 
 //       Path Attributes:
-
 //          A variable-length sequence of path attributes is present in
 //          every UPDATE message, except for an UPDATE message that carries
 //          only the withdrawn routes.  Each path attribute is a triple
 //          <attribute type, attribute length, attribute value> of variable
 //          length.
-
 type pathAttribute struct {
 	attributeType   attributeType
 	attributeLength byte
@@ -893,7 +909,6 @@ type attributeType struct {
 //          The high-order bit (bit 0) of the Attribute Flags octet is the
 //          Optional bit.  It defines whether the attribute is optional (if
 //          set to 1) or well-known (if set to 0).
-
 const optional = 1 << 7
 const wellknown = 0
 
@@ -901,7 +916,6 @@ const wellknown = 0
 //          is the Transitive bit.  It defines whether an optional
 //          attribute is transitive (if set to 1) or non-transitive (if set
 //          to 0).
-
 const transitive = 1 << 6
 const nontransitive = 0
 
@@ -914,14 +928,12 @@ const nontransitive = 0
 //          set to 1) or complete (if set to 0).  For well-known attributes
 //          and for optional non-transitive attributes, the Partial bit
 //          MUST be set to 0.
-
 const partial = 1 << 5
 const complete = 0
 
 //          The fourth high-order bit (bit 3) of the Attribute Flags octet
 //          is the Extended Length bit.  It defines whether the Attribute
 //          Length is one octet (if set to 0) or two octets (if set to 1).
-
 const extendedLength = 1 << 4
 const notextendedLength = 0
 
@@ -947,25 +959,19 @@ const notextendedLength = 0
 //          Type Codes, and their attribute values and uses are as follows:
 
 //          a) ORIGIN (Type Code 1):
-
 //             ORIGIN is a well-known mandatory attribute that defines the
 //             origin of the path information.  The data octet can assume
 //             the following values:
-
 //                Value      Meaning
-
-//                0         IGP - Network Layer Reachability Information
-//                             is interior to the originating AS
-
-//                1         EGP - Network Layer Reachability Information
-//                             learned via the EGP protocol [RFC904]
-
-//                2         INCOMPLETE - Network Layer Reachability
-//                             Information learned by some other means
-
 const (
+	//                0         IGP - Network Layer Reachability Information
+	//                             is interior to the originating AS
 	igp = iota
+	//                1         EGP - Network Layer Reachability Information
+	//                             learned via the EGP protocol [RFC904]
 	egp
+	//                2         INCOMPLETE - Network Layer Reachability
+	//                             Information learned by some other means
 	incomplete
 )
 
@@ -980,18 +986,16 @@ const (
 
 //             The path segment type is a 1-octet length field with the
 //             following values defined:
-
 //                Value      Segment Type
-
-//                1         AS_SET: unordered set of ASes a route in the
-//                             UPDATE message has traversed
-
-//                2         AS_SEQUENCE: ordered set of ASes a route in
-//                             the UPDATE message has traversed
 
 const (
 	_ = iota
+	//                1         AS_SET: unordered set of ASes a route in the
+	//                             UPDATE message has traversed
 	asSet
+
+	//                2         AS_SEQUENCE: ordered set of ASes a route in
+	//                             the UPDATE message has traversed
 	asSequence
 )
 
@@ -1004,58 +1008,44 @@ const (
 
 //             Usage of this attribute is defined in 5.1.2.
 
-//          c) NEXT_HOP (Type Code 3):
-
-//             This is a well-known mandatory attribute that defines the
-//             (unicast) IP address of the router that SHOULD be used as
-//             the next hop to the destinations listed in the Network Layer
-//             Reachability Information field of the UPDATE message.
-
-//             Usage of this attribute is defined in 5.1.3.
-
-//          d) MULTI_EXIT_DISC (Type Code 4):
-
-//             This is an optional non-transitive attribute that is a
-//             four-octet unsigned integer.  The value of this attribute
-//             MAY be used by a BGP speaker's Decision Process to
-//             discriminate among multiple entry points to a neighboring
-//             autonomous system.
-
-//             Usage of this attribute is defined in 5.1.4.
-
-//          e) LOCAL_PREF (Type Code 5):
-
-//             LOCAL_PREF is a well-known attribute that is a four-octet
-//             unsigned integer.  A BGP speaker uses it to inform its other
-//             internal peers of the advertising speaker's degree of
-//             preference for an advertised route.
-
-//             Usage of this attribute is defined in 5.1.5.
-
-//          f) ATOMIC_AGGREGATE (Type Code 6)
-
-//             ATOMIC_AGGREGATE is a well-known discretionary attribute of
-//             length 0.
-
-//             Usage of this attribute is defined in 5.1.6.
-
-//          g) AGGREGATOR (Type Code 7)
-
-//             AGGREGATOR is an optional transitive attribute of length 6.
-//             The attribute contains the last AS number that formed the
-//             aggregate route (encoded as 2 octets), followed by the IP
-//             address of the BGP speaker that formed the aggregate route
-//             (encoded as 4 octets).  This SHOULD be the same address as
-//             the one used for the BGP Identifier of the speaker.
-
 const (
 	_ = iota
 	origin
 	asPath
+	//          c) NEXT_HOP (Type Code 3):
+	//             This is a well-known mandatory attribute that defines the
+	//             (unicast) IP address of the router that SHOULD be used as
+	//             the next hop to the destinations listed in the Network Layer
+	//             Reachability Information field of the UPDATE message.
+	//             Usage of this attribute is defined in 5.1.3.
 	nextHop
+	//          d) MULTI_EXIT_DISC (Type Code 4):
+	//             This is an optional non-transitive attribute that is a
+	//             four-octet unsigned integer.  The value of this attribute
+	//             MAY be used by a BGP speaker's Decision Process to
+	//             discriminate among multiple entry points to a neighboring
+	//             autonomous system.
+	//             Usage of this attribute is defined in 5.1.4.
 	multiExitDisc
+	//          e) LOCAL_PREF (Type Code 5):
+	//             LOCAL_PREF is a well-known attribute that is a four-octet
+	//             unsigned integer.  A BGP speaker uses it to inform its other
+	//             internal peers of the advertising speaker's degree of
+	//             preference for an advertised route.
+	//             Usage of this attribute is defined in 5.1.5.
 	localPref
+	//          f) ATOMIC_AGGREGATE (Type Code 6)
+	//             ATOMIC_AGGREGATE is a well-known discretionary attribute of
+	//             length 0.
+	//             Usage of this attribute is defined in 5.1.6.
 	atomicAggregate
+	//          g) AGGREGATOR (Type Code 7)
+	//             AGGREGATOR is an optional transitive attribute of length 6.
+	//             The attribute contains the last AS number that formed the
+	//             aggregate route (encoded as 2 octets), followed by the IP
+	//             address of the BGP speaker that formed the aggregate route
+	//             (encoded as 4 octets).  This SHOULD be the same address as
+	//             the one used for the BGP Identifier of the speaker.
 	aggregator
 )
 
@@ -1210,100 +1200,99 @@ func newNotificationMessage(code int, subcode int, data []byte) notificationMess
 }
 
 //       Error Code:
-
 //          This 1-octet unsigned integer indicates the type of
 //          NOTIFICATION.  The following Error Codes have been defined:
-
 //             Error Code       Symbolic Name               Reference
-
-//               1         Message Header Error             Section 6.1
-
-//               2         OPEN Message Error               Section 6.2
-
-//               3         UPDATE Message Error             Section 6.3
-
-//               4         Hold Timer Expired               Section 6.5
-
-//               5         Finite State Machine Error       Section 6.6
-
-//               6         Cease                            Section 6.7
-
 const (
 	_ = iota
+	//               1         Message Header Error             Section 6.1
 	messageHeaderError
+	//               2         OPEN Message Error               Section 6.2
 	openMessageError
+	//               3         UPDATE Message Error             Section 6.3
 	updateMessageError
+	//               4         Hold Timer Expired               Section 6.5
 	holdTimerExpired
+	//               5         Finite State Machine Error       Section 6.6
 	finiteStateMachineError
+	//               6         Cease                            Section 6.7
 	cease
 )
 
 //       Error subcode:
-
 //          This 1-octet unsigned integer provides more specific
 //          information about the nature of the reported error.  Each Error
 //          Code may have one or more Error Subcodes associated with it.
 //          If no appropriate Error Subcode is defined, then a zero
 //          (Unspecific) value is used for the Error Subcode field.
-
 //       Message Header Error subcodes:
-
-//                1 - Connection Not Synchronized.
-//                2 - Bad Message Length.
-//                3 - Bad Message Type.
-
 const (
 	_ = iota
+	//                1 - Connection Not Synchronized.
 	connectionNotSynchronized
+	//                2 - Bad Message Length.
 	badMessageLength
+	//                3 - Bad Message Type.
 	badMessageType
 )
 
 //       OPEN Message Error subcodes:
-
-//                1 - Unsupported Version Number.
-//                2 - Bad Peer AS.
-//                3 - Bad BGP Identifier.
-//                4 - Unsupported Optional Parameter.
-//                5 - [Deprecated - see Appendix A].
-//                6 - Unacceptable Hold Time.
-
 const (
 	_ = iota
+	//                1 - Unsupported Version Number.
 	unsupportedVersionNumber
+
+	//                2 - Bad Peer AS.
 	badPeerAS
+
+	//                3 - Bad BGP Identifier.
 	badBGPIdentifier
+
+	//                4 - Unsupported Optional Parameter.
 	unsupportedOptionalParameter
+
+	//                5 - [Deprecated - see Appendix A].
 	_
+
+	//                6 - Unacceptable Hold Time.
 	unacceptableHoldTime
 )
 
 //       UPDATE Message Error subcodes:
-
-//                1 - Malformed Attribute List.
-//                2 - Unrecognized Well-known Attribute.
-//                3 - Missing Well-known Attribute.
-//                4 - Attribute Flags Error.
-//                5 - Attribute Length Error.
-//                6 - Invalid ORIGIN Attribute.
-//                7 - [Deprecated - see Appendix A].
-//                8 - Invalid NEXT_HOP Attribute.
-//                9 - Optional Attribute Error.
-//               10 - Invalid Network Field.
-//               11 - Malformed AS_PATH.
-
 const (
 	_ = iota
+
+	//                1 - Malformed Attribute List.
 	malformedAttributeList
+
+	//                2 - Unrecognized Well-known Attribute.
 	unrecognizedWellKnownAttribute
+
+	//                3 - Missing Well-known Attribute.
 	missingWellKnownAttribute
+
+	//                4 - Attribute Flags Error.
 	attributeFlagsError
+
+	//                5 - Attribute Length Error.
 	attributeLengthError
+
+	//                6 - Invalid ORIGIN Attribute.
+	invalidOriginAttribute
+
+	//                7 - [Deprecated - see Appendix A].
 	_
-	_
+
+	//                8 - Invalid NEXT_HOP Attribute.
 	invalidNextHopAttribute
+
+	//                9 - Optional Attribute Error.
 	optionalAttributeError
+
+	//               10 - Invalid Network Field.
 	invalidNetworkField
+
+	//               11 - Malformed AS_PATH.
 	malformedASPath
 )
 
@@ -2248,443 +2237,358 @@ type fsm struct {
 //             (version 2 and beyond) are supported, these fields will be
 //             accessible via a management interface.
 
-// 8.1.2.  Administrative Events
-
-//    An administrative event is an event in which the operator interface
-//    and BGP Policy engine signal the BGP-finite state machine to start or
-//    stop the BGP state machine.  The basic start and stop indications are
-//    augmented by optional connection attributes that signal a certain
-//    type of start or stop mechanism to the BGP FSM.  An example of this
-//    combination is Event 5, AutomaticStart_with_PassiveTcpEstablishment.
-//    With this event, the BGP implementation signals to the BGP FSM that
-//    the implementation is using an Automatic Start with the option to use
-//    a Passive TCP Establishment.  The Passive TCP establishment signals
-//    that this BGP FSM will wait for the remote side to start the TCP
-//    establishment.
-
-//    Note that only Event 1 (ManualStart) and Event 2 (ManualStop) are
-//    mandatory administrative events.  All other administrative events are
-//    optional (Events 3-8).  Each event below has a name, definition,
-//    status (mandatory or optional), and the optional session attributes
-//    that SHOULD be set at each stage.  When generating Event 1 through
-//    Event 8 for the BGP FSM, the conditions specified in the "Optional
-//    Attribute Status" section are verified.  If any of these conditions
-//    are not satisfied, then the local system should log an FSM error.
-
-//    The settings of optional session attributes may be implicit in some
-//    implementations, and therefore may not be set explicitly by an
-//    external operator action.  Section 8.2.1.5 describes these implicit
-//    settings of the optional session attributes.  The administrative
-//    states described below may also be implicit in some implementations
-//    and not directly configurable by an external operator.
-
-//       Event 1: ManualStart
-
-//          Definition: Local system administrator manually starts the peer
-//                      connection.
-
-//          Status:     Mandatory
-
-//          Optional
-//          Attribute
-//          Status:     The PassiveTcpEstablishment attribute SHOULD be set
-//                      to FALSE.
-
-//       Event 2: ManualStop
-
-//          Definition: Local system administrator manually stops the peer
-//                      connection.
-
-//          Status:     Mandatory
-
-//          Optional
-//          Attribute
-//          Status:     No interaction with any optional attributes.
-
-//       Event 3: AutomaticStart
-
-//          Definition: Local system automatically starts the BGP
-//                      connection.
-
-//          Status:     Optional, depending on local system
-
-//          Optional
-//          Attribute
-//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
-//                         to TRUE if this event occurs.
-//                      2) If the PassiveTcpEstablishment optional session
-//                         attribute is supported, it SHOULD be set to
-//                         FALSE.
-//                      3) If the DampPeerOscillations is supported, it
-//                         SHOULD be set to FALSE when this event occurs.
-
-//       Event 4: ManualStart_with_PassiveTcpEstablishment
-
-//          Definition: Local system administrator manually starts the peer
-//                      connection, but has PassiveTcpEstablishment
-//                      enabled.  The PassiveTcpEstablishment optional
-//                      attribute indicates that the peer will listen prior
-//                      to establishing the connection.
-
-//          Status:     Optional, depending on local system
-
-//          Optional
-//          Attribute
-//          Status:     1) The PassiveTcpEstablishment attribute SHOULD be
-//                         set to TRUE if this event occurs.
-//                      2) The DampPeerOscillations attribute SHOULD be set
-//                         to FALSE when this event occurs.
-
-//       Event 5: AutomaticStart_with_PassiveTcpEstablishment
-
-//          Definition: Local system automatically starts the BGP
-//                      connection with the PassiveTcpEstablishment
-//                      enabled.  The PassiveTcpEstablishment optional
-//                      attribute indicates that the peer will listen prior
-//                      to establishing a connection.
-
-//          Status:     Optional, depending on local system
-
-//          Optional
-//          Attribute
-//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
-//                         to TRUE.
-//                      2) The PassiveTcpEstablishment attribute SHOULD be
-//                         set to TRUE.
-//                      3) If the DampPeerOscillations attribute is
-//                         supported, the DampPeerOscillations SHOULD be
-//                         set to FALSE.
-
-//       Event 6: AutomaticStart_with_DampPeerOscillations
-
-//          Definition: Local system automatically starts the BGP peer
-//                      connection with peer oscillation damping enabled.
-//                      The exact method of damping persistent peer
-//                      oscillations is determined by the implementation
-//                      and is outside the scope of this document.
-
-//          Status:     Optional, depending on local system.
-
-//          Optional
-//          Attribute
-//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
-//                         to TRUE.
-//                      2) The DampPeerOscillations attribute SHOULD be set
-//                         to TRUE.
-//                      3) The PassiveTcpEstablishment attribute SHOULD be
-//                         set to FALSE.
-
-//       Event 7: AutomaticStart_with_DampPeerOscillations_and_
-//       PassiveTcpEstablishment
-
-//          Definition: Local system automatically starts the BGP peer
-//                      connection with peer oscillation damping enabled
-//                      and PassiveTcpEstablishment enabled.  The exact
-//                      method of damping persistent peer oscillations is
-//                      determined by the implementation and is outside the
-//                      scope of this document.
-
-//          Status:     Optional, depending on local system
-
-//          Optional
-//          Attributes
-//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
-//                         to TRUE.
-//                      2) The DampPeerOscillations attribute SHOULD be set
-//                         to TRUE.
-//                      3) The PassiveTcpEstablishment attribute SHOULD be
-//                         set to TRUE.
-
-//       Event 8: AutomaticStop
-
-//          Definition: Local system automatically stops the BGP
-//                      connection.
-
-//                      An example of an automatic stop event is exceeding
-//                      the number of prefixes for a given peer and the
-//                      local system automatically disconnecting the peer.
-
-//          Status:     Optional, depending on local system
-
-//          Optional
-//          Attribute
-//          Status:     1) The AllowAutomaticStop attribute SHOULD be TRUE.
-
-// 8.1.3.  Timer Events
-
-//       Event 9: ConnectRetryTimer_Expires
-
-//          Definition: An event generated when the ConnectRetryTimer
-//                      expires.
-
-//          Status:     Mandatory
-
-//       Event 10: HoldTimer_Expires
-
-//          Definition: An event generated when the HoldTimer expires.
-
-//          Status:     Mandatory
-
-//       Event 11: KeepaliveTimer_Expires
-
-//          Definition: An event generated when the KeepaliveTimer expires.
-
-//          Status:     Mandatory
-
-//       Event 12: DelayOpenTimer_Expires
-
-//          Definition: An event generated when the DelayOpenTimer expires.
-
-//                      Status:     Optional
-
-//          Optional
-//          Attribute
-//          Status:     If this event occurs,
-//                      1) DelayOpen attribute SHOULD be set to TRUE,
-//                      2) DelayOpenTime attribute SHOULD be supported,
-//                      3) DelayOpenTimer SHOULD be supported.
-
-//       Event 13: IdleHoldTimer_Expires
-
-//          Definition: An event generated when the IdleHoldTimer expires,
-//                      indicating that the BGP connection has completed
-//                      waiting for the back-off period to prevent BGP peer
-//                      oscillation.
-
-//                      The IdleHoldTimer is only used when the persistent
-//                      peer oscillation damping function is enabled by
-//                      setting the DampPeerOscillations optional attribute
-//                      to TRUE.
-
-//                      Implementations not implementing the persistent
-//                      peer oscillation damping function may not have the
-//                      IdleHoldTimer.
-
-//          Status:     Optional
-
-//          Optional
-//          Attribute
-//          Status:     If this event occurs:
-//                      1) DampPeerOscillations attribute SHOULD be set to
-//                         TRUE.
-//                      2) IdleHoldTimer SHOULD have just expired.
-
-// 8.1.4.  TCP Connection-Based Events
-
-//       Event 14: TcpConnection_Valid
-
-//          Definition: Event indicating the local system reception of a
-//                      TCP connection request with a valid source IP
-//                      address, TCP port, destination IP address, and TCP
-//                      Port.  The definition of invalid source and invalid
-//                      destination IP address is determined by the
-//                      implementation.
-
-//                      BGP's destination port SHOULD be port 179, as
-//                      defined by IANA.
-
-//                      TCP connection request is denoted by the local
-//                      system receiving a TCP SYN.
-
-//          Status:     Optional
-
-//          Optional
-//          Attribute
-//          Status:     1) The TrackTcpState attribute SHOULD be set to
-//                         TRUE if this event occurs.
-
-//       Event 15: Tcp_CR_Invalid
-
-//          Definition: Event indicating the local system reception of a
-//                      TCP connection request with either an invalid
-//                      source address or port number, or an invalid
-//                      destination address or port number.
-
-//                      BGP destination port number SHOULD be 179, as
-//                      defined by IANA.
-
-//                      A TCP connection request occurs when the local
-//                      system receives a TCP SYN.
-
-//          Status:     Optional
-
-//          Optional
-//          Attribute
-//          Status:     1) The TrackTcpState attribute should be set to
-//                         TRUE if this event occurs.
-
-//       Event 16: Tcp_CR_Acked
-
-//          Definition: Event indicating the local system's request to
-//                      establish a TCP connection to the remote peer.
-
-//                      The local system's TCP connection sent a TCP SYN,
-//                      received a TCP SYN/ACK message, and sent a TCP ACK.
-
-//          Status:     Mandatory
-
-//       Event 17: TcpConnectionConfirmed
-
-//          Definition: Event indicating that the local system has received
-//                      a confirmation that the TCP connection has been
-//                      established by the remote site.
-
-//                      The remote peer's TCP engine sent a TCP SYN.  The
-//                      local peer's TCP engine sent a SYN, ACK message and
-//                      now has received a final ACK.
-
-//          Status:     Mandatory
-
-//       Event 18: TcpConnectionFails
-
-//          Definition: Event indicating that the local system has received
-//                      a TCP connection failure notice.
-
-//                      The remote BGP peer's TCP machine could have sent a
-//                      FIN.  The local peer would respond with a FIN-ACK.
-//                      Another possibility is that the local peer
-//                      indicated a timeout in the TCP connection and
-//                      downed the connection.
-
-//          Status:     Mandatory
-
-// 8.1.5.  BGP Message-Based Events
-
-//       Event 19: BGPOpen
-
-//          Definition: An event is generated when a valid OPEN message has
-//                      been received.
-
-//          Status:     Mandatory
-
-//          Optional
-//          Attribute
-//          Status:     1) The DelayOpen optional attribute SHOULD be set
-//                         to FALSE.
-//                      2) The DelayOpenTimer SHOULD not be running.
-
-//       Event 20: BGPOpen with DelayOpenTimer running
-
-//          Definition: An event is generated when a valid OPEN message has
-//                      been received for a peer that has a successfully
-//                      established transport connection and is currently
-//                      delaying the sending of a BGP open message.
-
-//          Status:     Optional
-
-//          Optional
-//          Attribute
-//          Status:     1) The DelayOpen attribute SHOULD be set to TRUE.
-//                      2) The DelayOpenTimer SHOULD be running.
-
-//       Event 21: BGPHeaderErr
-
-//          Definition: An event is generated when a received BGP message
-//                      header is not valid.
-
-//          Status:     Mandatory
-
-//       Event 22: BGPOpenMsgErr
-
-//          Definition: An event is generated when an OPEN message has been
-//                      received with errors.
-
-//          Status:     Mandatory
-
-//       Event 23: OpenCollisionDump
-
-//          Definition: An event generated administratively when a
-//                      connection collision has been detected while
-//                      processing an incoming OPEN message and this
-
-//                      connection has been selected to be disconnected.
-//                      See Section 6.8 for more information on collision
-//                      detection.
-
-//                      Event 23 is an administrative action generated by
-//                      implementation logic that determines whether this
-//                      connection needs to be dropped per the rules in
-//                      Section 6.8.  This event may occur if the FSM is
-//                      implemented as two linked state machines.
-
-//          Status:     Optional
-
-//          Optional
-//          Attribute
-//          Status:     If the state machine is to process this event in
-//                      the Established state,
-//                      1) CollisionDetectEstablishedState optional
-//                         attribute SHOULD be set to TRUE.
-
-//                      Please note: The OpenCollisionDump event can occur
-//                      in Idle, Connect, Active, OpenSent, and OpenConfirm
-//                      without any optional attributes being set.
-
-//       Event 24: NotifMsgVerErr
-
-//          Definition: An event is generated when a NOTIFICATION message
-//                      with "version error" is received.
-
-//          Status:     Mandatory
-
-//       Event 25: NotifMsg
-
-//          Definition: An event is generated when a NOTIFICATION message
-//                      is received and the error code is anything but
-//                      "version error".
-
-//          Status:     Mandatory
-
-//       Event 26: KeepAliveMsg
-
-//          Definition: An event is generated when a KEEPALIVE message is
-//                      received.
-
-//          Status:     Mandatory
-
-//       Event 27: UpdateMsg
-
-//          Definition: An event is generated when a valid UPDATE message
-//                      is received.
-
-//          Status:     Mandatory
-
-//       Event 28: UpdateMsgErr
-
-//          Definition: An event is generated when an invalid UPDATE
-//                      message is received.
-
-//          Status:     Mandatory
-
 const (
 	_ = iota
+	// 8.1.2.  Administrative Events
+
+	//    An administrative event is an event in which the operator interface
+	//    and BGP Policy engine signal the BGP-finite state machine to start or
+	//    stop the BGP state machine.  The basic start and stop indications are
+	//    augmented by optional connection attributes that signal a certain
+	//    type of start or stop mechanism to the BGP FSM.  An example of this
+	//    combination is Event 5, AutomaticStart_with_PassiveTcpEstablishment.
+	//    With this event, the BGP implementation signals to the BGP FSM that
+	//    the implementation is using an Automatic Start with the option to use
+	//    a Passive TCP Establishment.  The Passive TCP establishment signals
+	//    that this BGP FSM will wait for the remote side to start the TCP
+	//    establishment.
+
+	//    Note that only Event 1 (ManualStart) and Event 2 (ManualStop) are
+	//    mandatory administrative events.  All other administrative events are
+	//    optional (Events 3-8).  Each event below has a name, definition,
+	//    status (mandatory or optional), and the optional session attributes
+	//    that SHOULD be set at each stage.  When generating Event 1 through
+	//    Event 8 for the BGP FSM, the conditions specified in the "Optional
+	//    Attribute Status" section are verified.  If any of these conditions
+	//    are not satisfied, then the local system should log an FSM error.
+
+	//    The settings of optional session attributes may be implicit in some
+	//    implementations, and therefore may not be set explicitly by an
+	//    external operator action.  Section 8.2.1.5 describes these implicit
+	//    settings of the optional session attributes.  The administrative
+	//    states described below may also be implicit in some implementations
+	//    and not directly configurable by an external operator.
+
+	//       Event 1: ManualStart
+	//          Definition: Local system administrator manually starts the peer
+	//                      connection.
+	//          Status:     Mandatory
+	//          Optional
+	//          Attribute
+	//          Status:     The PassiveTcpEstablishment attribute SHOULD be set
+	//                      to FALSE.
 	manualStart
+
+	//       Event 2: ManualStop
+	//          Definition: Local system administrator manually stops the peer
+	//                      connection.
+	//          Status:     Mandatory
+	//          Optional
+	//          Attribute
+	//          Status:     No interaction with any optional attributes.
 	manualStop
+
+	//       Event 3: AutomaticStart
+	//          Definition: Local system automatically starts the BGP
+	//                      connection.
+	//          Status:     Optional, depending on local system
+	//          Optional
+	//          Attribute
+	//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
+	//                         to TRUE if this event occurs.
+	//                      2) If the PassiveTcpEstablishment optional session
+	//                         attribute is supported, it SHOULD be set to
+	//                         FALSE.
+	//                      3) If the DampPeerOscillations is supported, it
+	//                         SHOULD be set to FALSE when this event occurs.
 	automaticStart
+
+	//       Event 4: ManualStart_with_PassiveTcpEstablishment
+	//          Definition: Local system administrator manually starts the peer
+	//                      connection, but has PassiveTcpEstablishment
+	//                      enabled.  The PassiveTcpEstablishment optional
+	//                      attribute indicates that the peer will listen prior
+	//                      to establishing the connection.
+	//          Status:     Optional, depending on local system
+	//          Optional
+	//          Attribute
+	//          Status:     1) The PassiveTcpEstablishment attribute SHOULD be
+	//                         set to TRUE if this event occurs.
+	//                      2) The DampPeerOscillations attribute SHOULD be set
+	//                         to FALSE when this event occurs.
 	manualStartWithPassiveTCPEstablishment
+
+	//       Event 5: AutomaticStart_with_PassiveTcpEstablishment
+	//          Definition: Local system automatically starts the BGP
+	//                      connection with the PassiveTcpEstablishment
+	//                      enabled.  The PassiveTcpEstablishment optional
+	//                      attribute indicates that the peer will listen prior
+	//                      to establishing a connection.
+	//          Status:     Optional, depending on local system
+	//          Optional
+	//          Attribute
+	//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
+	//                         to TRUE.
+	//                      2) The PassiveTcpEstablishment attribute SHOULD be
+	//                         set to TRUE.
+	//                      3) If the DampPeerOscillations attribute is
+	//                         supported, the DampPeerOscillations SHOULD be
+	//                         set to FALSE.
 	automaticStartWithPassiveTCPEstablishment
+
+	//       Event 6: AutomaticStart_with_DampPeerOscillations
+	//          Definition: Local system automatically starts the BGP peer
+	//                      connection with peer oscillation damping enabled.
+	//                      The exact method of damping persistent peer
+	//                      oscillations is determined by the implementation
+	//                      and is outside the scope of this document.
+	//          Status:     Optional, depending on local system.
+	//          Optional
+	//          Attribute
+	//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
+	//                         to TRUE.
+	//                      2) The DampPeerOscillations attribute SHOULD be set
+	//                         to TRUE.
+	//                      3) The PassiveTcpEstablishment attribute SHOULD be
+	//                         set to FALSE.
 	automaticStartWithDampPeerOscillations
+
+	//       Event 7: AutomaticStart_with_DampPeerOscillations_and_
+	//       PassiveTcpEstablishment
+	//          Definition: Local system automatically starts the BGP peer
+	//                      connection with peer oscillation damping enabled
+	//                      and PassiveTcpEstablishment enabled.  The exact
+	//                      method of damping persistent peer oscillations is
+	//                      determined by the implementation and is outside the
+	//                      scope of this document.
+	//          Status:     Optional, depending on local system
+	//          Optional
+	//          Attributes
+	//          Status:     1) The AllowAutomaticStart attribute SHOULD be set
+	//                         to TRUE.
+	//                      2) The DampPeerOscillations attribute SHOULD be set
+	//                         to TRUE.
+	//                      3) The PassiveTcpEstablishment attribute SHOULD be
+	//                         set to TRUE.
 	automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment
+
+	//       Event 8: AutomaticStop
+	//          Definition: Local system automatically stops the BGP
+	//                      connection.
+	//                      An example of an automatic stop event is exceeding
+	//                      the number of prefixes for a given peer and the
+	//                      local system automatically disconnecting the peer.
+	//          Status:     Optional, depending on local system
+	//          Optional
+	//          Attribute
+	//          Status:     1) The AllowAutomaticStop attribute SHOULD be TRUE.
 	automaticStop
+
+	// 8.1.3.  Timer Events
+
+	//       Event 9: ConnectRetryTimer_Expires
+	//          Definition: An event generated when the ConnectRetryTimer
+	//                      expires.
+	//          Status:     Mandatory
 	connectRetryTimerExpires
+
+	//       Event 10: HoldTimer_Expires
+	//          Definition: An event generated when the HoldTimer expires.
+	//          Status:     Mandatory
 	holdTimerExpires
+
+	//       Event 11: KeepaliveTimer_Expires
+	//          Definition: An event generated when the KeepaliveTimer expires.
+	//          Status:     Mandatory
 	keepaliveTimerExpires
+
+	//       Event 12: DelayOpenTimer_Expires
+	//          Definition: An event generated when the DelayOpenTimer expires.
+	//          Status:     Optional
+	//          Optional
+	//          Attribute
+	//          Status:     If this event occurs,
+	//                      1) DelayOpen attribute SHOULD be set to TRUE,
+	//                      2) DelayOpenTime attribute SHOULD be supported,
+	//                      3) DelayOpenTimer SHOULD be supported.
 	delayOpenTimerExpires
+
+	//       Event 13: IdleHoldTimer_Expires
+	//          Definition: An event generated when the IdleHoldTimer expires,
+	//                      indicating that the BGP connection has completed
+	//                      waiting for the back-off period to prevent BGP peer
+	//                      oscillation.
+	//                      The IdleHoldTimer is only used when the persistent
+	//                      peer oscillation damping function is enabled by
+	//                      setting the DampPeerOscillations optional attribute
+	//                      to TRUE.
+	//                      Implementations not implementing the persistent
+	//                      peer oscillation damping function may not have the
+	//                      IdleHoldTimer.
+	//          Status:     Optional
+	//          Optional
+	//          Attribute
+	//          Status:     If this event occurs:
+	//                      1) DampPeerOscillations attribute SHOULD be set to
+	//                         TRUE.
+	//                      2) IdleHoldTimer SHOULD have just expired.
 	idleHoldTimerExpires
+
+	// 8.1.4.  TCP Connection-Based Events
+
+	//       Event 14: TcpConnection_Valid
+	//          Definition: Event indicating the local system reception of a
+	//                      TCP connection request with a valid source IP
+	//                      address, TCP port, destination IP address, and TCP
+	//                      Port.  The definition of invalid source and invalid
+	//                      destination IP address is determined by the
+	//                      implementation.
+	//                      BGP's destination port SHOULD be port 179, as
+	//                      defined by IANA.
+	//                      TCP connection request is denoted by the local
+	//                      system receiving a TCP SYN.
+	//          Status:     Optional
+	//          Optional
+	//          Attribute
+	//          Status:     1) The TrackTcpState attribute SHOULD be set to
+	//                         TRUE if this event occurs.
 	tcpConnectionValid
+
+	//       Event 15: Tcp_CR_Invalid
+	//          Definition: Event indicating the local system reception of a
+	//                      TCP connection request with either an invalid
+	//                      source address or port number, or an invalid
+	//                      destination address or port number.
+	//                      BGP destination port number SHOULD be 179, as
+	//                      defined by IANA.
+	//                      A TCP connection request occurs when the local
+	//                      system receives a TCP SYN.
+	//          Status:     Optional
+	//          Optional
+	//          Attribute
+	//          Status:     1) The TrackTcpState attribute should be set to
+	//                         TRUE if this event occurs.
 	tcpCRInvalid
+
+	//       Event 16: Tcp_CR_Acked
+	//          Definition: Event indicating the local system's request to
+	//                      establish a TCP connection to the remote peer.
+	//                      The local system's TCP connection sent a TCP SYN,
+	//                      received a TCP SYN/ACK message, and sent a TCP ACK.
+	//          Status:     Mandatory
 	tcpCRAcked
+
+	//       Event 17: TcpConnectionConfirmed
+	//          Definition: Event indicating that the local system has received
+	//                      a confirmation that the TCP connection has been
+	//                      established by the remote site.
+	//                      The remote peer's TCP engine sent a TCP SYN.  The
+	//                      local peer's TCP engine sent a SYN, ACK message and
+	//                      now has received a final ACK.
+	//          Status:     Mandatory
 	tcpConnectionConfirmed
+
+	//       Event 18: TcpConnectionFails
+	//          Definition: Event indicating that the local system has received
+	//                      a TCP connection failure notice.
+	//                      The remote BGP peer's TCP machine could have sent a
+	//                      FIN.  The local peer would respond with a FIN-ACK.
+	//                      Another possibility is that the local peer
+	//                      indicated a timeout in the TCP connection and
+	//                      downed the connection.
+	//          Status:     Mandatory
 	tcpConnectionFails
+
+	// 8.1.5.  BGP Message-Based Events
+
+	//       Event 19: BGPOpen
+	//          Definition: An event is generated when a valid OPEN message has
+	//                      been received.
+	//          Status:     Mandatory
+	//          Optional
+	//          Attribute
+	//          Status:     1) The DelayOpen optional attribute SHOULD be set
+	//                         to FALSE.
+	//                      2) The DelayOpenTimer SHOULD not be running.
 	bgpOpen
+
+	//       Event 20: BGPOpen with DelayOpenTimer running
+	//          Definition: An event is generated when a valid OPEN message has
+	//                      been received for a peer that has a successfully
+	//                      established transport connection and is currently
+	//                      delaying the sending of a BGP open message.
+	//          Status:     Optional
+	//          Optional
+	//          Attribute
+	//          Status:     1) The DelayOpen attribute SHOULD be set to TRUE.
+	//                      2) The DelayOpenTimer SHOULD be running.
 	bgpOpenWithDelayOpenTimerRunning
+
+	//       Event 21: BGPHeaderErr
+	//          Definition: An event is generated when a received BGP message
+	//                      header is not valid.
+	//          Status:     Mandatory
 	bgpHeaderErr
+
+	//       Event 22: BGPOpenMsgErr
+	//          Definition: An event is generated when an OPEN message has been
+	//                      received with errors.
+	//          Status:     Mandatory
 	bgpOpenMsgErr
+
+	//       Event 23: OpenCollisionDump
+	//          Definition: An event generated administratively when a
+	//                      connection collision has been detected while
+	//                      processing an incoming OPEN message and this
+	//                      connection has been selected to be disconnected.
+	//                      See Section 6.8 for more information on collision
+	//                      detection.
+	//                      Event 23 is an administrative action generated by
+	//                      implementation logic that determines whether this
+	//                      connection needs to be dropped per the rules in
+	//                      Section 6.8.  This event may occur if the FSM is
+	//                      implemented as two linked state machines.
+	//          Status:     Optional
+	//          Optional
+	//          Attribute
+	//          Status:     If the state machine is to process this event in
+	//                      the Established state,
+	//                      1) CollisionDetectEstablishedState optional
+	//                         attribute SHOULD be set to TRUE.
+	//                      Please note: The OpenCollisionDump event can occur
+	//                      in Idle, Connect, Active, OpenSent, and OpenConfirm
+	//                      without any optional attributes being set.
 	openCollisionDump
+
+	//       Event 24: NotifMsgVerErr
+	//          Definition: An event is generated when a NOTIFICATION message
+	//                      with "version error" is received.
+	//          Status:     Mandatory
 	notifMsgVerErr
+
+	//       Event 25: NotifMsg
+	//          Definition: An event is generated when a NOTIFICATION message
+	//                      is received and the error code is anything but
+	//                      "version error".
+	//          Status:     Mandatory
 	notifMsg
+
+	//       Event 26: KeepAliveMsg
+	//          Definition: An event is generated when a KEEPALIVE message is
+	//                      received.
+	//          Status:     Mandatory
 	keepAliveMsg
+
+	//       Event 27: UpdateMsg
+	//          Definition: An event is generated when a valid UPDATE message
+	//                      is received.
+	//          Status:     Mandatory
 	updateMsg
+
+	//       Event 28: UpdateMsgErr
+	//          Definition: An event is generated when an invalid UPDATE
+	//                      message is received.
+	//          Status:     Mandatory
 	updateMsgErr
 )
 
