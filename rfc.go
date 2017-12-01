@@ -1977,11 +1977,14 @@ type fsm struct {
 
 	connectRetryCounter int
 	connectRetryTimer   *timer.Timer
-	connectRetryTime    time.Time
+	connectRetryTime    time.Duration
 	holdTimer           timer.Timer
-	holdTime            time.Time
-	keepaliveTimer      timer.Timer
-	keepaliveTime       time.Time
+	// initialHoldTime is the configured hold time
+	initialHoldTime time.Duration
+	// holdTime is the negotiated hold time
+	holdTime       time.Duration
+	keepaliveTimer timer.Timer
+	keepaliveTime  time.Duration
 
 	acceptConnectionsUnconfiguredPeers bool
 	allowAutomaticStart                bool
@@ -1989,9 +1992,9 @@ type fsm struct {
 	collisionDetectEstablishedState    int
 	dampPeerOscillations               bool
 	delayOpen                          bool
-	delayOpenTime                      time.Time
+	delayOpenTime                      time.Duration
 	delayOpenTimer                     timer.Timer
-	idleHoldTime                       time.Time
+	idleHoldTime                       time.Duration
 	idleHoldTimer                      timer.Timer
 	passiveTCPEstablishment            bool
 	sendNotificationwithoutOpen        bool
@@ -3003,11 +3006,19 @@ func (f *fsm) connect(event int) {
 		//         - sends an OPEN message,
 		//         - sends a KEEPALIVE message,
 		//         - if the HoldTimer initial value is non-zero,
-		//             - starts the KeepaliveTimer with the initial value and
-		//             - resets the HoldTimer to the negotiated value,
-		//           else, if the HoldTimer initial value is zero,
-		//             - resets the KeepaliveTimer and
-		//             - resets the HoldTimer value to zero,
+		if f.initialHoldTime != 0 {
+			//             - starts the KeepaliveTimer with the initial value and
+			f.keepaliveTimer.Reset()
+			//             - resets the HoldTimer to the negotiated value,
+			f.holdTimer.Reset()
+		} else {
+			//           else, if the HoldTimer initial value is zero,
+			//             - resets the KeepaliveTimer and
+			f.keepaliveTimer.Reset()
+			//             - resets the HoldTimer value to zero,
+			// Note: This seems redundant?
+			f.holdTimer.Stop()
+		}
 		//         - and changes its state to OpenConfirm.
 		f.state = openConfirm
 		//       If the value of the autonomous system field is the same as the
