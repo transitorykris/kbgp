@@ -6,6 +6,7 @@ import (
 	"net"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 func TestMarker(t *testing.T) {
@@ -92,5 +93,12 @@ func TestNewNLRI(t *testing.T) {
 	}
 	if bytes.Compare(n.prefix, []byte{1, 2, 3}) != 0 {
 		t.Errorf("Expected bytes to be [1,2,3] but got %v", n.prefix)
+	}
+}
+
+func TestNewKeepalive(t *testing.T) {
+	k := newKeepaliveMessage()
+	if unsafe.Sizeof(k) != 0 {
+		t.Errorf("Keepalive messages must have 0 length")
 	}
 }
