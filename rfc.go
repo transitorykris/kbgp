@@ -1162,11 +1162,21 @@ const minUpdateMessageLength = 23
 //    rate at which it sends KEEPALIVE messages as a function of the Hold
 //    Time interval.
 
+const defaultHoldTime = 3 * time.Second
+const defaultKeepaliveInterval = holdTime / 3
+const minKeepaliveInterval = 1 * time.Second
+
 //    If the negotiated Hold Time interval is zero, then periodic KEEPALIVE
 //    messages MUST NOT be sent.
 
 //    A KEEPALIVE message consists of only the message header and has a
 //    length of 19 octets.
+
+type keepaliveMessage struct{}
+
+func newKeepaliveMessage() keepaliveMessage {
+	return keepaliveMessage{}
+}
 
 // 4.5.  NOTIFICATION Message Format
 
