@@ -3651,7 +3651,7 @@ func (f *fsm) openConfirm(event int) {
 //       In the Established state, the BGP FSM can exchange UPDATE,
 //       NOTIFICATION, and KEEPALIVE messages with its peer.
 
-func (f *fsm) openConfirm(event int) {
+func (f *fsm) established(event int) {
 	switch event {
 	case manualStart:
 		//       The start events (Events 1, 3-7) are ignored in the Established state.
