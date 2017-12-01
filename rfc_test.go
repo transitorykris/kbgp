@@ -119,7 +119,7 @@ func TestNewNotificationMessage(t *testing.T) {
 
 func TestNewFSM(t *testing.T) {
 	f := newFSM()
-	if f.state != idleState {
+	if f.state != idle {
 		t.Errorf("New FSMs start in the idle state, instead it's state %d", f.state)
 	}
 }

@@ -2797,18 +2797,18 @@ const port = 179
 
 func newFSM() *fsm {
 	f := &fsm{
-		state: idleState,
+		state: idle,
 	}
 	return f
 }
 
 const (
-	idleState = iota
-	connectState
-	activeState
-	openSentState
-	openConfirmState
-	establishedState
+	idle = iota
+	connect
+	active
+	openSent
+	openConfirm
+	established
 )
 
 //    Idle state:
