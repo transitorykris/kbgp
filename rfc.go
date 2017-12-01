@@ -2714,10 +2714,8 @@ const (
 )
 
 //    Idle state:
-
 //       Initially, the BGP peer FSM is in the Idle state.  Hereafter, the
 //       BGP peer FSM will be shortened to BGP FSM.
-
 func (f *fsm) idle(event int) {
 	switch event {
 	case manualStart:
@@ -2826,10 +2824,8 @@ func (f *fsm) idle(event int) {
 }
 
 //    Connect State:
-
 //       In this state, BGP FSM is waiting for the TCP connection to be
 //       completed.
-
 func (f *fsm) connect(event int) {
 	switch event {
 	//       The start events (Events 1, 3-7) are ignored in the Connect state.
@@ -3111,10 +3107,8 @@ func (f *fsm) connect(event int) {
 }
 
 //    Active State:
-
 //       In this state, BGP FSM is trying to acquire a peer by listening
 //       for, and accepting, a TCP connection.
-
 func (f *fsm) active(event int) {
 	switch event {
 	//       The start events (Events 1, 3-7) are ignored in the Active state.
@@ -3358,9 +3352,7 @@ func (f *fsm) active(event int) {
 }
 
 //    OpenSent:
-
 //       In this state, BGP FSM waits for an OPEN message from its peer.
-
 func (f *fsm) openSent(event int) {
 	switch event {
 	//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
@@ -3542,9 +3534,7 @@ func (f *fsm) openSent(event int) {
 }
 
 //    OpenConfirm State:
-
 //       In this state, BGP waits for a KEEPALIVE or NOTIFICATION message.
-
 func (f *fsm) openConfirm(event int) {
 	switch event {
 	//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
@@ -3774,10 +3764,8 @@ func (f *fsm) openConfirm(event int) {
 }
 
 //    Established State:
-
 //       In the Established state, the BGP FSM can exchange UPDATE,
 //       NOTIFICATION, and KEEPALIVE messages with its peer.
-
 func (f *fsm) established(event int) {
 	switch event {
 	//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
