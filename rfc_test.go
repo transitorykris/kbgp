@@ -116,3 +116,10 @@ func TestNewNotificationMessage(t *testing.T) {
 		t.Errorf("Expected data %v but got %v", data, n.data)
 	}
 }
+
+func TestNewFSM(t *testing.T) {
+	f := newFSM()
+	if f.state != idleState {
+		t.Errorf("New FSMs start in the idle state, instead it's state %d", f.state)
+	}
+}
