@@ -2861,7 +2861,7 @@ func (f *fsm) connect(event int) {
 		//       local system:
 		//         - drops the TCP connection,
 		//         - restarts the ConnectRetryTimer,
-		f.connectRetryTimer.Reset()()
+		f.connectRetryTimer.Reset()
 		//         - stops the DelayOpenTimer and resets the timer to zero,
 		f.delayOpenTimer.Stop()
 		//         - initiates a TCP connection to the other BGP peer,
@@ -2912,15 +2912,17 @@ func (f *fsm) connect(event int) {
 		//       If the TCP connection fails (Event 18), the local system checks
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
 		//       system:
-		//         - restarts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer.Reset()
-		//         - stops the DelayOpenTimer and resets its value to zero,
-		f.delayOpenTimer.Stop()
-		//         - continues to listen for a connection that may be initiated by
-		//           the remote BGP peer, and
-		//         - changes its state to Active.
-		f.state = active
-
+		if f.delayOpenTimer.Running() {
+			//         - restarts the ConnectRetryTimer with the initial value,
+			f.connectRetryTimer.Reset()
+			//         - stops the DelayOpenTimer and resets its value to zero,
+			f.delayOpenTimer.Stop()
+			//         - continues to listen for a connection that may be initiated by
+			//           the remote BGP peer, and
+			//         - changes its state to Active.
+			f.state = active
+			return
+		}
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
@@ -2957,15 +2959,17 @@ func (f *fsm) connect(event int) {
 		//       If the TCP connection fails (Event 18), the local system checks
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
 		//       system:
-		//         - restarts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer.Reset()()
-		//         - stops the DelayOpenTimer and resets its value to zero,
-		f.delayOpenTimer.Stop()
-		//         - continues to listen for a connection that may be initiated by
-		//           the remote BGP peer, and
-		//         - changes its state to Active.
-		f.state = active
-
+		if f.delayOpenTimer.Running() {
+			//         - restarts the ConnectRetryTimer with the initial value,
+			f.connectRetryTimer.Reset()
+			//         - stops the DelayOpenTimer and resets its value to zero,
+			f.delayOpenTimer.Stop()
+			//         - continues to listen for a connection that may be initiated by
+			//           the remote BGP peer, and
+			//         - changes its state to Active.
+			f.state = active
+			return
+		}
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
@@ -2977,14 +2981,17 @@ func (f *fsm) connect(event int) {
 		//       If the TCP connection fails (Event 18), the local system checks
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
 		//       system:
-		//         - restarts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer.Reset()()
-		//         - stops the DelayOpenTimer and resets its value to zero,
-		f.delayOpenTimer.Stop()
-		//         - continues to listen for a connection that may be initiated by
-		//           the remote BGP peer, and
-		//         - changes its state to Active.
-		f.state = active
+		if f.delayOpenTimer.Running() {
+			//         - restarts the ConnectRetryTimer with the initial value,
+			f.connectRetryTimer.Reset()
+			//         - stops the DelayOpenTimer and resets its value to zero,
+			f.delayOpenTimer.Stop()
+			//         - continues to listen for a connection that may be initiated by
+			//           the remote BGP peer, and
+			//         - changes its state to Active.
+			f.state = active
+			return
+		}
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
@@ -3052,16 +3059,18 @@ func (f *fsm) connect(event int) {
 		//       If a NOTIFICATION message is received with a version error (Event
 		//       24), the local system checks the DelayOpenTimer.  If the
 		//       DelayOpenTimer is running, the local system:
-		//         - stops the ConnectRetryTimer (if running) and sets the
-		//           ConnectRetryTimer to zero,
-		f.connectRetryTimer.Stop()
-		//         - stops and resets the DelayOpenTimer (sets to zero),
-		f.delayOpenTimer.Stop()
-		//         - releases all BGP resources,
-		//         - drops the TCP connection, and
-		//         - changes its state to Idle.
-		f.state = idle
-
+		if f.delayOpenTimer.Running() {
+			//         - stops the ConnectRetryTimer (if running) and sets the
+			//           ConnectRetryTimer to zero,
+			f.connectRetryTimer.Stop()
+			//         - stops and resets the DelayOpenTimer (sets to zero),
+			f.delayOpenTimer.Stop()
+			//         - releases all BGP resources,
+			//         - drops the TCP connection, and
+			//         - changes its state to Idle.
+			f.state = idle
+			return
+		}
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - stops the ConnectRetryTimer and sets the ConnectRetryTimer to
 		//           zero,
@@ -3117,6 +3126,9 @@ func (f *fsm) active(event int) {
 		//         - If the DelayOpenTimer is running and the
 		//           SendNOTIFICATIONwithoutOPEN session attribute is set, the
 		//           local system sends a NOTIFICATION with a Cease,
+		if f.delayOpenTimer.Running() && f.sendNotificationwithoutOpen {
+			// TODO: Send NOTIFICATION with a Cease
+		}
 		//         - releases all BGP resources including stopping the
 		//           DelayOpenTimer
 		f.delayOpenTimer.Stop()
@@ -3132,7 +3144,7 @@ func (f *fsm) active(event int) {
 		//       In response to a ConnectRetryTimer_Expires event (Event 9), the
 		//       local system:
 		//         - restarts the ConnectRetryTimer (with initial value),
-		f.connectRetryTimer.Reset()()
+		f.connectRetryTimer.Reset()
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - continues to listen for a TCP connection that may be initiated
 		//           by a remote BGP peer, and
@@ -3217,7 +3229,7 @@ func (f *fsm) active(event int) {
 		//       If the local system receives a TcpConnectionFails event (Event
 		//       18), the local system:
 		//         - restarts the ConnectRetryTimer (with the initial value),
-		f.connectRetryTimer.Reset()()
+		f.connectRetryTimer.Reset()
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		f.delayOpenTimer.Stop()
 		//         - releases all BGP resource,
@@ -3230,25 +3242,28 @@ func (f *fsm) active(event int) {
 	case bgpOpenWithDelayOpenTimerRunning:
 		//       If an OPEN message is received and the DelayOpenTimer is running
 		//       (Event 20), the local system:
-		//         - stops the ConnectRetryTimer (if running) and sets the
-		//           ConnectRetryTimer to zero,
-		f.connectRetryTimer.Stop()
-		//         - stops and clears the DelayOpenTimer (sets to zero),
-		f.delayOpenTimer.Stop()
-		//         - completes the BGP initialization,
-		//         - sends an OPEN message,
-		//         - sends a KEEPALIVE message,
-		//         - if the HoldTimer value is non-zero,
-		//             - starts the KeepaliveTimer to initial value,
-		//             - resets the HoldTimer to the negotiated value,
-		//           else if the HoldTimer is zero
-		//             - resets the KeepaliveTimer (set to zero),
-		//             - resets the HoldTimer to zero, and
-		//         - changes its state to OpenConfirm.
-		f.state = openConfirm
-		//       If the value of the autonomous system field is the same as the
-		//       local Autonomous System number, set the connection status to an
-		//       internal connection; otherwise it will be external.
+		// TODO: How to check if OPEN message received?
+		if f.delayOpenTimer.Running() {
+			//         - stops the ConnectRetryTimer (if running) and sets the
+			//           ConnectRetryTimer to zero,
+			f.connectRetryTimer.Stop()
+			//         - stops and clears the DelayOpenTimer (sets to zero),
+			f.delayOpenTimer.Stop()
+			//         - completes the BGP initialization,
+			//         - sends an OPEN message,
+			//         - sends a KEEPALIVE message,
+			//         - if the HoldTimer value is non-zero,
+			//             - starts the KeepaliveTimer to initial value,
+			//             - resets the HoldTimer to the negotiated value,
+			//           else if the HoldTimer is zero
+			//             - resets the KeepaliveTimer (set to zero),
+			//             - resets the HoldTimer to zero, and
+			//         - changes its state to OpenConfirm.
+			f.state = openConfirm
+			//       If the value of the autonomous system field is the same as the
+			//       local Autonomous System number, set the connection status to an
+			//       internal connection; otherwise it will be external.
+		}
 	case bgpHeaderErr:
 		//       If BGP message header checking (Event 21) or OPEN message checking
 		//       detects an error (Event 22) (see Section 6.2), the local system:
@@ -3285,15 +3300,18 @@ func (f *fsm) active(event int) {
 		//       If a NOTIFICATION message is received with a version error (Event
 		//       24), the local system checks the DelayOpenTimer.  If the
 		//       DelayOpenTimer is running, the local system:
-		//         - stops the ConnectRetryTimer (if running) and sets the
-		//           ConnectRetryTimer to zero,
-		f.connectRetryTimer.Stop()
-		//         - stops and resets the DelayOpenTimer (sets to zero),
-		f.delayOpenTimer.Stop()
-		//         - releases all BGP resources,
-		//         - drops the TCP connection, and
-		//         - changes its state to Idle.
-		f.state = idle
+		if f.delayOpenTimer.Running() {
+			//         - stops the ConnectRetryTimer (if running) and sets the
+			//           ConnectRetryTimer to zero,
+			f.connectRetryTimer.Stop()
+			//         - stops and resets the DelayOpenTimer (sets to zero),
+			f.delayOpenTimer.Stop()
+			//         - releases all BGP resources,
+			//         - drops the TCP connection, and
+			//         - changes its state to Idle.
+			f.state = idle
+			return
+		}
 		//       If the DelayOpenTimer is not running, the local system:
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
@@ -3405,7 +3423,7 @@ func (f *fsm) openSent(event int) {
 		//       system:
 		//         - closes the BGP connection,
 		//         - restarts the ConnectRetryTimer,
-		f.connectRetryTimer.Reset()()
+		f.connectRetryTimer.Reset()
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
 		//         - changes its state to Active.
