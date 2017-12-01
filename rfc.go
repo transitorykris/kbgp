@@ -1164,7 +1164,6 @@ const minUpdateMessageLength = 23
 //    rate at which it sends KEEPALIVE messages as a function of the Hold
 //    Time interval.
 
-const defaultHoldTime = 3 * time.Second
 const defaultKeepaliveInterval = 1 * time.Second
 const minKeepaliveInterval = 1 * time.Second
 
@@ -4626,26 +4625,40 @@ func (f *fsm) established(event int) {
 //    value for the ConnectRetryTimer.  The suggested default value for the
 //    ConnectRetryTime is 120 seconds.
 
+const defaultConnectRetryTime = 120 * time.Second
+
 //    HoldTime is a mandatory FSM attribute that stores the initial value
 //    for the HoldTimer.  The suggested default value for the HoldTime is
 //    90 seconds.
+
+const defaultHoldTime = 90 * time.Second
 
 //    During some portions of the state machine (see Section 8), the
 //    HoldTimer is set to a large value.  The suggested default for this
 //    large value is 4 minutes.
 
+const defaultLargeHoldTimer = 4 * time.Minute
+
 //    The KeepaliveTime is a mandatory FSM attribute that stores the
 //    initial value for the KeepaliveTimer.  The suggested default value
 //    for the KeepaliveTime is 1/3 of the HoldTime.
 
+const defaultKeepaliveTime = defaultHoldTime / 3
+
 //    The suggested default value for the MinASOriginationIntervalTimer is
 //    15 seconds.
+
+const minASOriginationIntervalTimer = 15 * time.Second
 
 //    The suggested default value for the
 //    MinRouteAdvertisementIntervalTimer on EBGP connections is 30 seconds.
 
+const minRouteAdvertisementIntervalTimerEBGP = 30 * time.Second
+
 //    The suggested default value for the
 //    MinRouteAdvertisementIntervalTimer on IBGP connections is 5 seconds.
+
+const minRouteAdvertisementIntervalTimerIBGP = 5 * time.Second
 
 //    An implementation of BGP MUST allow the HoldTimer to be configurable
 //    on a per-peer basis, and MAY allow the other timers to be
