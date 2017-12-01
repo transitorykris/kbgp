@@ -2832,18 +2832,13 @@ func (f *fsm) idle(event int) {
 
 func (f *fsm) connect(event int) {
 	switch event {
+	//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case manualStart:
-		//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case automaticStart:
-		//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case manualStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case automaticStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case automaticStartWithDampPeerOscillations:
-		//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Connect state.
 	case manualStop:
 		//       In response to a ManualStop event (Event 2), the local system:
 		//         - drops the TCP connection,
@@ -3110,18 +3105,13 @@ func (f *fsm) connect(event int) {
 
 func (f *fsm) active(event int) {
 	switch event {
+	//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case manualStart:
-		//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case automaticStart:
-		//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case manualStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case automaticStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case automaticStartWithDampPeerOscillations:
-		//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Active state.
 	case manualStop:
 		//       In response to a ManualStop event (Event 2), the local system:
 		//         - If the DelayOpenTimer is running and the
@@ -3346,18 +3336,13 @@ func (f *fsm) active(event int) {
 
 func (f *fsm) openSent(event int) {
 	switch event {
+	//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case manualStart:
-		//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case automaticStart:
-		//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case manualStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case automaticStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case automaticStartWithDampPeerOscillations:
-		//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the OpenSent state.
 	case manualStop:
 		//       If a ManualStop event (Event 2) is issued in the OpenSent state,
 		//       the local system:
@@ -3520,18 +3505,13 @@ func (f *fsm) openSent(event int) {
 
 func (f *fsm) openConfirm(event int) {
 	switch event {
+	//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case manualStart:
-		//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case automaticStart:
-		//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case manualStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case automaticStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case automaticStartWithDampPeerOscillations:
-		//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case manualStop:
 		//       In response to a ManualStop event (Event 2) initiated by the
 		//       operator, the local system:
@@ -3731,18 +3711,13 @@ func (f *fsm) openConfirm(event int) {
 
 func (f *fsm) established(event int) {
 	switch event {
+	//       The start events (Events 1, 3-7) are ignored in the OpenConfirm state.
 	case manualStart:
-		//       The start events (Events 1, 3-7) are ignored in the Established state.
 	case automaticStart:
-		//       The start events (Events 1, 3-7) are ignored in the Established state.
 	case manualStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Established state.
 	case automaticStartWithPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Established state.
 	case automaticStartWithDampPeerOscillations:
-		//       The start events (Events 1, 3-7) are ignored in the Established state.
 	case automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-		//       The start events (Events 1, 3-7) are ignored in the Established state.
 	case manualStop:
 		//       In response to a ManualStop event (initiated by an operator)
 		//       (Event 2), the local system:
