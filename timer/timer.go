@@ -4,17 +4,15 @@ import "time"
 
 // Timer provides a fancier timer than time.Timer
 type Timer struct {
-	timer    *time.Timer
-	interval time.Duration
-	running  bool
+	timer   *time.Timer
+	running bool
 }
 
 // New creates a new timer that will call the given function after
 // the interval has elapsed
 func New(d time.Duration, f func()) *Timer {
 	t := &Timer{
-		interval: d,
-		running:  true,
+		running: true,
 	}
 	t.timer = time.AfterFunc(d, t.preflight(f))
 	return t
@@ -30,11 +28,11 @@ func (t *Timer) preflight(f func()) func() {
 }
 
 // Reset starts the timer at its initial value
-func (t *Timer) Reset() {
+func (t *Timer) Reset(d time.Duration) {
 	if !t.timer.Stop() {
 		<-t.timer.C
 	}
-	t.timer.Reset(t.interval)
+	t.timer.Reset(d)
 }
 
 // Stop cancels the timer

@@ -27,7 +27,7 @@ func TestReset(t *testing.T) {
 	}
 	ts := New(1*time.Second, f)
 	time.Sleep(500 * time.Millisecond)
-	ts.Reset()
+	ts.Reset(1 * time.Second)
 	time.Sleep(600 * time.Millisecond)
 	if ran {
 		t.Errorf("Timer called our function but it shouldn't have")

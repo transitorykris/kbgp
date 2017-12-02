@@ -1978,7 +1978,7 @@ type fsm struct {
 	connectRetryCounter int
 	connectRetryTimer   *timer.Timer
 	connectRetryTime    time.Duration
-	holdTimer           timer.Timer
+	holdTimer           *timer.Timer
 	// initialHoldTime is the configured hold time
 	initialHoldTime time.Duration
 	// holdTime is the negotiated hold time
@@ -2013,6 +2013,21 @@ func (f *fsm) connectRetryExpiry() {
 		f.openConfirm(connectRetryTimerExpires)
 	case established:
 		f.established(connectRetryTimerExpires)
+	}
+}
+
+func (f *fsm) holdTimerExpiry() {
+	switch f.state {
+	case idle:
+		f.idle(holdTimerExpires)
+	case connect:
+		f.connect(holdTimerExpires)
+	case active:
+		f.active(holdTimerExpires)
+	case openConfirm:
+		f.openConfirm(holdTimerExpires)
+	case established:
+		f.established(holdTimerExpires)
 	}
 }
 
@@ -2846,8 +2861,6 @@ func (f *fsm) connect(event int) {
 		f.connectRetryCounter = 0
 		//         - stops the ConnectRetryTimer and sets ConnectRetryTimer to
 		//           zero, and
-		// Note: see https://golang.org/pkg/time/#Timer about not doing this
-		// concurrently with other receives from the timer's channel
 		f.connectRetryTimer.Stop()
 		//         - changes its state to Idle.
 		f.state = idle
@@ -2856,7 +2869,7 @@ func (f *fsm) connect(event int) {
 		//       local system:
 		//         - drops the TCP connection,
 		//         - restarts the ConnectRetryTimer,
-		f.connectRetryTimer.Reset()
+		f.connectRetryTimer.Reset(f.connectRetryTime)
 		//         - stops the DelayOpenTimer and resets the timer to zero,
 		f.delayOpenTimer.Stop()
 		//         - initiates a TCP connection to the other BGP peer,
@@ -2868,6 +2881,7 @@ func (f *fsm) connect(event int) {
 		//       Connect state, the local system:
 		//         - sends an OPEN message to its peer,
 		//         - sets the HoldTimer to a large value, and
+		f.holdTimer.Reset(largeHoldTimer)
 		//         - changes its state to OpenSent.
 		f.state = openSent
 	case tcpConnectionValid:
@@ -2887,7 +2901,7 @@ func (f *fsm) connect(event int) {
 			//           ConnectRetryTimer to zero,
 			f.connectRetryTimer.Stop()
 			//         - sets the DelayOpenTimer to the initial value, and
-			f.delayOpenTimer.Reset()
+			f.delayOpenTimer.Reset(f.initialHoldTime)
 			//         - stays in the Connect state.
 		} else {
 			//       If the DelayOpen attribute is set to FALSE, the local system:
@@ -2897,6 +2911,7 @@ func (f *fsm) connect(event int) {
 			//         - completes BGP initialization
 			//         - sends an OPEN message to its peer,
 			//         - sets the HoldTimer to a large value, and
+			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
 			f.state = openSent
 			return
@@ -2909,7 +2924,7 @@ func (f *fsm) connect(event int) {
 		//       system:
 		if f.delayOpenTimer.Running() {
 			//         - restarts the ConnectRetryTimer with the initial value,
-			f.connectRetryTimer.Reset()
+			f.connectRetryTimer.Reset(f.connectRetryTime)
 			//         - stops the DelayOpenTimer and resets its value to zero,
 			f.delayOpenTimer.Stop()
 			//         - continues to listen for a connection that may be initiated by
@@ -2934,7 +2949,7 @@ func (f *fsm) connect(event int) {
 			//           ConnectRetryTimer to zero,
 			f.connectRetryTimer.Stop()
 			//         - sets the DelayOpenTimer to the initial value, and
-			f.delayOpenTimer.Reset()
+			f.delayOpenTimer.Reset(f.delayOpenTime)
 			//         - stays in the Connect state.
 		} else {
 			//       If the DelayOpen attribute is set to FALSE, the local system:
@@ -2944,6 +2959,7 @@ func (f *fsm) connect(event int) {
 			//         - completes BGP initialization
 			//         - sends an OPEN message to its peer,
 			//         - sets the HoldTimer to a large value, and
+			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
 			f.state = openSent
 			return
@@ -2956,7 +2972,7 @@ func (f *fsm) connect(event int) {
 		//       system:
 		if f.delayOpenTimer.Running() {
 			//         - restarts the ConnectRetryTimer with the initial value,
-			f.connectRetryTimer.Reset()
+			f.connectRetryTimer.Reset(f.connectRetryTime)
 			//         - stops the DelayOpenTimer and resets its value to zero,
 			f.delayOpenTimer.Stop()
 			//         - continues to listen for a connection that may be initiated by
@@ -2978,7 +2994,7 @@ func (f *fsm) connect(event int) {
 		//       system:
 		if f.delayOpenTimer.Running() {
 			//         - restarts the ConnectRetryTimer with the initial value,
-			f.connectRetryTimer.Reset()
+			f.connectRetryTimer.Reset(f.connectRetryTime)
 			//         - stops the DelayOpenTimer and resets its value to zero,
 			f.delayOpenTimer.Stop()
 			//         - continues to listen for a connection that may be initiated by
@@ -3008,13 +3024,13 @@ func (f *fsm) connect(event int) {
 		//         - if the HoldTimer initial value is non-zero,
 		if f.initialHoldTime != 0 {
 			//             - starts the KeepaliveTimer with the initial value and
-			f.keepaliveTimer.Reset()
+			f.keepaliveTimer.Reset(f.keepaliveTime)
 			//             - resets the HoldTimer to the negotiated value,
-			f.holdTimer.Reset()
+			f.holdTimer.Reset(f.holdTime)
 		} else {
 			//           else, if the HoldTimer initial value is zero,
 			//             - resets the KeepaliveTimer and
-			f.keepaliveTimer.Reset()
+			f.keepaliveTimer.Reset(f.keepaliveTime)
 			//             - resets the HoldTimer value to zero,
 			// Note: This seems redundant?
 			f.holdTimer.Stop()
@@ -3152,7 +3168,7 @@ func (f *fsm) active(event int) {
 		//       In response to a ConnectRetryTimer_Expires event (Event 9), the
 		//       local system:
 		//         - restarts the ConnectRetryTimer (with initial value),
-		f.connectRetryTimer.Reset()
+		f.connectRetryTimer.Reset(f.connectRetryTime)
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - continues to listen for a TCP connection that may be initiated
 		//           by a remote BGP peer, and
@@ -3192,7 +3208,7 @@ func (f *fsm) active(event int) {
 			f.connectRetryTimer.Stop()
 			//           - sets the DelayOpenTimer to the initial value
 			//             (DelayOpenTime), and
-			f.delayOpenTimer.Reset()
+			f.delayOpenTimer.Reset(f.delayOpenTime)
 			//           - stays in the Active state.
 		} else {
 			//         If the DelayOpen attribute is set to FALSE, the local system:
@@ -3201,6 +3217,7 @@ func (f *fsm) active(event int) {
 			//           - completes the BGP initialization,
 			//           - sends the OPEN message to its peer,
 			//           - sets its HoldTimer to a large value, and
+			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
 			f.state = openSent
 		}
@@ -3227,6 +3244,7 @@ func (f *fsm) active(event int) {
 			//           - completes the BGP initialization,
 			//           - sends the OPEN message to its peer,
 			//           - sets its HoldTimer to a large value, and
+			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
 			f.state = openSent
 			return
@@ -3237,7 +3255,7 @@ func (f *fsm) active(event int) {
 		//       If the local system receives a TcpConnectionFails event (Event
 		//       18), the local system:
 		//         - restarts the ConnectRetryTimer (with the initial value),
-		f.connectRetryTimer.Reset()
+		f.connectRetryTimer.Reset(f.connectRetryTime)
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		f.delayOpenTimer.Stop()
 		//         - releases all BGP resource,
@@ -3264,11 +3282,16 @@ func (f *fsm) active(event int) {
 			//         - sends an OPEN message,
 			//         - sends a KEEPALIVE message,
 			//         - if the HoldTimer value is non-zero,
-			//             - starts the KeepaliveTimer to initial value,
-			//             - resets the HoldTimer to the negotiated value,
-			//           else if the HoldTimer is zero
-			//             - resets the KeepaliveTimer (set to zero),
-			//             - resets the HoldTimer to zero, and
+			if f.holdTimer.Running() {
+				//             - starts the KeepaliveTimer to initial value,
+				//             - resets the HoldTimer to the negotiated value,
+				f.holdTimer.Reset(f.holdTime)
+			} else {
+				//           else if the HoldTimer is zero
+				//             - resets the KeepaliveTimer (set to zero),
+				//             - resets the HoldTimer to zero, and
+				f.holdTimer.Stop()
+			}
 			//         - changes its state to OpenConfirm.
 			f.state = openConfirm
 			//       If the value of the autonomous system field is the same as the
@@ -3445,7 +3468,7 @@ func (f *fsm) openSent(event int) {
 		//       system:
 		//         - closes the BGP connection,
 		//         - restarts the ConnectRetryTimer,
-		f.connectRetryTimer.Reset()
+		f.connectRetryTimer.Reset(f.connectRetryTime)
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
 		//         - changes its state to Active.
@@ -3455,13 +3478,16 @@ func (f *fsm) openSent(event int) {
 		//       correctness.  If there are no errors in the OPEN message (Event
 		//       19), the local system:
 		//         - resets the DelayOpenTimer to zero,
-		f.delayOpenTimer.Reset()
+		f.delayOpenTimer.Reset(f.delayOpenTime)
 		//         - sets the BGP ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - sends a KEEPALIVE message, and
 		//         - sets a KeepaliveTimer (via the text below)
 		//         - sets the HoldTimer according to the negotiated value (see
 		//           Section 4.2),
+		if holdTime != 0 {
+			f.holdTimer.Reset(f.holdTime)
+		}
 		//         - changes its state to OpenConfirm.
 		f.state = openConfirm
 
@@ -3751,6 +3777,7 @@ func (f *fsm) openConfirm(event int) {
 		//       If the local system receives a KEEPALIVE message (KeepAliveMsg
 		//       (Event 26)), the local system:
 		//         - restarts the HoldTimer and
+		f.holdTimer.Reset(f.holdTime)
 		//         - changes its state to Established
 		f.state = established
 	default:
@@ -3930,6 +3957,9 @@ func (f *fsm) established(event int) {
 		//       local system:
 		//         - restarts its HoldTimer, if the negotiated HoldTime value is
 		//           non-zero, and
+		if f.holdTime != 0 {
+			f.holdTimer.Reset(f.holdTime)
+		}
 		//         - remains in the Established state.
 		f.state = established
 	case updateMsg:
@@ -3938,6 +3968,9 @@ func (f *fsm) established(event int) {
 		//         - processes the message,
 		//         - restarts its HoldTimer, if the negotiated HoldTime value is
 		//           non-zero, and
+		if f.holdTime != 0 {
+			f.holdTime.Reset(f.holdTime)
+		}
 		//         - remains in the Established state.
 		f.state = established
 	case updateMsgErr:
