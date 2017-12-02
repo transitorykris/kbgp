@@ -1933,7 +1933,19 @@ type fsm struct {
 
 type peer struct{}
 
+func (p *peer) open() {
+	// TODO: Implement me
+}
+
+func (p *peer) update() {
+	// TODO: Implement me
+}
+
 func (p *peer) notification(code int, subcode int, data []byte) {
+	// TODO: Implement me
+}
+
+func (p *peer) keepalive() {
 	// TODO: Implement me
 }
 
