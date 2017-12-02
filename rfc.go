@@ -456,18 +456,22 @@ import (
 //          speakers.  Their contents represent routes that are available
 //          as input to the Decision Process.
 
+type adjRIBIn struct{}
+
 //       b) Loc-RIB: The Loc-RIB contains the local routing information the
 //          BGP speaker selected by applying its local policies to the
 //          routing information contained in its Adj-RIBs-In.  These are
 //          the routes that will be used by the local BGP speaker.  The
 //          next hop for each of these routes MUST be resolvable via the
 //          local BGP speaker's Routing Table.
+type locRIB struct{}
 
 //       c) Adj-RIBs-Out: The Adj-RIBs-Out stores information the local BGP
 //          speaker selected for advertisement to its peers.  The routing
 //          information stored in the Adj-RIBs-Out will be carried in the
 //          local BGP speaker's UPDATE messages and advertised to its
 //          peers.
+type adjRIBOut struct{}
 
 //    In summary, the Adj-RIBs-In contains unprocessed routing information
 //    that has been advertised to the local BGP speaker by its peers; the
