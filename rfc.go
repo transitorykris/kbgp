@@ -3932,7 +3932,7 @@ func (f *fsm) established(event int) {
 		//         - restarts its HoldTimer, if the negotiated HoldTime value is
 		//           non-zero, and
 		if f.holdTime != 0 {
-			f.holdTime.Reset(f.holdTime)
+			f.holdTimer.Reset(f.holdTime)
 		}
 		//         - remains in the Established state.
 		f.state = established
