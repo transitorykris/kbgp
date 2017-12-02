@@ -565,18 +565,12 @@ const maxMessageLength = 4096
 //          This 1-octet unsigned integer indicates the type code of the
 //          message.  This document defines the following type codes:
 const (
-	_ = iota
-	//                               1 - OPEN
-	open
-	//                               2 - UPDATE
-	update
-	//                               3 - NOTIFICATION
-	notification
-	//                               4 - KEEPALIVE
-	keepalive
-
-//          [RFC2918] defines one more type code.
-// routeRefresh
+	_            = iota
+	open         // 1 - OPEN
+	update       // 2 - UPDATE
+	notification // 3 - NOTIFICATION
+	keepalive    // 4 - KEEPALIVE
+	//routeRefresh // [RFC2918] defines one more type code.
 )
 
 // 4.2.  OPEN Message Format
@@ -1091,7 +1085,6 @@ func packPrefix(length int, ip net.IP) []byte {
 //    octets for the Total Path Attribute Length (the value of Withdrawn
 //    Routes Length is 0 and the value of Total Path Attribute Length is
 //    0).
-
 const minUpdateMessageLength = 23
 
 //    An UPDATE message can advertise, at most, one set of path attributes,
@@ -1128,7 +1121,6 @@ const minUpdateMessageLength = 23
 //    frequently than one per second.  An implementation MAY adjust the
 //    rate at which it sends KEEPALIVE messages as a function of the Hold
 //    Time interval.
-
 const defaultKeepaliveInterval = 1 * time.Second
 const minKeepaliveInterval = 1 * time.Second
 
@@ -1171,21 +1163,15 @@ func newNotificationMessage(code int, subcode int, data []byte) notificationMess
 //       Error Code:
 //          This 1-octet unsigned integer indicates the type of
 //          NOTIFICATION.  The following Error Codes have been defined:
-//             Error Code       Symbolic Name               Reference
+//                           Error Code       Symbolic Name               Reference
 const (
-	_ = iota
-	//               1         Message Header Error             Section 6.1
-	messageHeaderError
-	//               2         OPEN Message Error               Section 6.2
-	openMessageError
-	//               3         UPDATE Message Error             Section 6.3
-	updateMessageError
-	//               4         Hold Timer Expired               Section 6.5
-	holdTimerExpired
-	//               5         Finite State Machine Error       Section 6.6
-	finiteStateMachineError
-	//               6         Cease                            Section 6.7
-	cease
+	_                       = iota
+	messageHeaderError      // 1         Message Header Error             Section 6.1
+	openMessageError        // 2         OPEN Message Error               Section 6.2
+	updateMessageError      // 3         UPDATE Message Error             Section 6.3
+	holdTimerExpired        // 4         Hold Timer Expired               Section 6.5
+	finiteStateMachineError // 5         Finite State Machine Error       Section 6.6
+	cease                   // 6         Cease                            Section 6.7
 )
 
 //       Error subcode:
@@ -1196,73 +1182,37 @@ const (
 //          (Unspecific) value is used for the Error Subcode field.
 //       Message Header Error subcodes:
 const (
-	_ = iota
-	//                1 - Connection Not Synchronized.
-	connectionNotSynchronized
-	//                2 - Bad Message Length.
-	badMessageLength
-	//                3 - Bad Message Type.
-	badMessageType
+	_                         = iota
+	connectionNotSynchronized // 1 - Connection Not Synchronized.
+	badMessageLength          // 2 - Bad Message Length.
+	badMessageType            // 3 - Bad Message Type.
 )
 
 //       OPEN Message Error subcodes:
 const (
-	_ = iota
-	//                1 - Unsupported Version Number.
-	unsupportedVersionNumber
-
-	//                2 - Bad Peer AS.
-	badPeerAS
-
-	//                3 - Bad BGP Identifier.
-	badBGPIdentifier
-
-	//                4 - Unsupported Optional Parameter.
-	unsupportedOptionalParameter
-
-	//                5 - [Deprecated - see Appendix A].
-	_
-
-	//                6 - Unacceptable Hold Time.
-	unacceptableHoldTime
+	_                            = iota
+	unsupportedVersionNumber     // 1 - Unsupported Version Number.
+	badPeerAS                    // 2 - Bad Peer AS.
+	badBGPIdentifier             // 3 - Bad BGP Identifier.
+	unsupportedOptionalParameter // 4 - Unsupported Optional Parameter.
+	_                            // 5 - [Deprecated - see Appendix A].
+	unacceptableHoldTime         // 6 - Unacceptable Hold Time.
 )
 
 //       UPDATE Message Error subcodes:
 const (
-	_ = iota
-
-	//                1 - Malformed Attribute List.
-	malformedAttributeList
-
-	//                2 - Unrecognized Well-known Attribute.
-	unrecognizedWellKnownAttribute
-
-	//                3 - Missing Well-known Attribute.
-	missingWellKnownAttribute
-
-	//                4 - Attribute Flags Error.
-	attributeFlagsError
-
-	//                5 - Attribute Length Error.
-	attributeLengthError
-
-	//                6 - Invalid ORIGIN Attribute.
-	invalidOriginAttribute
-
-	//                7 - [Deprecated - see Appendix A].
-	_
-
-	//                8 - Invalid NEXT_HOP Attribute.
-	invalidNextHopAttribute
-
-	//                9 - Optional Attribute Error.
-	optionalAttributeError
-
-	//               10 - Invalid Network Field.
-	invalidNetworkField
-
-	//               11 - Malformed AS_PATH.
-	malformedASPath
+	_                              = iota
+	malformedAttributeList         // 1 - Malformed Attribute List.
+	unrecognizedWellKnownAttribute // 2 - Unrecognized Well-known Attribute.
+	missingWellKnownAttribute      // 3 - Missing Well-known Attribute.
+	attributeFlagsError            // 4 - Attribute Flags Error.
+	attributeLengthError           // 5 - Attribute Length Error.
+	invalidOriginAttribute         // 6 - Invalid ORIGIN Attribute.
+	_                              // 7 - [Deprecated - see Appendix A].
+	invalidNextHopAttribute        // 8 - Invalid NEXT_HOP Attribute.
+	optionalAttributeError         // 9 - Optional Attribute Error.
+	invalidNetworkField            // 10 - Invalid Network Field.
+	malformedASPath                // 11 - Malformed AS_PATH.
 )
 
 //       Data:
@@ -1919,30 +1869,16 @@ type fsm struct {
 
 	//    Session attributes required (mandatory) for each connection are:
 
-	//       1) State
-	state int
-
-	//       2) ConnectRetryCounter
-	connectRetryCounter int
-
-	//       3) ConnectRetryTimer
-	connectRetryTimer *timer.Timer
-
-	//       4) ConnectRetryTime
-	connectRetryTime time.Duration
-
-	//       5) HoldTimer
-	holdTimer *timer.Timer
-
-	//       6) HoldTime
+	state               int           // 1) State
+	connectRetryCounter int           // 2) ConnectRetryCounter
+	connectRetryTimer   *timer.Timer  // 3) ConnectRetryTimer
+	connectRetryTime    time.Duration // 4) ConnectRetryTime
+	holdTimer           *timer.Timer  // 5) HoldTimer
+	// 6) HoldTime
 	initialHoldTime time.Duration // initialHoldTime is the configured hold time
 	holdTime        time.Duration // holdTime is the negotiated hold time
-
-	//       7) KeepaliveTimer
-	keepaliveTimer timer.Timer
-
-	//       8) KeepaliveTime
-	keepaliveTime time.Duration
+	keepaliveTimer  timer.Timer   // 7) KeepaliveTimer
+	keepaliveTime   time.Duration // 8) KeepaliveTime
 
 	//    The state session attribute indicates the current state of the BGP
 	//    FSM.  The ConnectRetryCounter indicates the number of times a BGP
@@ -1955,44 +1891,19 @@ type fsm struct {
 	//    attributes may be supported, either per connection or per local
 	//    system:
 
-	//       1) AcceptConnectionsUnconfiguredPeers
-	acceptConnectionsUnconfiguredPeers bool
-
-	//       2) AllowAutomaticStart
-	allowAutomaticStart bool
-
-	//       3) AllowAutomaticStop
-	allowAutomaticStop bool
-
-	//       4) CollisionDetectEstablishedState
-	collisionDetectEstablishedState int
-
-	//       5) DampPeerOscillations
-	dampPeerOscillations bool
-
-	//       6) DelayOpen
-	delayOpen bool
-
-	//       7) DelayOpenTime
-	delayOpenTime time.Duration
-
-	//       8) DelayOpenTimer
-	delayOpenTimer timer.Timer
-
-	//       9) IdleHoldTime
-	idleHoldTime time.Duration
-
-	//      10) IdleHoldTimer
-	idleHoldTimer timer.Timer
-
-	//      11) PassiveTcpEstablishment
-	passiveTCPEstablishment bool
-
-	//      12) SendNOTIFICATIONwithoutOPEN
-	sendNotificationwithoutOpen bool
-
-	//      13) TrackTcpState
-	trackTCPState bool
+	acceptConnectionsUnconfiguredPeers bool          // 1) AcceptConnectionsUnconfiguredPeers
+	allowAutomaticStart                bool          // 2) AllowAutomaticStart
+	allowAutomaticStop                 bool          // 3) AllowAutomaticStop
+	collisionDetectEstablishedState    int           // 4) CollisionDetectEstablishedState
+	dampPeerOscillations               bool          // 5) DampPeerOscillations
+	delayOpen                          bool          // 6) DelayOpen
+	delayOpenTime                      time.Duration // 7) DelayOpenTime
+	delayOpenTimer                     timer.Timer   // 8) DelayOpenTimer
+	idleHoldTime                       time.Duration // 9) IdleHoldTime
+	idleHoldTimer                      timer.Timer   // 10) IdleHoldTimer
+	passiveTCPEstablishment            bool          // 11) PassiveTcpEstablishment
+	sendNotificationwithoutOpen        bool          // 12) SendNOTIFICATIONwithoutOPEN
+	trackTCPState                      bool          // 13) TrackTcpState
 
 	//    The optional session attributes support different features of the BGP
 	//    functionality that have implications for the BGP FSM state
