@@ -2955,7 +2955,7 @@ func (f *fsm) connect(event int) {
 		//           set to TRUE, then the local system first sends a NOTIFICATION
 		//           message with the appropriate error code, and then
 		if f.sendNotificationwithoutOpen {
-			f.peer.notification(messageHeaderError, noErrorSubcode, mnil)
+			f.peer.notification(messageHeaderError, noErrorSubcode, nil)
 		}
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
