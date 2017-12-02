@@ -1933,19 +1933,19 @@ type fsm struct {
 
 type peer struct{}
 
-func (p *peer) open() {
+func (f *fsm) open() {
 	// TODO: Implement me
 }
 
-func (p *peer) update() {
+func (f *fsm) update() {
 	// TODO: Implement me
 }
 
-func (p *peer) notification(code int, subcode int, data []byte) {
+func (f *fsm) notification(code int, subcode int, data []byte) {
 	// TODO: Implement me
 }
 
-func (p *peer) keepalive() {
+func (f *fsm) keepalive() {
 	// TODO: Implement me
 }
 
@@ -2800,7 +2800,7 @@ func (f *fsm) connect(event int) {
 		//       If the DelayOpenTimer_Expires event (Event 12) occurs in the
 		//       Connect state, the local system:
 		//         - sends an OPEN message to its peer,
-		f.peer.open()
+		f.open()
 		//         - sets the HoldTimer to a large value, and
 		f.holdTimer.Reset(largeHoldTimer)
 		//         - changes its state to OpenSent.
@@ -2831,7 +2831,7 @@ func (f *fsm) connect(event int) {
 			f.connectRetryTimer.Stop()
 			//         - completes BGP initialization
 			//         - sends an OPEN message to its peer,
-			f.peer.open()
+			f.open()
 			//         - sets the HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
@@ -2880,7 +2880,7 @@ func (f *fsm) connect(event int) {
 			f.connectRetryTimer.Stop()
 			//         - completes BGP initialization
 			//         - sends an OPEN message to its peer,
-			f.peer.open()
+			f.open()
 			//         - sets the HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
@@ -2943,9 +2943,9 @@ func (f *fsm) connect(event int) {
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		f.delayOpenTimer.Stop()
 		//         - sends an OPEN message,
-		f.peer.open()
+		f.open()
 		//         - sends a KEEPALIVE message,
-		f.peer.keepalive()
+		f.keepalive()
 		//         - if the HoldTimer initial value is non-zero,
 		if f.initialHoldTime != 0 {
 			//             - starts the KeepaliveTimer with the initial value and
@@ -2972,7 +2972,7 @@ func (f *fsm) connect(event int) {
 		//           set to TRUE, then the local system first sends a NOTIFICATION
 		//           message with the appropriate error code, and then
 		if f.sendNotificationwithoutOpen {
-			f.peer.notification(messageHeaderError, noErrorSubcode, nil)
+			f.notification(messageHeaderError, noErrorSubcode, nil)
 		}
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
@@ -2995,7 +2995,7 @@ func (f *fsm) connect(event int) {
 		//           set to TRUE, then the local system first sends a NOTIFICATION
 		//           message with the appropriate error code, and then
 		if f.sendNotificationwithoutOpen {
-			f.peer.notification(openMessageError, noErrorSubcode, nil)
+			f.notification(openMessageError, noErrorSubcode, nil)
 		}
 		//         - stops the ConnectRetryTimer (if running) and sets the
 		//           ConnectRetryTimer to zero,
@@ -3082,7 +3082,7 @@ func (f *fsm) active(event int) {
 		//           SendNOTIFICATIONwithoutOPEN session attribute is set, the
 		//           local system sends a NOTIFICATION with a Cease,
 		if f.delayOpenTimer.Running() && f.sendNotificationwithoutOpen {
-			f.peer.notification(cease, noErrorSubcode, nil)
+			f.notification(cease, noErrorSubcode, nil)
 		}
 		//         - releases all BGP resources including stopping the
 		//           DelayOpenTimer
@@ -3114,7 +3114,7 @@ func (f *fsm) active(event int) {
 		f.delayOpenTimer.Stop()
 		//         - completes the BGP initialization,
 		//         - sends the OPEN message to its remote peer,
-		f.peer.open()
+		f.open()
 		//         - sets its hold timer to a large value, and
 		//         - changes its state to OpenSent.
 		f.state = openSent
@@ -3148,7 +3148,7 @@ func (f *fsm) active(event int) {
 			f.connectRetryTimer.Stop()
 			//           - completes the BGP initialization,
 			//           - sends the OPEN message to its peer,
-			f.peer.open()
+			f.open()
 			//           - sets its HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
@@ -3176,7 +3176,7 @@ func (f *fsm) active(event int) {
 			f.connectRetryTimer.Stop()
 			//           - completes the BGP initialization,
 			//           - sends the OPEN message to its peer,
-			f.peer.open()
+			f.open()
 			//           - sets its HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
@@ -3214,9 +3214,9 @@ func (f *fsm) active(event int) {
 			f.delayOpenTimer.Stop()
 			//         - completes the BGP initialization,
 			//         - sends an OPEN message,
-			f.peer.open()
+			f.open()
 			//         - sends a KEEPALIVE message,
-			f.peer.keepalive()
+			f.keepalive()
 			//         - if the HoldTimer value is non-zero,
 			if f.holdTimer.Running() {
 				//             - starts the KeepaliveTimer to initial value,
@@ -3241,7 +3241,7 @@ func (f *fsm) active(event int) {
 		//           error code if the SendNOTIFICATIONwithoutOPEN attribute is set
 		//           to TRUE,
 		if f.sendNotificationwithoutOpen {
-			f.peer.notification(messageHeaderError, noErrorSubcode, nil)
+			f.notification(messageHeaderError, noErrorSubcode, nil)
 		}
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
@@ -3263,7 +3263,7 @@ func (f *fsm) active(event int) {
 		//           error code if the SendNOTIFICATIONwithoutOPEN attribute is set
 		//           to TRUE,
 		if f.sendNotificationwithoutOpen {
-			f.peer.notification(openMessageError, noErrorSubcode, nil)
+			f.notification(openMessageError, noErrorSubcode, nil)
 		}
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
@@ -3342,7 +3342,7 @@ func (f *fsm) openSent(event int) {
 		//       If a ManualStop event (Event 2) is issued in the OpenSent state,
 		//       the local system:
 		//         - sends the NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3355,7 +3355,7 @@ func (f *fsm) openSent(event int) {
 		//       If an AutomaticStop event (Event 8) is issued in the OpenSent
 		//       state, the local system:
 		//         - sends the NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all the BGP resources,
@@ -3373,7 +3373,7 @@ func (f *fsm) openSent(event int) {
 		//       If the HoldTimer_Expires (Event 10), the local system:
 		//         - sends a NOTIFICATION message with the error code Hold Timer
 		//           Expired,
-		f.peer.notification(holdTimerExpired, noErrorSubcode, nil)
+		f.notification(holdTimerExpired, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3427,7 +3427,7 @@ func (f *fsm) openSent(event int) {
 		//         - sets the BGP ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - sends a KEEPALIVE message, and
-		f.peer.keepalive()
+		f.keepalive()
 		//         - sets a KeepaliveTimer (via the text below)
 		//         - sets the HoldTimer according to the negotiated value (see
 		//           Section 4.2),
@@ -3448,7 +3448,7 @@ func (f *fsm) openSent(event int) {
 		//       checking detects an error (Event 22)(see Section 6.2), the local
 		//       system:
 		//         - sends a NOTIFICATION message with the appropriate error code,
-		f.peer.notification(openMessageError, noErrorSubcode, nil)
+		f.notification(openMessageError, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3474,7 +3474,7 @@ func (f *fsm) openSent(event int) {
 		//       signaled to the state machine.  If such an event is received in
 		//       the OpenSent state, the local system:
 		//         - sends a NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3502,7 +3502,7 @@ func (f *fsm) openSent(event int) {
 		//       local system:
 		//         - sends the NOTIFICATION with the Error Code Finite State
 		//           Machine Error,
-		f.peer.notification(finiteStateMachineError, noErrorSubcode, nil)
+		f.notification(finiteStateMachineError, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3534,7 +3534,7 @@ func (f *fsm) openConfirm(event int) {
 		//       In response to a ManualStop event (Event 2) initiated by the
 		//       operator, the local system:
 		//         - sends the NOTIFICATION message with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - sets the ConnectRetryCounter to zero,
@@ -3547,7 +3547,7 @@ func (f *fsm) openConfirm(event int) {
 		//       In response to the AutomaticStop event initiated by the system
 		//       (Event 8), the local system:
 		//         - sends the NOTIFICATION message with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3566,7 +3566,7 @@ func (f *fsm) openConfirm(event int) {
 		//       KEEPALIVE message is received, the local system:
 		//         - sends the NOTIFICATION message with the Error Code Hold Timer
 		//           Expired,
-		f.peer.notification(holdTimerExpired, noErrorSubcode, nil)
+		f.notification(holdTimerExpired, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3584,7 +3584,7 @@ func (f *fsm) openConfirm(event int) {
 		//       If the local system receives a KeepaliveTimer_Expires event (Event
 		//       11), the local system:
 		//         - sends a KEEPALIVE message,
-		f.peer.keepalive()
+		f.keepalive()
 		//         - restarts the KeepaliveTimer, and
 		//         - remains in the OpenConfirmed state.
 	case tcpConnectionValid:
@@ -3654,7 +3654,7 @@ func (f *fsm) openConfirm(event int) {
 		//       If this connection is to be dropped due to connection collision,
 		//       the local system:
 		//         - sends a NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3674,7 +3674,7 @@ func (f *fsm) openConfirm(event int) {
 		//       (Event 21)) or OPEN message checking detects an error (see Section
 		//       6.2) (BGPOpenMsgErr (Event 22)), the local system:
 		//         - sends a NOTIFICATION message with the appropriate error code,
-		f.peer.notification(messageHeaderError, noErrorSubcode, nil)
+		f.notification(messageHeaderError, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3694,7 +3694,7 @@ func (f *fsm) openConfirm(event int) {
 		//       (Event 21)) or OPEN message checking detects an error (see Section
 		//       6.2) (BGPOpenMsgErr (Event 22)), the local system:
 		//         - sends a NOTIFICATION message with the appropriate error code,
-		f.peer.notification(openMessageError, noErrorSubcode, nil)
+		f.notification(openMessageError, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3716,7 +3716,7 @@ func (f *fsm) openConfirm(event int) {
 		//       OpenCollisionDump event (Event 23).  When the local system
 		//       receives an OpenCollisionDump event (Event 23), the local system:
 		//         - sends a NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources
@@ -3742,7 +3742,7 @@ func (f *fsm) openConfirm(event int) {
 		//       local system:
 		//         - sends a NOTIFICATION with a code of Finite State Machine
 		//           Error,
-		f.peer.notification(finiteStateMachineError, noErrorSubcode, nil)
+		f.notification(finiteStateMachineError, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3775,7 +3775,7 @@ func (f *fsm) established(event int) {
 		//       In response to a ManualStop event (initiated by an operator)
 		//       (Event 2), the local system:
 		//         - sends the NOTIFICATION message with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - deletes all routes associated with this connection,
@@ -3788,7 +3788,7 @@ func (f *fsm) established(event int) {
 	case automaticStop:
 		//       In response to an AutomaticStop event (Event 8), the local system:
 		//         - sends a NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero
 		f.connectRetryTimer.Stop()
 		//         - deletes all routes associated with this connection,
@@ -3813,7 +3813,7 @@ func (f *fsm) established(event int) {
 		//       system:
 		//         - sends a NOTIFICATION message with the Error Code Hold Timer
 		//           Expired,
-		f.peer.notification(holdTimerExpired, noErrorSubcode, nil)
+		f.notification(holdTimerExpired, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - releases all BGP resources,
@@ -3831,7 +3831,7 @@ func (f *fsm) established(event int) {
 		//       If the KeepaliveTimer_Expires event occurs (Event 11), the local
 		//       system:
 		//         - sends a KEEPALIVE message, and
-		f.peer.keepalive()
+		f.keepalive()
 		//         - restarts its KeepaliveTimer, unless the negotiated HoldTime
 		//           value is zero.
 
@@ -3861,7 +3861,7 @@ func (f *fsm) established(event int) {
 		//       process an OpenCollisionDump event (Event 23).  If this connection
 		//       needs to be terminated, the local system:
 		//         - sends a NOTIFICATION with a Cease,
-		f.peer.notification(cease, noErrorSubcode, nil)
+		f.notification(cease, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - deletes all routes associated with this connection,
@@ -3941,7 +3941,7 @@ func (f *fsm) established(event int) {
 		//       message error handling procedure (see Section 6.3) detects an
 		//       error (Event 28), the local system:
 		//         - sends a NOTIFICATION message with an Update error,
-		f.peer.notification(updateMessageError, noErrorSubcode, nil)
+		f.notification(updateMessageError, noErrorSubcode, nil)
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - deletes all routes associated with this connection,
@@ -3961,7 +3961,7 @@ func (f *fsm) established(event int) {
 		//       system:
 		//         - sends a NOTIFICATION message with the Error Code Finite State
 		//           Machine Error,
-		f.peer.notification(finiteStateMachineError, noErrorSubcode, nil)
+		f.notification(finiteStateMachineError, noErrorSubcode, nil)
 		//         - deletes all routes associated with this connection,
 		//         - sets the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
