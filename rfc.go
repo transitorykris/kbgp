@@ -1905,100 +1905,113 @@ const minNotificationMessageLength = 21
 //    OPEN and NOTIFICATION messages.
 
 // 8.  BGP Finite State Machine (FSM)
-
 //    The data structures and FSM described in this document are conceptual
 //    and do not have to be implemented precisely as described here, as
 //    long as the implementations support the described functionality and
 //    they exhibit the same externally visible behavior.
-
-//    This section specifies the BGP operation in terms of a Finite State
-//    Machine (FSM).  The section falls into two parts:
-
-//       1) Description of Events for the State machine (Section 8.1)
-//       2) Description of the FSM (Section 8.2)
-
-//    Session attributes required (mandatory) for each connection are:
-
-//       1) State
-//       2) ConnectRetryCounter
-//       3) ConnectRetryTimer
-//       4) ConnectRetryTime
-//       5) HoldTimer
-//       6) HoldTime
-//       7) KeepaliveTimer
-//       8) KeepaliveTime
-
-//    The state session attribute indicates the current state of the BGP
-//    FSM.  The ConnectRetryCounter indicates the number of times a BGP
-//    peer has tried to establish a peer session.
-
-//    The mandatory attributes related to timers are described in Section
-//    10.  Each timer has a "timer" and a "time" (the initial value).
-
-//    The optional Session attributes are listed below.  These optional
-//    attributes may be supported, either per connection or per local
-//    system:
-
-//       1) AcceptConnectionsUnconfiguredPeers
-//       2) AllowAutomaticStart
-//       3) AllowAutomaticStop
-//       4) CollisionDetectEstablishedState
-//       5) DampPeerOscillations
-//       6) DelayOpen
-//       7) DelayOpenTime
-//       8) DelayOpenTimer
-//       9) IdleHoldTime
-//      10) IdleHoldTimer
-//      11) PassiveTcpEstablishment
-//      12) SendNOTIFICATIONwithoutOPEN
-//      13) TrackTcpState
-
-//    The optional session attributes support different features of the BGP
-//    functionality that have implications for the BGP FSM state
-//    transitions.  Two groups of the attributes which relate to timers
-//    are:
-
-//       group 1: DelayOpen, DelayOpenTime, DelayOpenTimer
-//       group 2: DampPeerOscillations, IdleHoldTime, IdleHoldTimer
-
-//    The first parameter (DelayOpen, DampPeerOscillations) is an optional
-//    attribute that indicates that the Timer function is active.  The
-//    "Time" value specifies the initial value for the "Timer"
-//    (DelayOpenTime, IdleHoldTime).  The "Timer" specifies the actual
-//    timer.
-
-//    Please refer to Section 8.1.1 for an explanation of the interaction
-//    between these optional attributes and the events signaled to the
-//    state machine.  Section 8.2.1.3 also provides a short overview of the
-//    different types of optional attributes (flags or timers).
-
 type fsm struct {
+
+	//    This section specifies the BGP operation in terms of a Finite State
+	//    Machine (FSM).  The section falls into two parts:
+
+	//       1) Description of Events for the State machine (Section 8.1)
+	//       2) Description of the FSM (Section 8.2)
+
+	//    Session attributes required (mandatory) for each connection are:
+
+	//       1) State
 	state int
 
+	//       2) ConnectRetryCounter
 	connectRetryCounter int
-	connectRetryTimer   *timer.Timer
-	connectRetryTime    time.Duration
-	holdTimer           *timer.Timer
-	// initialHoldTime is the configured hold time
-	initialHoldTime time.Duration
-	// holdTime is the negotiated hold time
-	holdTime       time.Duration
-	keepaliveTimer timer.Timer
-	keepaliveTime  time.Duration
 
+	//       3) ConnectRetryTimer
+	connectRetryTimer *timer.Timer
+
+	//       4) ConnectRetryTime
+	connectRetryTime time.Duration
+
+	//       5) HoldTimer
+	holdTimer *timer.Timer
+
+	//       6) HoldTime
+	initialHoldTime time.Duration // initialHoldTime is the configured hold time
+	holdTime        time.Duration // holdTime is the negotiated hold time
+
+	//       7) KeepaliveTimer
+	keepaliveTimer timer.Timer
+
+	//       8) KeepaliveTime
+	keepaliveTime time.Duration
+
+	//    The state session attribute indicates the current state of the BGP
+	//    FSM.  The ConnectRetryCounter indicates the number of times a BGP
+	//    peer has tried to establish a peer session.
+
+	//    The mandatory attributes related to timers are described in Section
+	//    10.  Each timer has a "timer" and a "time" (the initial value).
+
+	//    The optional Session attributes are listed below.  These optional
+	//    attributes may be supported, either per connection or per local
+	//    system:
+
+	//       1) AcceptConnectionsUnconfiguredPeers
 	acceptConnectionsUnconfiguredPeers bool
-	allowAutomaticStart                bool
-	allowAutomaticStop                 bool
-	collisionDetectEstablishedState    int
-	dampPeerOscillations               bool
-	delayOpen                          bool
-	delayOpenTime                      time.Duration
-	delayOpenTimer                     timer.Timer
-	idleHoldTime                       time.Duration
-	idleHoldTimer                      timer.Timer
-	passiveTCPEstablishment            bool
-	sendNotificationwithoutOpen        bool
-	trackTCPState                      bool
+
+	//       2) AllowAutomaticStart
+	allowAutomaticStart bool
+
+	//       3) AllowAutomaticStop
+	allowAutomaticStop bool
+
+	//       4) CollisionDetectEstablishedState
+	collisionDetectEstablishedState int
+
+	//       5) DampPeerOscillations
+	dampPeerOscillations bool
+
+	//       6) DelayOpen
+	delayOpen bool
+
+	//       7) DelayOpenTime
+	delayOpenTime time.Duration
+
+	//       8) DelayOpenTimer
+	delayOpenTimer timer.Timer
+
+	//       9) IdleHoldTime
+	idleHoldTime time.Duration
+
+	//      10) IdleHoldTimer
+	idleHoldTimer timer.Timer
+
+	//      11) PassiveTcpEstablishment
+	passiveTCPEstablishment bool
+
+	//      12) SendNOTIFICATIONwithoutOPEN
+	sendNotificationwithoutOpen bool
+
+	//      13) TrackTcpState
+	trackTCPState bool
+
+	//    The optional session attributes support different features of the BGP
+	//    functionality that have implications for the BGP FSM state
+	//    transitions.  Two groups of the attributes which relate to timers
+	//    are:
+
+	//       group 1: DelayOpen, DelayOpenTime, DelayOpenTimer
+	//       group 2: DampPeerOscillations, IdleHoldTime, IdleHoldTimer
+
+	//    The first parameter (DelayOpen, DampPeerOscillations) is an optional
+	//    attribute that indicates that the Timer function is active.  The
+	//    "Time" value specifies the initial value for the "Timer"
+	//    (DelayOpenTime, IdleHoldTime).  The "Timer" specifies the actual
+	//    timer.
+
+	//    Please refer to Section 8.1.1 for an explanation of the interaction
+	//    between these optional attributes and the events signaled to the
+	//    state machine.  Section 8.2.1.3 also provides a short overview of the
+	//    different types of optional attributes (flags or timers).
 }
 
 func (f *fsm) connectRetryExpiry() {
