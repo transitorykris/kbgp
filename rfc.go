@@ -508,6 +508,8 @@ type adjRIBOut struct{}
 //    octets.  All implementations are required to support this maximum
 //    message size.  The smallest message that may be sent consists of a
 //    BGP header without a data portion (19 octets).
+const minMessageLength = 19
+const maxMessageLength = 4096
 
 //    All multi-octet fields are in network byte order.
 
@@ -561,9 +563,6 @@ func marker() [markerLength]byte {
 	copy(m[:], b)
 	return m
 }
-
-const minMessageLength = 19
-const maxMessageLength = 4096
 
 //       Type:
 //          This 1-octet unsigned integer indicates the type code of the
