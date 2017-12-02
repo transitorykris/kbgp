@@ -2653,7 +2653,7 @@ func (f *fsm) idle(event int) {
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryExpiry))
+		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
@@ -2668,7 +2668,7 @@ func (f *fsm) idle(event int) {
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryExpiry))
+		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - initiates a TCP connection to the other BGP peer,
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
@@ -2688,7 +2688,7 @@ func (f *fsm) idle(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryExpiry))
+		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		//         - changes its state to Active.
@@ -2703,7 +2703,7 @@ func (f *fsm) idle(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryExpiry))
+		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		//         - changes its state to Active.
