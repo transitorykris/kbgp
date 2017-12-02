@@ -1927,6 +1927,126 @@ type fsm struct {
 	//    different types of optional attributes (flags or timers).
 }
 
+func (f *fsm) manualStart() {
+	switch f.state {
+	case idle:
+		f.idle(manualStart)
+	case connect:
+		f.connect(manualStart)
+	case active:
+		f.active(manualStart)
+	case openConfirm:
+		f.openConfirm(manualStart)
+	case established:
+		f.established(manualStart)
+	}
+}
+
+func (f *fsm) manualStop() {
+	switch f.state {
+	case idle:
+		f.idle(manualStop)
+	case connect:
+		f.connect(manualStop)
+	case active:
+		f.active(manualStop)
+	case openConfirm:
+		f.openConfirm(manualStop)
+	case established:
+		f.established(manualStop)
+	}
+}
+
+func (f *fsm) automaticStart() {
+	switch f.state {
+	case idle:
+		f.idle(automaticStart)
+	case connect:
+		f.connect(automaticStart)
+	case active:
+		f.active(automaticStart)
+	case openConfirm:
+		f.openConfirm(automaticStart)
+	case established:
+		f.established(automaticStart)
+	}
+}
+
+func (f *fsm) manualStartWithPassiveTCPEstablishment() {
+	switch f.state {
+	case idle:
+		f.idle(manualStartWithPassiveTCPEstablishment)
+	case connect:
+		f.connect(manualStartWithPassiveTCPEstablishment)
+	case active:
+		f.active(manualStartWithPassiveTCPEstablishment)
+	case openConfirm:
+		f.openConfirm(manualStartWithPassiveTCPEstablishment)
+	case established:
+		f.established(manualStartWithPassiveTCPEstablishment)
+	}
+}
+
+func (f *fsm) automaticStartWithPassiveTCPEstablishment() {
+	switch f.state {
+	case idle:
+		f.idle(automaticStartWithPassiveTCPEstablishment)
+	case connect:
+		f.connect(automaticStartWithPassiveTCPEstablishment)
+	case active:
+		f.active(automaticStartWithPassiveTCPEstablishment)
+	case openConfirm:
+		f.openConfirm(automaticStartWithPassiveTCPEstablishment)
+	case established:
+		f.established(automaticStartWithPassiveTCPEstablishment)
+	}
+}
+
+func (f *fsm) automaticStartWithDampPeerOscillations() {
+	switch f.state {
+	case idle:
+		f.idle(automaticStartWithDampPeerOscillations)
+	case connect:
+		f.connect(automaticStartWithDampPeerOscillations)
+	case active:
+		f.active(automaticStartWithDampPeerOscillations)
+	case openConfirm:
+		f.openConfirm(automaticStartWithDampPeerOscillations)
+	case established:
+		f.established(automaticStartWithDampPeerOscillations)
+	}
+}
+
+func (f *fsm) automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment() {
+	switch f.state {
+	case idle:
+		f.idle(automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment)
+	case connect:
+		f.connect(automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment)
+	case active:
+		f.active(automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment)
+	case openConfirm:
+		f.openConfirm(automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment)
+	case established:
+		f.established(automaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment)
+	}
+}
+
+func (f *fsm) automaticStop() {
+	switch f.state {
+	case idle:
+		f.idle(automaticStop)
+	case connect:
+		f.connect(automaticStop)
+	case active:
+		f.active(automaticStop)
+	case openConfirm:
+		f.openConfirm(automaticStop)
+	case established:
+		f.established(automaticStop)
+	}
+}
+
 func (f *fsm) connectRetryExpiry() {
 	switch f.state {
 	case idle:
@@ -1954,6 +2074,276 @@ func (f *fsm) holdTimerExpiry() {
 		f.openConfirm(holdTimerExpires)
 	case established:
 		f.established(holdTimerExpires)
+	}
+}
+
+func (f *fsm) keepaliveTimerExpires() {
+	switch f.state {
+	case idle:
+		f.idle(keepaliveTimerExpires)
+	case connect:
+		f.connect(keepaliveTimerExpires)
+	case active:
+		f.active(keepaliveTimerExpires)
+	case openConfirm:
+		f.openConfirm(keepaliveTimerExpires)
+	case established:
+		f.established(keepaliveTimerExpires)
+	}
+}
+
+func (f *fsm) delayOpenTimerExpires() {
+	switch f.state {
+	case idle:
+		f.idle(delayOpenTimerExpires)
+	case connect:
+		f.connect(delayOpenTimerExpires)
+	case active:
+		f.active(delayOpenTimerExpires)
+	case openConfirm:
+		f.openConfirm(delayOpenTimerExpires)
+	case established:
+		f.established(delayOpenTimerExpires)
+	}
+}
+
+func (f *fsm) idleHoldTimerExpires() {
+	switch f.state {
+	case idle:
+		f.idle(idleHoldTimerExpires)
+	case connect:
+		f.connect(idleHoldTimerExpires)
+	case active:
+		f.active(idleHoldTimerExpires)
+	case openConfirm:
+		f.openConfirm(idleHoldTimerExpires)
+	case established:
+		f.established(idleHoldTimerExpires)
+	}
+}
+
+func (f *fsm) connectRetryExpiry() {
+	switch f.state {
+	case idle:
+		f.idle(connectRetryTimerExpires)
+	case connect:
+		f.connect(connectRetryTimerExpires)
+	case active:
+		f.active(connectRetryTimerExpires)
+	case openConfirm:
+		f.openConfirm(connectRetryTimerExpires)
+	case established:
+		f.established(connectRetryTimerExpires)
+	}
+}
+
+func (f *fsm) tcpConnectionValid() {
+	switch f.state {
+	case idle:
+		f.idle(tcpConnectionValid)
+	case connect:
+		f.connect(tcpConnectionValid)
+	case active:
+		f.active(tcpConnectionValid)
+	case openConfirm:
+		f.openConfirm(tcpConnectionValid)
+	case established:
+		f.established(tcpConnectionValid)
+	}
+}
+
+func (f *fsm) tcpCRInvalid() {
+	switch f.state {
+	case idle:
+		f.idle(tcpCRInvalid)
+	case connect:
+		f.connect(tcpCRInvalid)
+	case active:
+		f.active(tcpCRInvalid)
+	case openConfirm:
+		f.openConfirm(tcpCRInvalid)
+	case established:
+		f.established(tcpCRInvalid)
+	}
+}
+
+func (f *fsm) tcpCRAcked() {
+	switch f.state {
+	case idle:
+		f.idle(tcpCRAcked)
+	case connect:
+		f.connect(tcpCRAcked)
+	case active:
+		f.active(tcpCRAcked)
+	case openConfirm:
+		f.openConfirm(tcpCRAcked)
+	case established:
+		f.established(tcpCRAcked)
+	}
+}
+
+func (f *fsm) tcpConnectionConfirmed() {
+	switch f.state {
+	case idle:
+		f.idle(tcpConnectionConfirmed)
+	case connect:
+		f.connect(tcpConnectionConfirmed)
+	case active:
+		f.active(tcpConnectionConfirmed)
+	case openConfirm:
+		f.openConfirm(tcpConnectionConfirmed)
+	case established:
+		f.established(tcpConnectionConfirmed)
+	}
+}
+
+func (f *fsm) tcpConnectionFails() {
+	switch f.state {
+	case idle:
+		f.idle(tcpConnectionFails)
+	case connect:
+		f.connect(tcpConnectionFails)
+	case active:
+		f.active(tcpConnectionFails)
+	case openConfirm:
+		f.openConfirm(tcpConnectionFails)
+	case established:
+		f.established(tcpConnectionFails)
+	}
+}
+
+func (f *fsm) bgpOpen() {
+	switch f.state {
+	case idle:
+		f.idle(bgpOpen)
+	case connect:
+		f.connect(bgpOpen)
+	case active:
+		f.active(bgpOpen)
+	case openConfirm:
+		f.openConfirm(bgpOpen)
+	case established:
+		f.established(bgpOpen)
+	}
+}
+
+func (f *fsm) bgpOpenWithDelayOpenTimerRunning() {
+	switch f.state {
+	case idle:
+		f.idle(bgpOpenWithDelayOpenTimerRunning)
+	case connect:
+		f.connect(bgpOpenWithDelayOpenTimerRunning)
+	case active:
+		f.active(bgpOpenWithDelayOpenTimerRunning)
+	case openConfirm:
+		f.openConfirm(bgpOpenWithDelayOpenTimerRunning)
+	case established:
+		f.established(bgpOpenWithDelayOpenTimerRunning)
+	}
+}
+
+func (f *fsm) bgpHeaderErr() {
+	switch f.state {
+	case idle:
+		f.idle(bgpHeaderErr)
+	case connect:
+		f.connect(bgpHeaderErr)
+	case active:
+		f.active(bgpHeaderErr)
+	case openConfirm:
+		f.openConfirm(bgpHeaderErr)
+	case established:
+		f.established(bgpHeaderErr)
+	}
+}
+
+func (f *fsm) openCollisionDump() {
+	switch f.state {
+	case idle:
+		f.idle(openCollisionDump)
+	case connect:
+		f.connect(openCollisionDump)
+	case active:
+		f.active(openCollisionDump)
+	case openConfirm:
+		f.openConfirm(openCollisionDump)
+	case established:
+		f.established(openCollisionDump)
+	}
+}
+
+func (f *fsm) notifMsgVerErr() {
+	switch f.state {
+	case idle:
+		f.idle(notifMsgVerErr)
+	case connect:
+		f.connect(notifMsgVerErr)
+	case active:
+		f.active(notifMsgVerErr)
+	case openConfirm:
+		f.openConfirm(notifMsgVerErr)
+	case established:
+		f.established(notifMsgVerErr)
+	}
+}
+
+func (f *fsm) notifMsg() {
+	switch f.state {
+	case idle:
+		f.idle(notifMsg)
+	case connect:
+		f.connect(notifMsg)
+	case active:
+		f.active(notifMsg)
+	case openConfirm:
+		f.openConfirm(notifMsg)
+	case established:
+		f.established(notifMsg)
+	}
+}
+
+func (f *fsm) keepAliveMsg() {
+	switch f.state {
+	case idle:
+		f.idle(keepAliveMsg)
+	case connect:
+		f.connect(keepAliveMsg)
+	case active:
+		f.active(keepAliveMsg)
+	case openConfirm:
+		f.openConfirm(keepAliveMsg)
+	case established:
+		f.established(keepAliveMsg)
+	}
+}
+
+func (f *fsm) updateMsg() {
+	switch f.state {
+	case idle:
+		f.idle(updateMsg)
+	case connect:
+		f.connect(updateMsg)
+	case active:
+		f.active(updateMsg)
+	case openConfirm:
+		f.openConfirm(updateMsg)
+	case established:
+		f.established(updateMsg)
+	}
+}
+
+func (f *fsm) updateMsgErr() {
+	switch f.state {
+	case idle:
+		f.idle(updateMsgErr)
+	case connect:
+		f.connect(updateMsgErr)
+	case active:
+		f.active(updateMsgErr)
+	case openConfirm:
+		f.openConfirm(updateMsgErr)
+	case established:
+		f.established(updateMsgErr)
 	}
 }
 
