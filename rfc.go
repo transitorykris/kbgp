@@ -3159,7 +3159,7 @@ func (f *fsm) active(event int) {
 			f.connectRetryTimer.Stop()
 			//           - sets the DelayOpenTimer to the initial value
 			//             (DelayOpenTime), and
-			f.delayOpenTimer.Reset()
+			f.delayOpenTimer.Reset(f.delayOpenTime)
 			//           - stays in the Active state.
 		} else {
 			//         If the DelayOpen attribute is set to FALSE, the local system:
@@ -3409,7 +3409,7 @@ func (f *fsm) openSent(event int) {
 		//         - sets a KeepaliveTimer (via the text below)
 		//         - sets the HoldTimer according to the negotiated value (see
 		//           Section 4.2),
-		if holdTime != 0 {
+		if f.holdTime != 0 {
 			f.holdTimer.Reset(f.holdTime)
 		}
 		//         - changes its state to OpenConfirm.
