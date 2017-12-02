@@ -1939,6 +1939,13 @@ func (f *fsm) open() {
 
 func (f *fsm) update() {
 	// TODO: Implement me
+
+	// Note: Each time the local system sends a KEEPALIVE or UPDATE message, it
+	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
+	//       is zero.
+	if f.holdTime != 0 {
+		f.keepaliveTimer.Reset(defaultKeepaliveTime)
+	}
 }
 
 func (f *fsm) notification(code int, subcode int, data []byte) {
@@ -1947,6 +1954,13 @@ func (f *fsm) notification(code int, subcode int, data []byte) {
 
 func (f *fsm) keepalive() {
 	// TODO: Implement me
+
+	// Note: Each time the local system sends a KEEPALIVE or UPDATE message, it
+	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
+	//       is zero.
+	if f.holdTime != 0 {
+		f.keepaliveTimer.Reset(defaultKeepaliveTime)
+	}
 }
 
 func (f *fsm) sendEvent(event int) func() {
