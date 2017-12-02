@@ -1121,7 +1121,6 @@ const minUpdateMessageLength = 23
 //    frequently than one per second.  An implementation MAY adjust the
 //    rate at which it sends KEEPALIVE messages as a function of the Hold
 //    Time interval.
-const defaultKeepaliveInterval = 1 * time.Second
 const minKeepaliveInterval = 1 * time.Second
 
 //    If the negotiated Hold Time interval is zero, then periodic KEEPALIVE
