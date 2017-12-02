@@ -2800,6 +2800,7 @@ func (f *fsm) connect(event int) {
 		//       If the DelayOpenTimer_Expires event (Event 12) occurs in the
 		//       Connect state, the local system:
 		//         - sends an OPEN message to its peer,
+		f.peer.open()
 		//         - sets the HoldTimer to a large value, and
 		f.holdTimer.Reset(largeHoldTimer)
 		//         - changes its state to OpenSent.
@@ -2830,6 +2831,7 @@ func (f *fsm) connect(event int) {
 			f.connectRetryTimer.Stop()
 			//         - completes BGP initialization
 			//         - sends an OPEN message to its peer,
+			f.peer.open()
 			//         - sets the HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
@@ -2878,6 +2880,7 @@ func (f *fsm) connect(event int) {
 			f.connectRetryTimer.Stop()
 			//         - completes BGP initialization
 			//         - sends an OPEN message to its peer,
+			f.peer.open()
 			//         - sets the HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
@@ -2940,7 +2943,9 @@ func (f *fsm) connect(event int) {
 		//         - stops and clears the DelayOpenTimer (sets the value to zero),
 		f.delayOpenTimer.Stop()
 		//         - sends an OPEN message,
+		f.peer.open()
 		//         - sends a KEEPALIVE message,
+		f.peer.keepalive()
 		//         - if the HoldTimer initial value is non-zero,
 		if f.initialHoldTime != 0 {
 			//             - starts the KeepaliveTimer with the initial value and
@@ -3109,6 +3114,7 @@ func (f *fsm) active(event int) {
 		f.delayOpenTimer.Stop()
 		//         - completes the BGP initialization,
 		//         - sends the OPEN message to its remote peer,
+		f.peer.open()
 		//         - sets its hold timer to a large value, and
 		//         - changes its state to OpenSent.
 		f.state = openSent
@@ -3142,6 +3148,7 @@ func (f *fsm) active(event int) {
 			f.connectRetryTimer.Stop()
 			//           - completes the BGP initialization,
 			//           - sends the OPEN message to its peer,
+			f.peer.open()
 			//           - sets its HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
@@ -3169,6 +3176,7 @@ func (f *fsm) active(event int) {
 			f.connectRetryTimer.Stop()
 			//           - completes the BGP initialization,
 			//           - sends the OPEN message to its peer,
+			f.peer.open()
 			//           - sets its HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
@@ -3206,7 +3214,9 @@ func (f *fsm) active(event int) {
 			f.delayOpenTimer.Stop()
 			//         - completes the BGP initialization,
 			//         - sends an OPEN message,
+			f.peer.open()
 			//         - sends a KEEPALIVE message,
+			f.peer.keepalive()
 			//         - if the HoldTimer value is non-zero,
 			if f.holdTimer.Running() {
 				//             - starts the KeepaliveTimer to initial value,
@@ -3417,6 +3427,7 @@ func (f *fsm) openSent(event int) {
 		//         - sets the BGP ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - sends a KEEPALIVE message, and
+		f.peer.keepalive()
 		//         - sets a KeepaliveTimer (via the text below)
 		//         - sets the HoldTimer according to the negotiated value (see
 		//           Section 4.2),
@@ -3573,6 +3584,7 @@ func (f *fsm) openConfirm(event int) {
 		//       If the local system receives a KeepaliveTimer_Expires event (Event
 		//       11), the local system:
 		//         - sends a KEEPALIVE message,
+		f.peer.keepalive()
 		//         - restarts the KeepaliveTimer, and
 		//         - remains in the OpenConfirmed state.
 	case tcpConnectionValid:
@@ -3819,6 +3831,7 @@ func (f *fsm) established(event int) {
 		//       If the KeepaliveTimer_Expires event occurs (Event 11), the local
 		//       system:
 		//         - sends a KEEPALIVE message, and
+		f.peer.keepalive()
 		//         - restarts its KeepaliveTimer, unless the negotiated HoldTime
 		//           value is zero.
 
