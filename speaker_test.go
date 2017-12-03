@@ -17,6 +17,18 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestStart(t *testing.T) {
+	s := New(uint16(1234), uint32(4567))
+	s.Start()
+	// Not much to check but hope we don't panic
+}
+
+func TestStop(t *testing.T) {
+	s := New(uint16(1234), uint32(4567))
+	s.Stop()
+	// Not much to check but hope we don't panic
+}
+
 func TestAddPeer(t *testing.T) {
 	s := New(uint16(1234), uint32(4567))
 	err := s.AddPeer()
