@@ -16,3 +16,19 @@ func TestNew(t *testing.T) {
 		t.Errorf("Did not expect locRIB to be nil")
 	}
 }
+
+func TestAddPeer(t *testing.T) {
+	s := New(uint16(1234), uint32(4567))
+	err := s.AddPeer()
+	if err != nil {
+		t.Errorf("Expected AddPeer to return nil but got %s", err.Error())
+	}
+}
+
+func TestRemovePeer(t *testing.T) {
+	s := New(uint16(1234), uint32(4567))
+	err := s.RemovePeer()
+	if err != nil {
+		t.Errorf("Expected RemovePeer to return nil but got %s", err.Error())
+	}
+}

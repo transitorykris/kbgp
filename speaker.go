@@ -37,3 +37,13 @@ func (s *Speaker) Stop() {
 		}
 	}
 }
+
+// AddPeer configures a new BGP neighbor. Returns nil if successful.
+func (s *Speaker) AddPeer() error {
+	return nil
+}
+
+// RemovePeer removes the BGP neighbor from the speaker. Returns nil if successful.
+func (s *Speaker) RemovePeer() error {
+	return nil
+}
