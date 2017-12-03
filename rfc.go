@@ -1923,21 +1923,6 @@ type peer struct {
 	adjRIBOut *adjRIBOut
 }
 
-func (f *fsm) open() {
-	// TODO: Implement me
-}
-
-func (f *fsm) update() {
-	// TODO: Implement me
-
-	// Note: Each time the local system sends a KEEPALIVE or UPDATE message, it
-	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
-	//       is zero.
-	if f.holdTime != 0 {
-		f.keepaliveTimer.Reset(defaultKeepaliveTime)
-	}
-}
-
 func (f *fsm) initialize() {
 	f.peer.adjRIBIn = newAdjRIBIn()
 	f.peer.adjRIBOut = newAdjRIBOut()
@@ -1968,13 +1953,38 @@ func (f *fsm) dial() (*net.Conn, error) {
 	return &conn, nil
 }
 
+func (f *fsm) write(v interface{}) {
+	// TODO: Serialize the interface's values as raw bytes
+}
+
+func (f *fsm) open() {
+	// TODO: Implement me
+	//o := newOpenMessage()
+	//f.write(o)
+}
+
+func (f *fsm) update() {
+	// TODO: Implement me
+	//u := newUpdateMessage()
+	//f.write(u)
+	// Note: Each time the local system sends a KEEPALIVE or UPDATE message, it
+	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
+	//       is zero.
+	if f.holdTime != 0 {
+		f.keepaliveTimer.Reset(defaultKeepaliveTime)
+	}
+}
+
 func (f *fsm) notification(code int, subcode int, data []byte) {
 	// TODO: Implement me
+	n := newNotificationMessage(code, subcode, data)
+	f.write(n)
 }
 
 func (f *fsm) keepalive() {
 	// TODO: Implement me
-
+	k := newKeepaliveMessage()
+	f.write(k)
 	// Note: Each time the local system sends a KEEPALIVE or UPDATE message, it
 	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
 	//       is zero.
