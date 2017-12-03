@@ -2630,7 +2630,9 @@ const port = 179
 
 func newFSM() *fsm {
 	f := &fsm{
-		state: idle,
+		state:               idle,
+		allowAutomaticStart: true,
+		allowAutomaticStop:  true,
 	}
 	return f
 }
