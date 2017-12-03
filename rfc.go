@@ -1906,9 +1906,19 @@ type fsm struct {
 	//    different types of optional attributes (flags or timers).
 
 	peer *peer
+
+	// Handle both listening for our peer and trying to connect to it
+	incomingTCP *net.Conn
+	outgoingTCP *net.Conn
 }
 
 type peer struct {
+	// One of incomingTCP or outgoingTCP in the FSM will become our peer's connection
+	tcp *net.Conn
+
+	remoteAS uint16
+	remoteIP net.IP
+
 	adjRIBIn  *adjRIBIn
 	adjRIBOut *adjRIBOut
 }
@@ -1936,6 +1946,26 @@ func (f *fsm) initialize() {
 func (f *fsm) release() {
 	f.peer.adjRIBIn = nil
 	f.peer.adjRIBOut = nil
+}
+
+func (f *fsm) listen() (*net.Conn, error) {
+	ln, err := net.Listen("tcp4", "")
+	if err != nil {
+		return nil, err
+	}
+	conn, err := ln.Accept()
+	if err != nil {
+		return nil, err
+	}
+	return &conn, nil
+}
+
+func (f *fsm) dial() (*net.Conn, error) {
+	conn, err := net.Dial("tcp4", f.remoteIP)
+	if err != nil {
+		return nil, err
+	}
+	return &conn, nil
 }
 
 func (f *fsm) notification(code int, subcode int, data []byte) {
