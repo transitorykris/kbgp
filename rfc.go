@@ -472,6 +472,11 @@ func New(myAS uint16, bgpIdentifier uint32) *Speaker {
 	return s
 }
 
+// Start sends a manual start to all FSMs
+func (s *Speaker) Start() {
+	// TODO: Implement me
+}
+
 //       a) Adj-RIBs-In: The Adj-RIBs-In stores routing information learned
 //          from inbound UPDATE messages that were received from other BGP
 //          speakers.  Their contents represent routes that are available
