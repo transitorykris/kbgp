@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"net"
@@ -1944,6 +1945,7 @@ func (f *fsm) keepalive() {
 
 func (f *fsm) sendEvent(event int) func() {
 	return func() {
+		log.Println("Sending event", event, "to state", f.state)
 		switch f.state {
 		case idle:
 			f.idle(event)
@@ -2649,6 +2651,11 @@ const (
 	established
 )
 
+func (f *fsm) transition(state int) {
+	log.Println("Transitioning from", f.state, "to", state)
+	f.state = state
+}
+
 //    Idle state:
 //       Initially, the BGP peer FSM is in the Idle state.  Hereafter, the
 //       BGP peer FSM will be shortened to BGP FSM.
@@ -2668,7 +2675,7 @@ func (f *fsm) idle(event int) {
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
 		//         - changes its state to Connect.
-		f.state = connect
+		f.transition(connect)
 	case automaticStart:
 		//       In this state, BGP FSM refuses all incoming BGP connections for
 		//       this peer.  No resources are allocated to the peer.  In response
@@ -2683,7 +2690,7 @@ func (f *fsm) idle(event int) {
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
 		//         - changes its state to Connect.
-		f.state = connect
+		f.transition(connect)
 	case manualStop:
 		//       The ManualStop event (Event 2) and AutomaticStop (Event 8) event
 		//       are ignored in the Idle state.
@@ -2702,7 +2709,7 @@ func (f *fsm) idle(event int) {
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		//         - changes its state to Active.
-		f.state = active
+		f.transition(active)
 		//       The exact value of the ConnectRetryTimer is a local matter, but it
 		//       SHOULD be sufficiently large to allow TCP initialization.
 	case automaticStartWithPassiveTCPEstablishment:
@@ -2717,7 +2724,7 @@ func (f *fsm) idle(event int) {
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		//         - changes its state to Active.
-		f.state = active
+		f.transition(active)
 		//       The exact value of the ConnectRetryTimer is a local matter, but it
 		//       SHOULD be sufficiently large to allow TCP initialization.
 	case automaticStartWithDampPeerOscillations:
@@ -2781,7 +2788,7 @@ func (f *fsm) connect(event int) {
 		//           zero, and
 		f.connectRetryTimer.Stop()
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case connectRetryTimerExpires:
 		//       In response to the ConnectRetryTimer_Expires event (Event 9), the
 		//       local system:
@@ -2802,7 +2809,7 @@ func (f *fsm) connect(event int) {
 		//         - sets the HoldTimer to a large value, and
 		f.holdTimer.Reset(largeHoldTimer)
 		//         - changes its state to OpenSent.
-		f.state = openSent
+		f.transition(openSent)
 	case tcpConnectionValid:
 		//       If the BGP FSM receives a TcpConnection_Valid event (Event 14),
 		//       the TCP connection is processed, and the connection remains in the
@@ -2833,7 +2840,7 @@ func (f *fsm) connect(event int) {
 			//         - sets the HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
-			f.state = openSent
+			f.transition(openSent)
 			return
 		}
 
@@ -2850,7 +2857,7 @@ func (f *fsm) connect(event int) {
 			//         - continues to listen for a connection that may be initiated by
 			//           the remote BGP peer, and
 			//         - changes its state to Active.
-			f.state = active
+			f.transition(active)
 			return
 		}
 		//       If the DelayOpenTimer is not running, the local system:
@@ -2859,7 +2866,7 @@ func (f *fsm) connect(event int) {
 		//         - drops the TCP connection,
 		//         - releases all BGP resources, and
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case tcpConnectionConfirmed:
 		//       If the TCP connection succeeds (Event 16 or Event 17), the local
 		//       system checks the DelayOpen attribute prior to processing.  If the
@@ -2882,7 +2889,7 @@ func (f *fsm) connect(event int) {
 			//         - sets the HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//         - changes its state to OpenSent.
-			f.state = openSent
+			f.transition(openSent)
 			return
 		}
 
@@ -2899,7 +2906,7 @@ func (f *fsm) connect(event int) {
 			//         - continues to listen for a connection that may be initiated by
 			//           the remote BGP peer, and
 			//         - changes its state to Active.
-			f.state = active
+			f.transition(active)
 			return
 		}
 		//       If the DelayOpenTimer is not running, the local system:
@@ -2908,7 +2915,7 @@ func (f *fsm) connect(event int) {
 		//         - drops the TCP connection,
 		//         - releases all BGP resources, and
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case tcpConnectionFails:
 		//       If the TCP connection fails (Event 18), the local system checks
 		//       the DelayOpenTimer.  If the DelayOpenTimer is running, the local
@@ -2921,7 +2928,7 @@ func (f *fsm) connect(event int) {
 			//         - continues to listen for a connection that may be initiated by
 			//           the remote BGP peer, and
 			//         - changes its state to Active.
-			f.state = active
+			f.transition(active)
 			return
 		}
 		//       If the DelayOpenTimer is not running, the local system:
@@ -2930,7 +2937,7 @@ func (f *fsm) connect(event int) {
 		//         - drops the TCP connection,
 		//         - releases all BGP resources, and
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpOpenWithDelayOpenTimerRunning:
 		//       If an OPEN message is received while the DelayOpenTimer is running
 		//       (Event 20), the local system:
@@ -2959,7 +2966,7 @@ func (f *fsm) connect(event int) {
 			f.holdTimer.Stop()
 		}
 		//         - and changes its state to OpenConfirm.
-		f.state = openConfirm
+		f.transition(openConfirm)
 		//       If the value of the autonomous system field is the same as the
 		//       local Autonomous System number, set the connection status to an
 		//       internal connection; otherwise it will be "external".
@@ -2985,7 +2992,7 @@ func (f *fsm) connect(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpOpenMsgErr:
 		//       If BGP message header checking (Event 21) or OPEN message checking
 		//       detects an error (Event 22) (see Section 6.2), the local system:
@@ -3008,7 +3015,7 @@ func (f *fsm) connect(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsgVerErr:
 		//       If a NOTIFICATION message is received with a version error (Event
 		//       24), the local system checks the DelayOpenTimer.  If the
@@ -3022,7 +3029,7 @@ func (f *fsm) connect(event int) {
 			//         - releases all BGP resources,
 			//         - drops the TCP connection, and
 			//         - changes its state to Idle.
-			f.state = idle
+			f.transition(idle)
 			return
 		}
 		//       If the DelayOpenTimer is not running, the local system:
@@ -3039,7 +3046,7 @@ func (f *fsm) connect(event int) {
 		}
 		//           attribute is set to True, and
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	default:
 		//       In response to any other events (Events 8, 10-11, 13, 19, 23,
 		//       25-28), the local system:
@@ -3059,7 +3066,7 @@ func (f *fsm) connect(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	}
 }
 
@@ -3093,7 +3100,7 @@ func (f *fsm) active(event int) {
 		//           zero, and
 		f.connectRetryTimer.Stop()
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case connectRetryTimerExpires:
 		//       In response to a ConnectRetryTimer_Expires event (Event 9), the
 		//       local system:
@@ -3103,7 +3110,7 @@ func (f *fsm) active(event int) {
 		//         - continues to listen for a TCP connection that may be initiated
 		//           by a remote BGP peer, and
 		//         - changes its state to Connect.
-		f.state = connect
+		f.transition(connect)
 	case delayOpenTimerExpires:
 		//       If the local system receives a DelayOpenTimer_Expires event (Event
 		//       12), the local system:
@@ -3116,7 +3123,7 @@ func (f *fsm) active(event int) {
 		f.open()
 		//         - sets its hold timer to a large value, and
 		//         - changes its state to OpenSent.
-		f.state = openSent
+		f.transition(openSent)
 		//       A HoldTimer value of 4 minutes is also suggested for this state
 		//       transition.
 	case tcpConnectionValid:
@@ -3151,7 +3158,7 @@ func (f *fsm) active(event int) {
 			//           - sets its HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
-			f.state = openSent
+			f.transition(openSent)
 		}
 		//       A HoldTimer value of 4 minutes is suggested as a "large value" for
 		//       the HoldTimer.
@@ -3179,7 +3186,7 @@ func (f *fsm) active(event int) {
 			//           - sets its HoldTimer to a large value, and
 			f.holdTimer.Reset(largeHoldTimer)
 			//           - changes its state to OpenSent.
-			f.state = openSent
+			f.transition(openSent)
 			return
 		}
 		//       A HoldTimer value of 4 minutes is suggested as a "large value" for
@@ -3200,7 +3207,7 @@ func (f *fsm) active(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpOpenWithDelayOpenTimerRunning:
 		//       If an OPEN message is received and the DelayOpenTimer is running
 		//       (Event 20), the local system:
@@ -3228,7 +3235,7 @@ func (f *fsm) active(event int) {
 				f.holdTimer.Stop()
 			}
 			//         - changes its state to OpenConfirm.
-			f.state = openConfirm
+			f.transition(openConfirm)
 			//       If the value of the autonomous system field is the same as the
 			//       local Autonomous System number, set the connection status to an
 			//       internal connection; otherwise it will be external.
@@ -3254,7 +3261,7 @@ func (f *fsm) active(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpOpenMsgErr:
 		//       If BGP message header checking (Event 21) or OPEN message checking
 		//       detects an error (Event 22) (see Section 6.2), the local system:
@@ -3276,7 +3283,7 @@ func (f *fsm) active(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsgVerErr:
 		//       If a NOTIFICATION message is received with a version error (Event
 		//       24), the local system checks the DelayOpenTimer.  If the
@@ -3290,7 +3297,7 @@ func (f *fsm) active(event int) {
 			//         - releases all BGP resources,
 			//         - drops the TCP connection, and
 			//         - changes its state to Idle.
-			f.state = idle
+			f.transition(idle)
 			return
 		}
 		//       If the DelayOpenTimer is not running, the local system:
@@ -3306,7 +3313,7 @@ func (f *fsm) active(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	default:
 		//       In response to any other event (Events 8, 10-11, 13, 19, 23,
 		//       25-28), the local system:
@@ -3322,7 +3329,7 @@ func (f *fsm) active(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	}
 }
 
@@ -3349,7 +3356,7 @@ func (f *fsm) openSent(event int) {
 		//         - sets the ConnectRetryCounter to zero, and
 		f.connectRetryCounter = 0
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case automaticStop:
 		//       If an AutomaticStop event (Event 8) is issued in the OpenSent
 		//       state, the local system:
@@ -3367,7 +3374,7 @@ func (f *fsm) openSent(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case holdTimerExpires:
 		//       If the HoldTimer_Expires (Event 10), the local system:
 		//         - sends a NOTIFICATION message with the error code Hold Timer
@@ -3385,7 +3392,7 @@ func (f *fsm) openSent(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case tcpConnectionValid:
 		//       If a TcpConnection_Valid (Event 14), Tcp_CR_Acked (Event 16), or a
 		//       TcpConnectionConfirmed event (Event 17) is received, a second TCP
@@ -3416,7 +3423,7 @@ func (f *fsm) openSent(event int) {
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
 		//         - changes its state to Active.
-		f.state = active
+		f.transition(active)
 	case bgpOpen:
 		//       When an OPEN message is received, all fields are checked for
 		//       correctness.  If there are no errors in the OPEN message (Event
@@ -3434,7 +3441,7 @@ func (f *fsm) openSent(event int) {
 			f.holdTimer.Reset(f.holdTime)
 		}
 		//         - changes its state to OpenConfirm.
-		f.state = openConfirm
+		f.transition(openConfirm)
 
 		//       If the negotiated hold time value is zero, then the HoldTimer and
 		//       KeepaliveTimer are not started.  If the value of the Autonomous
@@ -3460,7 +3467,7 @@ func (f *fsm) openSent(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 		//       Collision detection mechanisms (Section 6.8) need to be applied
 		//       when a valid BGP OPEN message is received (Event 19 or Event 20).
 		//       Please refer to Section 6.8 for the details of the comparison.  A
@@ -3486,7 +3493,7 @@ func (f *fsm) openSent(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsgVerErr:
 		//       If a NOTIFICATION message is received with a version error (Event
 		//       24), the local system:
@@ -3495,7 +3502,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection, and
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	default:
 		//       In response to any other event (Events 9, 11-13, 20, 25-28), the
 		//       local system:
@@ -3514,7 +3521,7 @@ func (f *fsm) openSent(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	}
 }
 
@@ -3541,7 +3548,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - sets the ConnectRetryTimer to zero, and
 		f.connectRetryTimer.Stop()
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case automaticStop:
 		//       In response to the AutomaticStop event initiated by the system
 		//       (Event 8), the local system:
@@ -3559,7 +3566,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case holdTimerExpires:
 		//       If the HoldTimer_Expires event (Event 10) occurs before a
 		//       KEEPALIVE message is received, the local system:
@@ -3578,7 +3585,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case keepaliveTimerExpires:
 		//       If the local system receives a KeepaliveTimer_Expires event (Event
 		//       11), the local system:
@@ -3620,7 +3627,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsg:
 		//       If the local system receives a TcpConnectionFails event (Event 18)
 		//       from the underlying TCP or a NOTIFICATION message (Event 25), the
@@ -3637,7 +3644,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsgVerErr:
 		//       If the local system receives a NOTIFICATION message with a version
 		//       error (NotifMsgVerErr (Event 24)), the local system:
@@ -3646,7 +3653,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection, and
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpOpen:
 		//       If the local system receives a valid OPEN message (BGPOpen (Event
 		//       19)), the collision detect function is processed per Section 6.8.
@@ -3666,7 +3673,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpHeaderErr:
 		//       If an OPEN message is received, all fields are checked for
 		//       correctness.  If the BGP message header checking (BGPHeaderErr
@@ -3686,7 +3693,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case bgpOpenMsgErr:
 		//       If an OPEN message is received, all fields are checked for
 		//       correctness.  If the BGP message header checking (BGPHeaderErr
@@ -3706,7 +3713,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case openCollisionDump:
 		//       If, during the processing of another OPEN message, the BGP
 		//       implementation determines, by a means outside the scope of this
@@ -3728,14 +3735,14 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case keepAliveMsg:
 		//       If the local system receives a KEEPALIVE message (KeepAliveMsg
 		//       (Event 26)), the local system:
 		//         - restarts the HoldTimer and
 		f.holdTimer.Reset(f.holdTime)
 		//         - changes its state to Established
-		f.state = established
+		f.transition(established)
 	default:
 		//       In response to any other event (Events 9, 12-13, 20, 27-28), the
 		//       local system:
@@ -3754,7 +3761,7 @@ func (f *fsm) openConfirm(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	}
 }
 
@@ -3783,7 +3790,7 @@ func (f *fsm) established(event int) {
 		//         - sets the ConnectRetryCounter to zero, and
 		f.connectRetryCounter = 0
 		//          - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case automaticStop:
 		//       In response to an AutomaticStop event (Event 8), the local system:
 		//         - sends a NOTIFICATION with a Cease,
@@ -3801,7 +3808,7 @@ func (f *fsm) established(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 
 		//       One reason for an AutomaticStop event is: A BGP receives an UPDATE
 		//       messages with a number of prefixes for a given peer such that the
@@ -3825,7 +3832,7 @@ func (f *fsm) established(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case keepaliveTimerExpires:
 		//       If the KeepaliveTimer_Expires event occurs (Event 11), the local
 		//       system:
@@ -3874,7 +3881,7 @@ func (f *fsm) established(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsgVerErr:
 		//       If the local system receives a NOTIFICATION message (Event 24 or
 		//       Event 25) or a TcpConnectionFails (Event 18) from the underlying
@@ -3887,7 +3894,7 @@ func (f *fsm) established(event int) {
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case notifMsg:
 		//       If the local system receives a NOTIFICATION message (Event 24 or
 		//       Event 25) or a TcpConnectionFails (Event 18) from the underlying
@@ -3900,7 +3907,7 @@ func (f *fsm) established(event int) {
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case tcpConnectionFails:
 		//       If the local system receives a NOTIFICATION message (Event 24 or
 		//       Event 25) or a TcpConnectionFails (Event 18) from the underlying
@@ -3913,7 +3920,7 @@ func (f *fsm) established(event int) {
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	case keepAliveMsg:
 		//       If the local system receives a KEEPALIVE message (Event 26), the
 		//       local system:
@@ -3923,7 +3930,7 @@ func (f *fsm) established(event int) {
 			f.holdTimer.Reset(f.holdTime)
 		}
 		//         - remains in the Established state.
-		f.state = established
+		f.transition(established)
 	case updateMsg:
 		//       If the local system receives an UPDATE message (Event 27), the
 		//       local system:
@@ -3934,7 +3941,7 @@ func (f *fsm) established(event int) {
 			f.holdTimer.Reset(f.holdTime)
 		}
 		//         - remains in the Established state.
-		f.state = established
+		f.transition(established)
 	case updateMsgErr:
 		//       If the local system receives an UPDATE message, and the UPDATE
 		//       message error handling procedure (see Section 6.3) detects an
@@ -3954,7 +3961,7 @@ func (f *fsm) established(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	default:
 		//       In response to any other event (Events 9, 12-13, 20-22), the local
 		//       system:
@@ -3974,7 +3981,7 @@ func (f *fsm) established(event int) {
 			// TODO: Implement me
 		}
 		//         - changes its state to Idle.
-		f.state = idle
+		f.transition(idle)
 	}
 }
 
