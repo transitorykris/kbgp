@@ -1875,7 +1875,7 @@ type fsm struct {
 	acceptConnectionsUnconfiguredPeers bool          // 1) AcceptConnectionsUnconfiguredPeers
 	allowAutomaticStart                bool          // 2) AllowAutomaticStart
 	allowAutomaticStop                 bool          // 3) AllowAutomaticStop
-	collisionDetectEstablishedState    int           // 4) CollisionDetectEstablishedState
+	collisionDetectEstablishedState    bool          // 4) CollisionDetectEstablishedState
 	dampPeerOscillations               bool          // 5) DampPeerOscillations
 	delayOpen                          bool          // 6) DelayOpen
 	delayOpenTime                      time.Duration // 7) DelayOpenTime
@@ -2682,9 +2682,16 @@ const port = 179
 
 func newFSM() *fsm {
 	f := &fsm{
-		state:               idle,
-		allowAutomaticStart: true,
-		allowAutomaticStop:  true,
+		state: idle,
+		acceptConnectionsUnconfiguredPeers: false,
+		allowAutomaticStart:                true,
+		allowAutomaticStop:                 true,
+		collisionDetectEstablishedState:    false,
+		dampPeerOscillations:               false,
+		delayOpen:                          false,
+		passiveTCPEstablishment:            false,
+		sendNotificationwithoutOpen:        false,
+		trackTCPState:                      false,
 	}
 	// Initialize timers
 	f.delayOpenTimer = timer.New(defaultDelayOpenTime, f.sendEvent(delayOpenTimerExpires))
