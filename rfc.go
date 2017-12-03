@@ -3048,6 +3048,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		//         - drops the TCP connection,
 		//         - increments the ConnectRetryCounter by 1,
+		f.connectRetryCounter++
 		//         - performs peer oscillation damping if the DampPeerOscillations
 		if f.dampPeerOscillations {
 			// TODO: Implement me
