@@ -1857,7 +1857,7 @@ type fsm struct {
 	// 6) HoldTime
 	initialHoldTime time.Duration // initialHoldTime is the configured hold time
 	holdTime        time.Duration // holdTime is the negotiated hold time
-	keepaliveTimer  timer.Timer   // 7) KeepaliveTimer
+	keepaliveTimer  *timer.Timer  // 7) KeepaliveTimer
 	keepaliveTime   time.Duration // 8) KeepaliveTime
 
 	//    The state session attribute indicates the current state of the BGP
@@ -1878,9 +1878,9 @@ type fsm struct {
 	dampPeerOscillations               bool          // 5) DampPeerOscillations
 	delayOpen                          bool          // 6) DelayOpen
 	delayOpenTime                      time.Duration // 7) DelayOpenTime
-	delayOpenTimer                     timer.Timer   // 8) DelayOpenTimer
+	delayOpenTimer                     *timer.Timer  // 8) DelayOpenTimer
 	idleHoldTime                       time.Duration // 9) IdleHoldTime
-	idleHoldTimer                      timer.Timer   // 10) IdleHoldTimer
+	idleHoldTimer                      *timer.Timer  // 10) IdleHoldTimer
 	passiveTCPEstablishment            bool          // 11) PassiveTcpEstablishment
 	sendNotificationwithoutOpen        bool          // 12) SendNOTIFICATIONwithoutOPEN
 	trackTCPState                      bool          // 13) TrackTcpState
@@ -2634,6 +2634,9 @@ func newFSM() *fsm {
 		allowAutomaticStart: true,
 		allowAutomaticStop:  true,
 	}
+	// Initialize timers
+	f.delayOpenTimer = timer.New(defaultDelayOpenTime, f.sendEvent(delayOpenTimerExpires))
+	f.delayOpenTimer.Stop()
 	return f
 }
 
