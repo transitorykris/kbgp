@@ -43,3 +43,10 @@ func ipToUint32(ip net.IP) uint32 {
 	u := binary.BigEndian.Uint32(ip4)
 	return u
 }
+
+// Uint32ToIP converts a uint32 to a net.IP
+func Uint32ToIP(i uint32) net.IP {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, i)
+	return ip
+}

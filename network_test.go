@@ -21,3 +21,12 @@ func TestIPToBGPIdentifier(t *testing.T) {
 		t.Errorf("Incorrect identifier %d != %d", ip4, id)
 	}
 }
+
+func TestUint32ToIP(t *testing.T) {
+	i := uint32(167772773)
+	expectedIP := net.ParseIP("10.0.2.101")
+	ip := Uint32ToIP(i)
+	if !ip.Equal(expectedIP) {
+		t.Errorf("Expected IP %v but got %v", expectedIP, ip)
+	}
+}

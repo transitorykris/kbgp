@@ -11,9 +11,13 @@ func main() {
 
 	// Config
 	myAS := uint16(1234)
-	id := uint32(123456789)
+	id, err := kbgp.FindBGPIdentifier()
+	if err != nil {
+		panic(err)
+	}
 
 	// Start our router
+	log.Printf("AS: %d ID: %s", myAS, kbgp.Uint32ToIP(id).String())
 	bgp := kbgp.New(myAS, id)
 	bgp.Start()
 
