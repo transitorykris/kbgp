@@ -451,6 +451,11 @@ import (
 //    The Routing Information Base (RIB) within a BGP speaker consists of
 //    three distinct parts:
 
+type speaker struct {
+	locRIB *locRIB
+	fsm    []*fsm
+}
+
 //       a) Adj-RIBs-In: The Adj-RIBs-In stores routing information learned
 //          from inbound UPDATE messages that were received from other BGP
 //          speakers.  Their contents represent routes that are available
@@ -1931,7 +1936,10 @@ type fsm struct {
 	peer *peer
 }
 
-type peer struct{}
+type peer struct {
+	adjRIBIn  *adjRIBIn
+	adjRIBOut *adjRIBOut
+}
 
 func (f *fsm) open() {
 	// TODO: Implement me
