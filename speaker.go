@@ -1,5 +1,7 @@
 package kbgp
 
+import "net"
+
 // Speaker implements BGP4
 type Speaker struct {
 	version       int
@@ -47,4 +49,28 @@ func (s *Speaker) AddPeer() error {
 // RemovePeer removes the BGP neighbor from the speaker. Returns nil if successful.
 func (s *Speaker) RemovePeer() error {
 	return nil
+}
+
+// listen handles incoming TCP connections and attempts to match them to
+// a FSM or reject them if no such FSM exists or if they are in a state that
+// forbids new connections.
+func (s *Speaker) listener() (*net.Conn, error) {
+	ln, err := net.Listen("tcp4", "")
+	if err != nil {
+		return nil, err
+	}
+	conn, err := ln.Accept()
+	if err != nil {
+		return nil, err
+	}
+	return &conn, nil
+}
+
+// dial attempts to form a TCP connection with the peer
+func (s *Speaker) dial(fsm *fsm) (*net.Conn, error) {
+	conn, err := net.Dial("tcp4", fsm.peer.remoteIP.String())
+	if err != nil {
+		return nil, err
+	}
+	return &conn, nil
 }
