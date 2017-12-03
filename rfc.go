@@ -451,9 +451,25 @@ import (
 //    The Routing Information Base (RIB) within a BGP speaker consists of
 //    three distinct parts:
 
-type speaker struct {
-	locRIB *locRIB
-	fsm    []*fsm
+// Speaker implements BGP4
+type Speaker struct {
+	version       int
+	myAS          uint16
+	bgpIdentifier uint32
+	locRIB        *locRIB
+	fsm           []*fsm
+}
+
+// New creates a new BGP speaker
+func New(myAS uint16, bgpIdentifier uint32) *Speaker {
+	s := &Speaker{
+		version:       version,
+		myAS:          myAS,
+		bgpIdentifier: bgpIdentifier,
+		locRIB:        newLocRIB(),
+		fsm:           make([]*fsm, 0),
+	}
+	return s
 }
 
 //       a) Adj-RIBs-In: The Adj-RIBs-In stores routing information learned
@@ -470,6 +486,10 @@ type adjRIBIn struct{}
 //          next hop for each of these routes MUST be resolvable via the
 //          local BGP speaker's Routing Table.
 type locRIB struct{}
+
+func newLocRIB() *locRIB {
+	return &locRIB{}
+}
 
 //       c) Adj-RIBs-Out: The Adj-RIBs-Out stores information the local BGP
 //          speaker selected for advertisement to its peers.  The routing
