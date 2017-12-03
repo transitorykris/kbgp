@@ -119,3 +119,28 @@ func TestJitter(t *testing.T) {
 		}
 	}
 }
+
+func TestInitialize(t *testing.T) {
+	f := new(fsm)
+	f.peer = new(peer)
+	f.initialize()
+	if f.peer.adjRIBIn == nil {
+		t.Errorf("Expected adjRIBIn to be non-nil")
+	}
+	if f.peer.adjRIBOut == nil {
+		t.Errorf("Expected adjRIBOut to be non-nil")
+	}
+}
+
+func TestRelease(t *testing.T) {
+	f := new(fsm)
+	f.peer = new(peer)
+	f.initialize()
+	f.release()
+	if f.peer.adjRIBIn != nil {
+		t.Errorf("Expected adjRIBIn to be nil but got %v", f.peer.adjRIBIn)
+	}
+	if f.peer.adjRIBOut != nil {
+		t.Errorf("Expected adjRIBOut to be nil but got %v", f.peer.adjRIBOut)
+	}
+}
