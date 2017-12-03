@@ -476,8 +476,11 @@ func New(myAS uint16, bgpIdentifier uint32) *Speaker {
 //          from inbound UPDATE messages that were received from other BGP
 //          speakers.  Their contents represent routes that are available
 //          as input to the Decision Process.
-
 type adjRIBIn struct{}
+
+func newAdjRIBIn() *adjRIBIn {
+	return &adjRIBIn{}
+}
 
 //       b) Loc-RIB: The Loc-RIB contains the local routing information the
 //          BGP speaker selected by applying its local policies to the
@@ -497,6 +500,10 @@ func newLocRIB() *locRIB {
 //          local BGP speaker's UPDATE messages and advertised to its
 //          peers.
 type adjRIBOut struct{}
+
+func newAdjRIBOut() *adjRIBOut {
+	return &adjRIBOut{}
+}
 
 //    In summary, the Adj-RIBs-In contains unprocessed routing information
 //    that has been advertised to the local BGP speaker by its peers; the
