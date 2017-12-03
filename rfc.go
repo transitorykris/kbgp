@@ -403,32 +403,6 @@ import (
 //    the protocol is extended, the new behavior is fully documented in the
 //    extension specifications.
 
-// Speaker implements BGP4
-type Speaker struct {
-	version       int
-	myAS          uint16
-	bgpIdentifier uint32
-	locRIB        *locRIB
-	fsm           []*fsm
-}
-
-// New creates a new BGP speaker
-func New(myAS uint16, bgpIdentifier uint32) *Speaker {
-	s := &Speaker{
-		version:       version,
-		myAS:          myAS,
-		bgpIdentifier: bgpIdentifier,
-		locRIB:        newLocRIB(),
-		fsm:           make([]*fsm, 0),
-	}
-	return s
-}
-
-// Start sends a manual start to all FSMs
-func (s *Speaker) Start() {
-	// TODO: Implement me
-}
-
 // 3.1.  Routes: Advertisement and Storage
 
 //    For the purpose of this protocol, a route is defined as a unit of
