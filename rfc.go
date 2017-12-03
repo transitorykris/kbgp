@@ -726,41 +726,6 @@ func durationToUint16(t time.Duration) uint16 {
 //          Identifier to an IP address that is assigned to that BGP
 //          speaker.  The value of the BGP Identifier is determined upon
 //          startup and is the same for every local interface and BGP peer.
-func findBGPIdentifier() (uint32, error) {
-	ifs, err := net.Interfaces()
-	if err != nil {
-		return 0, err
-	}
-	// Note: this selection process is arbitrary
-	for _, v := range ifs {
-		addrs, err := v.Addrs()
-		if err != nil {
-			continue
-		}
-		for _, addr := range addrs {
-			ip, _, err := net.ParseCIDR(addr.String())
-			if err != nil {
-				continue
-			}
-			// Make sure we have an IPv4 address
-			if ip.To4() == nil {
-				continue
-			}
-			// If it's routable, we have a winner!
-			if ip.IsGlobalUnicast() {
-				return ipToUint32(ip), nil
-			}
-		}
-	}
-	return 0, fmt.Errorf("No valid BGP identifier found")
-}
-
-func ipToUint32(ip net.IP) uint32 {
-	// ip could be 4 or 16 bytes, let's be sure it's 4
-	ip4 := ip.To4()
-	u := binary.BigEndian.Uint32(ip4)
-	return u
-}
 
 //       Optional Parameters Length:
 //          This 1-octet unsigned integer indicates the total length of the

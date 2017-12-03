@@ -2,7 +2,6 @@ package kbgp
 
 import (
 	"bytes"
-	"encoding/binary"
 	"net"
 	"testing"
 	"time"
@@ -36,22 +35,6 @@ func TestIsValidHoldTime(t *testing.T) {
 	}
 	if !isValidHoldTime(3 * time.Second) {
 		t.Errorf("Expected 3 seconds to be a valid hold time")
-	}
-}
-
-func TestFindBGPIdentifier(t *testing.T) {
-	_, err := findBGPIdentifier()
-	if err != nil {
-		t.Errorf("Unexpected error guessing IP: %v", err)
-	}
-}
-
-func TestIPToBGPIdentifier(t *testing.T) {
-	ip := net.ParseIP("1.2.3.4")
-	id := ipToUint32(ip)
-	ip4 := binary.BigEndian.Uint32(ip.To4())
-	if ip4 != id {
-		t.Errorf("Incorrect identifier %d != %d", ip4, id)
 	}
 }
 
