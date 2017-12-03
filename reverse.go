@@ -1,0 +1,40 @@
+package kbgp
+
+var eventName = map[int]string{
+	1:  "ManualStart",
+	2:  "ManualStop",
+	3:  "AutomaticStart",
+	4:  "ManualStart_with_PassiveTcpEstablishment",
+	5:  "AutomaticStart_with_PassiveTcpEstablishment",
+	6:  "AutomaticStart_with_DampPeerOscillations",
+	7:  "AutomaticStart_with_DampPeerOscillations_and_PassiveTcpEstablishment",
+	8:  "AutomaticStop",
+	9:  "ConnectRetryTimer_Expires",
+	10: "HoldTimer_Expires",
+	11: "KeepaliveTimer_Expires",
+	12: "KeepaliveTimer_Expires",
+	13: "DelayOpenTimer_Expires",
+	14: "IdleHoldTimer_Expires",
+	15: "TcpConnection_Valid",
+	16: "Tcp_CR_Acked",
+	17: "TcpConnectionConfirmed",
+	18: "TcpConnectionFails",
+	19: "BGPOpen",
+	20: "BGPOpen with DelayOpenTimer running",
+	21: "BGPHeaderErr",
+	22: "BGPOpenMsgErr",
+	23: "OpenCollisionDump",
+	24: "NotifMsgVerErr",
+	25: "NotifMsg",
+	26: "KeepAliveMsg",
+	27: "UpdateMsg",
+	28: "UpdateMsgErr",
+}
+
+var stateName = map[int]string{
+	0: "Idle",
+	1: "Connect",
+	2: "Active",
+	3: "OpenConfirm",
+	4: "Established",
+}

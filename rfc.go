@@ -1945,7 +1945,7 @@ func (f *fsm) keepalive() {
 
 func (f *fsm) sendEvent(event int) func() {
 	return func() {
-		log.Println("Sending event", event, "to state", f.state)
+		log.Printf("Sending (%d) %s to state (%d) %s", event, eventName[event], f.state, stateName[f.state])
 		switch f.state {
 		case idle:
 			f.idle(event)
@@ -2652,7 +2652,7 @@ const (
 )
 
 func (f *fsm) transition(state int) {
-	log.Println("Transitioning from", f.state, "to", state)
+	log.Printf("Transitioning from (%d) %s to (%d) %s", f.state, stateName[f.state], state, stateName[state])
 	f.state = state
 }
 
