@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 
 	"github.com/transitorykris/kbgp"
 )
@@ -19,9 +20,13 @@ func main() {
 	// Start our router
 	log.Printf("AS: %d ID: %s", myAS, kbgp.Uint32ToIP(id).String())
 	bgp := kbgp.New(myAS, id)
-	if err := bgp.AddPeer(); err != nil {
+
+	remoteAS := uint16(1001)
+	remoteIP := net.ParseIP("127.0.0.1")
+	if err := bgp.AddPeer(remoteAS, remoteIP); err != nil {
 		log.Fatal(err)
 	}
+
 	bgp.Start()
 
 	select {}

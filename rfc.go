@@ -1918,8 +1918,11 @@ type peer struct {
 	adjRIBOut *adjRIBOut
 }
 
-func newPeer() *peer {
-	p := &peer{}
+func newPeer(remoteAS uint16, remoteIP net.IP) *peer {
+	p := &peer{
+		remoteAS: remoteAS,
+		remoteIP: remoteIP,
+	}
 	return p
 }
 
@@ -2661,7 +2664,7 @@ const port = 179
 
 // 8.2.2.  Finite State Machine
 
-func newFSM() *fsm {
+func newFSM(remoteAS uint16, remoteIP net.IP) *fsm {
 	f := &fsm{
 		state: idle,
 		acceptConnectionsUnconfiguredPeers: false,
@@ -2673,7 +2676,7 @@ func newFSM() *fsm {
 		passiveTCPEstablishment:            false,
 		sendNotificationwithoutOpen:        false,
 		trackTCPState:                      false,
-		peer:                               newPeer(),
+		peer:                               newPeer(remoteAS, remoteIP),
 	}
 	// Initialize timers
 	f.delayOpenTimer = timer.New(defaultDelayOpenTime, f.sendEvent(delayOpenTimerExpires))

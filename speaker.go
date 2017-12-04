@@ -47,8 +47,8 @@ func (s *Speaker) Stop() {
 }
 
 // AddPeer configures a new BGP neighbor. Returns nil if successful.
-func (s *Speaker) AddPeer() error {
-	s.fsm = append(s.fsm, newFSM())
+func (s *Speaker) AddPeer(remoteAS int, remoteIP net.IP) error {
+	s.fsm = append(s.fsm, newFSM(remoteAS, remoteIP))
 	return nil
 }
 
