@@ -1966,6 +1966,8 @@ func (f *fsm) drop() error {
 
 func (f *fsm) write(v interface{}) {
 	// TODO: Serialize the interface's values as raw bytes
+	// If the write fails, the TCP connection is likely closed
+	// f.sendEvent(tcpConnectionFails)
 }
 
 func (f *fsm) open() {
