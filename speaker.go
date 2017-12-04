@@ -87,9 +87,8 @@ func (s *Speaker) listener() {
 		}
 		// If we found no associated FSM, close the connection.
 		if f == nil {
-			log.Println("No matching peer found, closing TCP connection")
-			// Tell the state machine about the failure?
-			// Is ther any error to send here before closing?
+			log.Println("No matching peer found for %s, closing TCP connection", conn.RemoteAddr())
+			f.sendEvent(tcpCRInvalid)
 			conn.Close()
 			continue // Accept the next connection
 		}
