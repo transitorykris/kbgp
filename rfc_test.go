@@ -176,6 +176,60 @@ func TestReadMessage(t *testing.T) {
 	}
 }
 
+func TestReadOpen(t *testing.T) {
+	raw := []byte{
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
+		0x00, 0x09, // Length
+		0x01,       // Type (Open)
+		0x04,       // Version
+		0x00, 0x01, // My Autonomous System,
+		0x00, 0x00, // 0 second Hold time
+		0x01, 0x02, 0x03, 0x04, // BGP Identifier
+		0x00, // 0 length = no optional parameters
+	}
+	fmt.Println("Creating a new FSM")
+	f := new(fsm)
+	fmt.Println("Adding a peer to it")
+	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
+	fmt.Println("Creating a mock connection")
+	f.peer.conn = newConn(raw)
+	// Add mock net.Conn to fsm
+	// Write raw to it
+	fmt.Println("Reading the message header and the message")
+	header, message := f.readMessage()
+	// Check that the header has the correct marker, and expected length and type
+	if bytes.Compare(header.marker[:], raw[:16]) != 0 {
+		t.Errorf("Header marker should be %v but got %v", raw[:16], header.marker)
+	}
+	// Check that the message length is equal to the expected length
+	if len(message) != 9 {
+		t.Error("Expected message length to be 0 but got", len(message))
+	}
+	if header.messageType != 0x01 {
+		t.Errorf("Expected the message type to be %v but got %d", raw[18], header.messageType)
+	}
+	open := f.readOpen(message)
+	if open.version != 4 {
+		t.Error("Expected BGP version to be 4 but got", open.version)
+	}
+	if open.myAS != 1 {
+		t.Error("Expected myAS to be 1 but got", open.myAS)
+	}
+	if open.holdTime != 0 {
+		t.Error("Expected hold time to be 0 but got", open.holdTime)
+	}
+	if open.bgpIdentifier != 16909060 {
+		t.Error("Expected bgp identifier to be 16909060 but got", open.bgpIdentifier)
+	}
+	if open.optParmLen != 0 {
+		t.Error("Expected optional parameters length to be 0 but got", open.optParmLen)
+	}
+	if len(open.optParameters) != 0 {
+		t.Error("Expected no optional parameters but got", open.optParameters)
+	}
+}
+
 // TODO: Mock net.Conn
 type conn struct {
 	bs []byte
@@ -188,8 +242,11 @@ func newConn(bs []byte) *conn {
 }
 
 func (c *conn) Read(b []byte) (n int, err error) {
-	copy(b, c.bs)
-	return len(c.bs), nil
+	count := copy(b, c.bs)
+	fmt.Println("Read copied", count, "bytes")
+	// Remove those bytes from our mock connection's buffer
+	c.bs = c.bs[count:]
+	return len(b), nil
 }
 
 func (c *conn) Write(b []byte) (n int, err error) {

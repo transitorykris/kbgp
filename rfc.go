@@ -2003,7 +2003,8 @@ func (f *fsm) reader() {
 }
 
 func (f *fsm) read(count int) []byte {
-	b := make([]byte, minMessageLength, maxMessageLength)
+	//b := make([]byte, minMessageLength, maxMessageLength)
+	b := make([]byte, count, count)
 
 	// Read enough bytes for the message header
 	if count == 0 {
@@ -2015,7 +2016,7 @@ func (f *fsm) read(count int) []byte {
 		if err != nil {
 			// Fail... shut it down
 			fmt.Println("tcpConnectionFails event")
-			f.sendEvent(tcpConnectionFails)
+			f.sendEvent(tcpConnectionFails) // This should not be here
 		}
 		if n < count {
 			fmt.Println("We did not read in the expected number of bytes, got", n)
@@ -2090,7 +2091,7 @@ func readUint32(buf *bytes.Buffer) uint32 {
 	return binary.BigEndian.Uint32(readBytes(4, buf))
 }
 
-func (f *fsm) readOpen(message []byte) {
+func (f *fsm) readOpen(message []byte) *openMessage {
 	//        0                   1                   2                   3
 	//        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	//        +-+-+-+-+-+-+-+-+
@@ -2142,6 +2143,7 @@ func (f *fsm) readOpen(message []byte) {
 	//		- if so, send BGPOpenWithDelayOpenTimerRunning event
 	// 6. Otherwise send a BGPOpen event
 	fmt.Println("Open message:", open)
+	return open
 }
 
 func (f *fsm) readUpdate(message []byte) {
