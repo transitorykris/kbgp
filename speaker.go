@@ -105,7 +105,7 @@ func (s *Speaker) listener() {
 		// - Check if the FSM is okay to take a new connection
 
 		// - Set s.fsm.peer.conn to this conn
-		f.peer.conn = &conn
+		f.peer.conn = conn
 
 		// Event 14: TcpConnection_Valid
 
@@ -145,25 +145,4 @@ func (s *Speaker) listener() {
 		// 		 Status:     Mandatory
 		f.sendEvent(tcpConnectionConfirmed)
 	}
-}
-
-// dial attempts to form a TCP connection with the peer
-func (s *Speaker) dial(f *fsm) {
-	conn, err := net.Dial("tcp4", f.peer.remoteIP.String())
-	if err != nil {
-		log.Fatal(err)
-		// TODO: Figure out how to handle errors here
-	}
-
-	// Event 16: Tcp_CR_Acked
-
-	// 		 Definition: Event indicating the local system's request to
-	// 					 establish a TCP connection to the remote peer.
-
-	// 					 The local system's TCP connection sent a TCP SYN,
-	// 					 received a TCP SYN/ACK message, and sent a TCP ACK.
-
-	// 		 Status:     Mandatory
-	f.peer.conn = &conn
-	f.sendEvent(tcpCRAcked)
 }

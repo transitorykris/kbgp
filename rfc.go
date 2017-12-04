@@ -1909,7 +1909,7 @@ type fsm struct {
 }
 
 type peer struct {
-	conn *net.Conn
+	conn net.Conn
 
 	remoteAS uint16
 	remoteIP net.IP
@@ -1935,6 +1935,27 @@ func (f *fsm) initialize() {
 func (f *fsm) release() {
 	f.peer.adjRIBIn = nil
 	f.peer.adjRIBOut = nil
+}
+
+// dial attempts to form a TCP connection with the peer
+func (f *fsm) dial() {
+	conn, err := net.Dial("tcp4", fmt.Sprintf("%s:%d", f.peer.remoteIP.String(), port))
+	if err != nil {
+		log.Fatal(err)
+		// TODO: Figure out how to handle errors here
+	}
+
+	// Event 16: Tcp_CR_Acked
+
+	// 		 Definition: Event indicating the local system's request to
+	// 					 establish a TCP connection to the remote peer.
+
+	// 					 The local system's TCP connection sent a TCP SYN,
+	// 					 received a TCP SYN/ACK message, and sent a TCP ACK.
+
+	// 		 Status:     Mandatory
+	f.peer.conn = conn
+	f.sendEvent(tcpCRAcked)
 }
 
 func (f *fsm) write(v interface{}) {
@@ -2715,8 +2736,12 @@ func (f *fsm) idle(event int) {
 		//         - starts the ConnectRetryTimer with the initial value,
 		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - initiates a TCP connection to the other BGP peer,
+		go f.dial()
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
+		// NOTE: Listening is already happening, but may need a better mechanism
+		// e.g. We add a this peer to the listener, remove it from the listener when
+		// we shut down. Right now the listener scans through all FSMs.
 		//         - changes its state to Connect.
 		f.transition(connect)
 	case automaticStart:
@@ -2731,8 +2756,12 @@ func (f *fsm) idle(event int) {
 		//         - starts the ConnectRetryTimer with the initial value,
 		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - initiates a TCP connection to the other BGP peer,
+		go f.dial()
 		//         - listens for a connection that may be initiated by the remote
 		//           BGP peer, and
+		// NOTE: Listening is already happening, but may need a better mechanism
+		// e.g. We add a this peer to the listener, remove it from the listener when
+		// we shut down. Right now the listener scans through all FSMs.
 		//         - changes its state to Connect.
 		f.transition(connect)
 	case manualStop:
@@ -2753,6 +2782,9 @@ func (f *fsm) idle(event int) {
 		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
+		// NOTE: Listening is already happening, but may need a better mechanism
+		// e.g. We add a this peer to the listener, remove it from the listener when
+		// we shut down. Right now the listener scans through all FSMs.
 		//         - changes its state to Active.
 		f.transition(active)
 		//       The exact value of the ConnectRetryTimer is a local matter, but it
@@ -2769,6 +2801,9 @@ func (f *fsm) idle(event int) {
 		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
+		// NOTE: Listening is already happening, but may need a better mechanism
+		// e.g. We add a this peer to the listener, remove it from the listener when
+		// we shut down. Right now the listener scans through all FSMs.
 		//         - changes its state to Active.
 		f.transition(active)
 		//       The exact value of the ConnectRetryTimer is a local matter, but it
