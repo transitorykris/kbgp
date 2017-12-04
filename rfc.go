@@ -1978,10 +1978,80 @@ func (f *fsm) write(v interface{}) {
 	// f.sendEvent(tcpConnectionFails)
 }
 
+// read perpetually processes messages and routes them to where they need to go
+func (f *fsm) reader() {
+	header, message := f.readMessage()
+	switch header.messageType {
+	case open:
+		f.readOpen(message)
+	case update:
+		f.readUpdate(message)
+	case notification:
+		f.readKeepalive(message)
+	case keepalive:
+		f.readKeepalive(message)
+	default:
+		// Send a NOTIFICATION
+		_ = newNotificationMessage(messageHeaderError, badMessageType, nil)
+	}
+}
+
 func (f *fsm) read() {
 	// TODO: Read the next message
+
+	// Read the message header
+	// Use the type to determine what to read in next
+	// Use the length to determine how much needs to be read
+
 	// If the read fails, the TCP connection is likely closed
 	// f.sendEvent(tcpConnectionFails)
+}
+
+func (f *fsm) readMessage() (messageHeader, []byte) {
+	// 1. Read in the message header
+	// 2. Check that the header is valid
+	//		- if it is not send a bgpHeaderErr event
+	return messageHeader{}, nil
+}
+
+func (f *fsm) readOpen(message []byte) {
+	// 1. Read in the message
+	// 2. Check that the header is valid
+	//		- if it is not send a BGPHeaderErr event
+	// 3. Check that the message is valid
+	//		- if it is not send a BGPOpenMsgErr event
+	// 4. Check to see if there is a collision and this connection
+	//    has been selected to be disconnected
+	//		- if it is to be disconnected send an OpenCollisionDump event
+	// 5. Check if the peer is delaying sending a BGP open message
+	//		- if so, send BGPOpenWithDelayOpenTimerRunning event
+	// 6. Otherwise send a BGPOpen event
+}
+
+func (f *fsm) readUpdate(message []byte) {
+	// 1. Read in the message
+	// 2. Check that the header is valid
+	//		- If it is not send a BGPHeaderErr event
+	// 3. Check that the message is valid
+	//		- if it is not send an UpdateMsgErr event
+	// 4. Otherwise send an UpdateMsg event
+}
+
+func (f *fsm) readNotification(message []byte) {
+	// 1. Read in the message
+	// 2. Check that the header is valid
+	//		- If it is not send a BGPHeaderErr event
+	// 3. If it is a version error send a NotifMsgVerErr event
+	// 4. Otherwise send a NotifMsg event
+}
+
+func (f *fsm) readKeepalive(message []byte) {
+	// Related events
+	// keepAliveMsg
+	if length != 0 {
+		// Send a notification
+		_ = newNotificationMessage(messageHeaderError, badMessageLength, nil)
+	}
 }
 
 func (f *fsm) open() {
