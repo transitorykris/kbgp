@@ -101,10 +101,8 @@ func (s *Speaker) listener() {
 
 		log.Printf("Matching peer found AS%d remote IP %s", f.peer.remoteAS, f.peer.remoteIP)
 
-		// - Check if the FSM is okay to take a new connection
-
-		// - Set s.fsm.peer.conn to this conn
-		f.peer.conn = conn
+		// - Set the incoming connection in the FSM
+		f.peer.incomingConn = conn
 
 		// Event 14: TcpConnection_Valid
 

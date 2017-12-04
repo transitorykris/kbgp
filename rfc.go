@@ -1909,7 +1909,13 @@ type fsm struct {
 }
 
 type peer struct {
+	// conn is the winning connection with this peer
 	conn net.Conn
+
+	// incomingConn and outgoingConn is a waiting room while managing
+	// connection collisions
+	incomingConn net.Conn
+	outgoingConn net.Conn
 
 	remoteAS uint16
 	remoteIP net.IP
@@ -1954,7 +1960,9 @@ func (f *fsm) dial() {
 	// 					 received a TCP SYN/ACK message, and sent a TCP ACK.
 
 	// 		 Status:     Mandatory
-	f.peer.conn = conn
+	f.peer.outgoingConn = conn
+	// Note: This event is probably incorrect. I believe it's for incoming
+	// connection requests.
 	f.sendEvent(tcpCRAcked)
 }
 
