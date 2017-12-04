@@ -1909,7 +1909,7 @@ type fsm struct {
 }
 
 type peer struct {
-	tcp *net.Conn
+	conn *net.Conn
 
 	remoteAS uint16
 	remoteIP net.IP
@@ -1918,7 +1918,13 @@ type peer struct {
 	adjRIBOut *adjRIBOut
 }
 
+func newPeer() *peer {
+	p := &peer{}
+	return p
+}
+
 func (f *fsm) initialize() {
+	fmt.Println("Initializing")
 	f.peer.adjRIBIn = newAdjRIBIn()
 	f.peer.adjRIBOut = newAdjRIBOut()
 }
@@ -2667,6 +2673,7 @@ func newFSM() *fsm {
 		passiveTCPEstablishment:            false,
 		sendNotificationwithoutOpen:        false,
 		trackTCPState:                      false,
+		peer:                               newPeer(),
 	}
 	// Initialize timers
 	f.delayOpenTimer = timer.New(defaultDelayOpenTime, f.sendEvent(delayOpenTimerExpires))

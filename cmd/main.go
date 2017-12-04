@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/transitorykris/kbgp"
 )
@@ -25,8 +24,10 @@ func main() {
 	}
 	bgp.Start()
 
-	time.Sleep(5 * time.Second)
+	select {}
 
-	bgp.Stop()
-	log.Println("Exiting")
+	//time.Sleep(5 * time.Second)
+
+	//bgp.Stop()
+	//log.Println("Exiting")
 }
