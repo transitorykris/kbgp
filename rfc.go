@@ -1958,6 +1958,12 @@ func (f *fsm) dial() {
 	f.sendEvent(tcpCRAcked)
 }
 
+// drops the TCP connection
+func (f *fsm) drop() error {
+	err := f.peer.conn.Close()
+	return err
+}
+
 func (f *fsm) write(v interface{}) {
 	// TODO: Serialize the interface's values as raw bytes
 }
@@ -2862,6 +2868,7 @@ func (f *fsm) connect(event int) {
 	case manualStop:
 		//       In response to a ManualStop event (Event 2), the local system:
 		//         - drops the TCP connection,
+		f.drop()
 		//         - releases all BGP resources,
 		f.release()
 		//         - sets ConnectRetryCounter to zero,
@@ -2875,11 +2882,13 @@ func (f *fsm) connect(event int) {
 		//       In response to the ConnectRetryTimer_Expires event (Event 9), the
 		//       local system:
 		//         - drops the TCP connection,
+		f.drop()
 		//         - restarts the ConnectRetryTimer,
 		f.connectRetryTimer.Reset(f.connectRetryTime)
 		//         - stops the DelayOpenTimer and resets the timer to zero,
 		f.delayOpenTimer.Stop()
 		//         - initiates a TCP connection to the other BGP peer,
+		f.dial()
 		//         - continues to listen for a connection that may be initiated by
 		//           the remote BGP peer, and
 		//         - stays in the Connect state.
@@ -2946,6 +2955,7 @@ func (f *fsm) connect(event int) {
 		//         - stops the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - releases all BGP resources, and
 		f.release()
 		//         - changes its state to Idle.
@@ -2996,6 +3006,7 @@ func (f *fsm) connect(event int) {
 		//         - stops the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - releases all BGP resources, and
 		f.release()
 		//         - changes its state to Idle.
@@ -3019,6 +3030,7 @@ func (f *fsm) connect(event int) {
 		//         - stops the ConnectRetryTimer to zero,
 		f.connectRetryTimer.Stop()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - releases all BGP resources, and
 		f.release()
 		//         - changes its state to Idle.
@@ -3070,6 +3082,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3094,6 +3107,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3116,6 +3130,7 @@ func (f *fsm) connect(event int) {
 			//         - releases all BGP resources,
 			f.release()
 			//         - drops the TCP connection, and
+			f.drop()
 			//         - changes its state to Idle.
 			f.transition(idle)
 			return
@@ -3127,6 +3142,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - performs peer oscillation damping if the DampPeerOscillations
@@ -3148,6 +3164,7 @@ func (f *fsm) connect(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - performs peer oscillation damping if the DampPeerOscillations
@@ -3185,6 +3202,7 @@ func (f *fsm) active(event int) {
 		f.release()
 		f.delayOpenTimer.Stop()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - stops the ConnectRetryTimer and sets the ConnectRetryTimer to
@@ -3198,6 +3216,7 @@ func (f *fsm) active(event int) {
 		//         - restarts the ConnectRetryTimer (with initial value),
 		f.connectRetryTimer.Reset(f.connectRetryTime)
 		//         - initiates a TCP connection to the other BGP peer,
+		f.dial()
 		//         - continues to listen for a TCP connection that may be initiated
 		//           by a remote BGP peer, and
 		//         - changes its state to Connect.
@@ -3346,6 +3365,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3369,6 +3389,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3391,6 +3412,7 @@ func (f *fsm) active(event int) {
 			//         - releases all BGP resources,
 			f.release()
 			//         - drops the TCP connection, and
+			f.drop()
 			//         - changes its state to Idle.
 			f.transition(idle)
 			return
@@ -3401,6 +3423,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3418,6 +3441,7 @@ func (f *fsm) active(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by one,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3451,6 +3475,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - sets the ConnectRetryCounter to zero, and
 		f.connectRetryCounter = 0
 		//         - changes its state to Idle.
@@ -3465,6 +3490,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all the BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3484,6 +3510,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3560,6 +3587,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3587,6 +3615,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3604,6 +3633,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection, and
+		f.drop()
 		//         - changes its state to Idle.
 		f.transition(idle)
 	default:
@@ -3617,6 +3647,7 @@ func (f *fsm) openSent(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3648,6 +3679,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - sets the ConnectRetryTimer to zero, and
@@ -3664,6 +3696,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3684,6 +3717,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3727,6 +3761,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3745,6 +3780,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3762,6 +3798,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection, and
+		f.drop()
 		//         - changes its state to Idle.
 		f.transition(idle)
 	case bgpOpen:
@@ -3776,6 +3813,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection (send TCP FIN),
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3797,6 +3835,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3818,6 +3857,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3841,6 +3881,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3868,6 +3909,7 @@ func (f *fsm) openConfirm(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3903,6 +3945,7 @@ func (f *fsm) established(event int) {
 		//         - releases BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - sets the ConnectRetryCounter to zero, and
 		f.connectRetryCounter = 0
 		//          - changes its state to Idle.
@@ -3917,6 +3960,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3942,6 +3986,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -3992,6 +4037,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -4011,6 +4057,7 @@ func (f *fsm) established(event int) {
 		//         - releases all the BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - changes its state to Idle.
@@ -4025,6 +4072,7 @@ func (f *fsm) established(event int) {
 		//         - releases all the BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - changes its state to Idle.
@@ -4039,6 +4087,7 @@ func (f *fsm) established(event int) {
 		//         - releases all the BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - changes its state to Idle.
@@ -4076,6 +4125,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
@@ -4097,6 +4147,7 @@ func (f *fsm) established(event int) {
 		//         - releases all BGP resources,
 		f.release()
 		//         - drops the TCP connection,
+		f.drop()
 		//         - increments the ConnectRetryCounter by 1,
 		f.connectRetryCounter++
 		//         - (optionally) performs peer oscillation damping if the
