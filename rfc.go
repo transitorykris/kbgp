@@ -2048,7 +2048,7 @@ func (f *fsm) readNotification(message []byte) {
 func (f *fsm) readKeepalive(message []byte) {
 	// Related events
 	// keepAliveMsg
-	if length != 0 {
+	if len(message) != 0 {
 		// Send a notification
 		_ = newNotificationMessage(messageHeaderError, badMessageLength, nil)
 	}
