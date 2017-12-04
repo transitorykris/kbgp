@@ -2,6 +2,7 @@ package kbgp
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -101,7 +102,7 @@ func TestNewNotificationMessage(t *testing.T) {
 }
 
 func TestNewFSM(t *testing.T) {
-	f := newFSM()
+	f := newFSM(1, net.ParseIP("1.2.3.4"))
 	if f.state != idle {
 		t.Errorf("New FSMs start in the idle state, instead it's state %d", f.state)
 	}
@@ -143,4 +144,78 @@ func TestRelease(t *testing.T) {
 	if f.peer.adjRIBOut != nil {
 		t.Errorf("Expected adjRIBOut to be nil but got %v", f.peer.adjRIBOut)
 	}
+}
+
+func TestReadMessage(t *testing.T) {
+	raw := []byte{
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
+		0x00, 0x00, // Length
+		0x01, // Type
+	}
+	fmt.Println("Creating a new FSM")
+	f := new(fsm)
+	fmt.Println("Adding a peer to it")
+	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
+	fmt.Println("Creating a mock connection")
+	f.peer.conn = newConn(raw)
+	// Add mock net.Conn to fsm
+	// Write raw to it
+	fmt.Println("Reading the message header and the message")
+	header, message := f.readMessage()
+	// Check that the header has the correct marker, and expected length and type
+	if bytes.Compare(header.marker[:], raw[:16]) != 0 {
+		t.Errorf("Header marker should be %v but got %v", raw[:16], header.marker)
+	}
+	// Check that the message length is equal to the expected length
+	if len(message) != 0 {
+		t.Errorf("Expected message length to be 0 but got %d", len(message))
+	}
+	if header.messageType != 0x01 {
+		t.Errorf("Expected the message type to be %v but got %d", raw[18], header.messageType)
+	}
+}
+
+// TODO: Mock net.Conn
+type conn struct {
+	bs []byte
+}
+
+func newConn(bs []byte) *conn {
+	fmt.Printf("Creating a new connection with %d bytes of data\n", len(bs))
+	fmt.Println("The data is", bs)
+	return &conn{bs: bs}
+}
+
+func (c *conn) Read(b []byte) (n int, err error) {
+	copy(b, c.bs)
+	return len(c.bs), nil
+}
+
+func (c *conn) Write(b []byte) (n int, err error) {
+	return 0, nil
+}
+
+func (c *conn) Close() error {
+	return nil
+}
+
+func (c *conn) LocalAddr() net.Addr {
+	return nil
+}
+
+func (c *conn) RemoteAddr() net.Addr {
+	return nil
+}
+
+func (c *conn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *conn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *conn) SetWriteDeadline(t time.Time) error {
+	return nil
 }

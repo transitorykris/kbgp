@@ -1,6 +1,9 @@
 package kbgp
 
-import "testing"
+import (
+	"net"
+	"testing"
+)
 
 func TestNew(t *testing.T) {
 	as := uint16(1234)
@@ -31,7 +34,7 @@ func TestStop(t *testing.T) {
 
 func TestAddPeer(t *testing.T) {
 	s := New(uint16(1234), uint32(4567))
-	err := s.AddPeer()
+	err := s.AddPeer(1, net.ParseIP("1.2.3.4"))
 	if err != nil {
 		t.Errorf("Expected AddPeer to return nil but got %s", err.Error())
 	}

@@ -2006,42 +2006,67 @@ func (f *fsm) read(count int) []byte {
 	b := make([]byte, minMessageLength, maxMessageLength)
 
 	// Read enough bytes for the message header
+	if count == 0 {
+		return nil
+	}
 	for {
-		n, err := f.peer.conn.Read(b[len(b):]) // Does this do what I think it does?
+		fmt.Printf("Reading in %d bytes from conn\n", len(b))
+		n, err := f.peer.conn.Read(b) // Does this do what I think it does?
 		if err != nil {
 			// Fail... shut it down
+			fmt.Println("tcpConnectionFails event")
 			f.sendEvent(tcpConnectionFails)
 		}
 		if n < count {
+			fmt.Println("We did not read in the expected number of bytes, got", n)
 			continue
 		}
+		fmt.Println("Got", n, "bytes, breaking")
 		break
 	}
-
-	return b[:count-1]
+	fmt.Printf("Returning %d bytes\n", len(b))
+	return b[:count]
 }
 
 func (f *fsm) readMessage() (messageHeader, []byte) {
+	//       0                   1                   2                   3
+	//       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//       |                                                               |
+	//       +                                                               +
+	//       |                                                               |
+	//       +                                                               +
+	//       |                           Marker                              |
+	//       +                                                               +
+	//       |                                                               |
+	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//       |          Length               |      Type     |
+	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// 1. Read in the message header
 	// 2. Check that the header is valid
 	//		- if it is not send a bgpHeaderErr event
+	fmt.Println("Reading raw message header")
 	rawHeader := f.read(messageHeaderLength)
-
+	fmt.Println("Creating a new buffer")
 	buf := bytes.NewBuffer(rawHeader)
 
 	var marker [markerLength]byte
+	fmt.Println("Reading marker")
 	copy(marker[:], buf.Next(markerLength)) // Note: We expect this to be all 1's
-	length := binary.BigEndian.Uint16(buf.Next(lengthLength))
-	messageType, _ := buf.ReadByte()
+	fmt.Println("Reading length")
+	length := readUint16(buf)
+	fmt.Println("Reading message type")
+	messageType := readByte(buf)
+	fmt.Println("Got message type", messageType)
 
 	header := messageHeader{
 		marker:      marker,
 		length:      length,
 		messageType: messageType,
 	}
-
+	fmt.Println("Reading in raw message")
 	message := f.read(int(header.length))
-
+	fmt.Println("Returning header and raw message", header, message)
 	return header, message
 }
 
