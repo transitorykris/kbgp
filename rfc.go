@@ -568,6 +568,9 @@ type messageHeader struct {
 }
 
 const markerLength = 16
+const lengthLength = 2
+const typeLength = 1
+const messageHeaderLength = markerLength + lengthLength + typeLength
 
 func marker() [markerLength]byte {
 	b := bytes.Repeat([]byte{0xFF}, markerLength)
@@ -1996,25 +1999,67 @@ func (f *fsm) reader() {
 	}
 }
 
-func (f *fsm) read() {
-	// TODO: Read the next message
+func (f *fsm) read(count int) []byte {
+	b := make([]byte, minMessageLength, maxMessageLength)
 
-	// Read the message header
-	// Use the type to determine what to read in next
-	// Use the length to determine how much needs to be read
+	// Read enough bytes for the message header
+	for {
+		n, err := f.peer.conn.Read(b[len(b):]) // Does this do what I think it does?
+		if err != nil {
+			// Fail... shut it down
+			f.sendEvent(tcpConnectionFails)
+		}
+		if n < count {
+			continue
+		}
+		break
+	}
 
-	// If the read fails, the TCP connection is likely closed
-	// f.sendEvent(tcpConnectionFails)
+	return b[:count-1]
 }
 
 func (f *fsm) readMessage() (messageHeader, []byte) {
 	// 1. Read in the message header
 	// 2. Check that the header is valid
 	//		- if it is not send a bgpHeaderErr event
-	return messageHeader{}, nil
+	rawHeader := f.read(messageHeaderLength)
+
+	buf := bytes.NewBuffer(rawHeader)
+
+	var marker [markerLength]byte
+	copy(marker[:], buf.Next(markerLength)) // Note: We expect this to be all 1's
+	length := binary.BigEndian.Uint16(buf.Next(lengthLength))
+	messageType, _ := buf.ReadByte()
+
+	header := messageHeader{
+		marker:      marker,
+		length:      length,
+		messageType: messageType,
+	}
+
+	message := f.read(int(header.length))
+
+	return header, message
 }
 
 func (f *fsm) readOpen(message []byte) {
+	//        0                   1                   2                   3
+	//        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	//        +-+-+-+-+-+-+-+-+
+	//        |    Version    |
+	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//        |     My Autonomous System      |
+	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//        |           Hold Time           |
+	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//        |                         BGP Identifier                        |
+	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//        | Opt Parm Len  |
+	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//        |                                                               |
+	//        |             Optional Parameters (variable)                    |
+	//        |                                                               |
+	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// 1. Read in the message
 	// 2. Check that the header is valid
 	//		- if it is not send a BGPHeaderErr event
@@ -2029,6 +2074,17 @@ func (f *fsm) readOpen(message []byte) {
 }
 
 func (f *fsm) readUpdate(message []byte) {
+	//       +-----------------------------------------------------+
+	//       |   Withdrawn Routes Length (2 octets)                |
+	//       +-----------------------------------------------------+
+	//       |   Withdrawn Routes (variable)                       |
+	//       +-----------------------------------------------------+
+	//       |   Total Path Attribute Length (2 octets)            |
+	//       +-----------------------------------------------------+
+	//       |   Path Attributes (variable)                        |
+	//       +-----------------------------------------------------+
+	//       |   Network Layer Reachability Information (variable) |
+	//       +-----------------------------------------------------+
 	// 1. Read in the message
 	// 2. Check that the header is valid
 	//		- If it is not send a BGPHeaderErr event
@@ -2038,20 +2094,40 @@ func (f *fsm) readUpdate(message []byte) {
 }
 
 func (f *fsm) readNotification(message []byte) {
+	//       0                   1                   2                   3
+	//       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//       | Error code    | Error subcode |   Data (variable)             |
+	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// 1. Read in the message
+	buf := bytes.NewBuffer(message)
+	code, _ := buf.ReadByte()
+	subcode, _ := buf.ReadByte()
+	var data []byte
+	buf.Read(data)
+
+	n := newNotificationMessage(int(code), int(subcode), data)
 	// 2. Check that the header is valid
 	//		- If it is not send a BGPHeaderErr event
 	// 3. If it is a version error send a NotifMsgVerErr event
+	if n.code == openMessageError && n.code == unsupportedVersionNumber {
+		f.sendEvent(notifMsgVerErr)
+		return
+	}
 	// 4. Otherwise send a NotifMsg event
+	f.sendEvent(notifMsg)
+
+	// TODO: How and where do we make the notification data available?
 }
 
 func (f *fsm) readKeepalive(message []byte) {
 	// Related events
-	// keepAliveMsg
 	if len(message) != 0 {
 		// Send a notification
 		_ = newNotificationMessage(messageHeaderError, badMessageLength, nil)
+		return
 	}
+	f.sendEvent(keepAliveMsg)
 }
 
 func (f *fsm) open() {
