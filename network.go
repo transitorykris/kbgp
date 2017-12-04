@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 )
 
 // FindBGPIdentifier tries to find the best possible identifier from all
@@ -49,4 +51,15 @@ func Uint32ToIP(i uint32) net.IP {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, i)
 	return ip
+}
+
+// parseAddr splits the IP and port
+func parseAddr(a net.Addr) (string, uint16) {
+	addr := strings.Split(a.String(), ":")
+	ip := addr[0]
+	port, err := strconv.Atoi(addr[1])
+	if err != nil {
+		port = 0
+	}
+	return ip, uint16(port)
 }

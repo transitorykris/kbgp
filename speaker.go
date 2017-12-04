@@ -47,7 +47,7 @@ func (s *Speaker) Stop() {
 }
 
 // AddPeer configures a new BGP neighbor. Returns nil if successful.
-func (s *Speaker) AddPeer(remoteAS int, remoteIP net.IP) error {
+func (s *Speaker) AddPeer(remoteAS uint16, remoteIP net.IP) error {
 	s.fsm = append(s.fsm, newFSM(remoteAS, remoteIP))
 	return nil
 }
@@ -79,18 +79,12 @@ func (s *Speaker) listener() {
 		for _, v := range s.fsm {
 			// Note: this probably won't work, RemoteAddr()'s format could have things
 			// like the port attached to it. There may be a better way..
-			if v.peer.remoteIP.String() == conn.RemoteAddr().String() {
+			remoteIP, _ := parseAddr(conn.RemoteAddr())
+			if v.peer.remoteIP.String() == remoteIP {
 				f = v
 				break
 			}
 		}
-
-		// TODO: Allow binding listeners to specific IP addresses
-		// If the remote address does not match the expected remote address
-		// we would reject the connection. In this case we would check if
-		// TrackTcpState is true and if so send a Tcp_CR_Invalid message to
-		// the FSM.
-
 		// If we found no associated FSM, close the connection.
 		if f == nil {
 			log.Println("No matching peer found, closing TCP connection")
@@ -99,6 +93,15 @@ func (s *Speaker) listener() {
 			conn.Close()
 			continue // Accept the next connection
 		}
+
+		// TODO: Allow binding listeners to specific IP addresses
+		// If the remote address does not match the expected remote address
+		// we would reject the connection. In this case we would check if
+		// TrackTcpState is true and if so send a Tcp_CR_Invalid message to
+		// the FSM.
+
+		log.Printf("Matching peer found AS%d remote IP %s", f.peer.remoteAS, f.peer.remoteIP)
+
 		// - Check if the FSM is okay to take a new connection
 
 		// - Set s.fsm.peer.conn to this conn
