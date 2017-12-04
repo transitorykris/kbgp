@@ -1970,6 +1970,12 @@ func (f *fsm) write(v interface{}) {
 	// f.sendEvent(tcpConnectionFails)
 }
 
+func (f *fsm) read() {
+	// TODO: Read the next message
+	// If the read fails, the TCP connection is likely closed
+	// f.sendEvent(tcpConnectionFails)
+}
+
 func (f *fsm) open() {
 	// TODO: Implement me
 	//o := newOpenMessage()
