@@ -1983,9 +1983,12 @@ func (f *fsm) write(v interface{}) {
 
 // read perpetually processes messages and routes them to where they need to go
 func (f *fsm) reader() {
+	fmt.Println("Reading message")
 	header, message := f.readMessage()
+	fmt.Println("Header:", header)
 	switch header.messageType {
 	case open:
+		fmt.Println("Reading open message")
 		f.readOpen(message)
 	case update:
 		f.readUpdate(message)
@@ -1994,8 +1997,8 @@ func (f *fsm) reader() {
 	case keepalive:
 		f.readKeepalive(message)
 	default:
-		// Send a NOTIFICATION
-		_ = newNotificationMessage(messageHeaderError, badMessageType, nil)
+		// NOTIFICATION - messageHeaderError, badMessageType
+		fmt.Println("NOTIFICATION - messageHeaderError, badMessageType")
 	}
 }
 
@@ -2042,6 +2045,26 @@ func (f *fsm) readMessage() (messageHeader, []byte) {
 	return header, message
 }
 
+func readBytes(n int, buf *bytes.Buffer) []byte {
+	bs := make([]byte, n, n)
+	for i := range bs {
+		bs[i], _ = buf.ReadByte()
+	}
+	return bs
+}
+
+func readByte(buf *bytes.Buffer) byte {
+	return readBytes(1, buf)[0]
+}
+
+func readUint16(buf *bytes.Buffer) uint16 {
+	return binary.BigEndian.Uint16(readBytes(2, buf))
+}
+
+func readUint32(buf *bytes.Buffer) uint32 {
+	return binary.BigEndian.Uint32(readBytes(4, buf))
+}
+
 func (f *fsm) readOpen(message []byte) {
 	//        0                   1                   2                   3
 	//        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -2061,8 +2084,30 @@ func (f *fsm) readOpen(message []byte) {
 	//        |                                                               |
 	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// 1. Read in the message
+	buf := bytes.NewBuffer(message)
 	// 2. Check that the header is valid
 	//		- if it is not send a BGPHeaderErr event
+	open := new(openMessage)
+	open.version = readByte(buf)
+	if open.version != version {
+		// NOTIFICATION - openMessageError, unsupportedVersionNumber
+		fmt.Println("NOTIFICATION - openMessageError, unsupportedVersionNumber")
+	}
+	open.myAS = readUint16(buf)
+	if open.myAS != f.peer.remoteAS {
+		// NOTIFICATION - openMessageError, badPeerAS
+		fmt.Println("NOTIFICATION - openMessageError, badPeerAS")
+	}
+	open.holdTime = readUint16(buf)
+	if open.holdTime > 0 && open.holdTime < 3 {
+		// NOTIFICATION - openMessageError, unacceptableHoldTime
+		fmt.Println("NOTIFICATION - openMessageError, badPeerAS")
+	}
+	open.bgpIdentifier = readUint32(buf)
+	// TODO: What is an unacceptable bgp identifier?
+	open.optParmLen = readByte(buf)
+	// Note: We should be reading this into a parameters struct
+	open.optParameters = readBytes(int(open.optParmLen), buf)
 	// 3. Check that the message is valid
 	//		- if it is not send a BGPOpenMsgErr event
 	// 4. Check to see if there is a collision and this connection
@@ -2071,6 +2116,7 @@ func (f *fsm) readOpen(message []byte) {
 	// 5. Check if the peer is delaying sending a BGP open message
 	//		- if so, send BGPOpenWithDelayOpenTimerRunning event
 	// 6. Otherwise send a BGPOpen event
+	fmt.Println("Open message:", open)
 }
 
 func (f *fsm) readUpdate(message []byte) {
