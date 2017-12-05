@@ -2227,7 +2227,7 @@ func (f *fsm) readAttributeType(bs []byte) (attributeType, *notificationMessage)
 	return attribute, nil
 }
 
-func (f *fsm) readNLRI(bs []byte) ([]*nlri, *notificationMessage) {
+func (f *fsm) readNLRI(bs []byte) (*nlri, *notificationMessage) {
 	//                   +---------------------------+
 	//                   |   Length (1 octet)        |
 	//                   +---------------------------+
@@ -2236,7 +2236,7 @@ func (f *fsm) readNLRI(bs []byte) ([]*nlri, *notificationMessage) {
 	buf := bytes.NewBuffer(bs)
 	nlri := new(nlri)
 	nlri.length = readByte(buf)
-	nlri.prefix = readBytes(nlri.length, buf)
+	nlri.prefix = readBytes(int(nlri.length), buf)
 	return nlri, nil
 }
 
