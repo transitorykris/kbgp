@@ -1936,7 +1936,6 @@ func newPeer(remoteAS uint16, remoteIP net.IP) *peer {
 }
 
 func (f *fsm) initialize() {
-	fmt.Println("Initializing")
 	f.peer.adjRIBIn = newAdjRIBIn()
 	f.peer.adjRIBOut = newAdjRIBOut()
 }
@@ -1983,12 +1982,9 @@ func (f *fsm) write(v interface{}) {
 
 // read perpetually processes messages and routes them to where they need to go
 func (f *fsm) reader() {
-	fmt.Println("Reading message")
 	header, message := f.readMessage()
-	fmt.Println("Header:", header)
 	switch header.messageType {
 	case open:
-		fmt.Println("Reading open message")
 		f.readOpen(message)
 	case update:
 		f.readUpdate(message)
@@ -1998,7 +1994,6 @@ func (f *fsm) reader() {
 		f.readKeepalive(message)
 	default:
 		// NOTIFICATION - messageHeaderError, badMessageType
-		fmt.Println("NOTIFICATION - messageHeaderError, badMessageType")
 	}
 }
 
@@ -2011,21 +2006,16 @@ func (f *fsm) read(count int) []byte {
 		return nil
 	}
 	for {
-		fmt.Printf("Reading in %d bytes from conn\n", len(b))
 		n, err := f.peer.conn.Read(b) // Does this do what I think it does?
 		if err != nil {
 			// Fail... shut it down
-			fmt.Println("tcpConnectionFails event")
 			f.sendEvent(tcpConnectionFails) // This should not be here
 		}
 		if n < count {
-			fmt.Println("We did not read in the expected number of bytes, got", n)
 			continue
 		}
-		fmt.Println("Got", n, "bytes, breaking")
 		break
 	}
-	fmt.Printf("Returning %d bytes\n", len(b))
 	return b[:count]
 }
 
@@ -2046,28 +2036,20 @@ func (f *fsm) readMessage() (messageHeader, []byte) {
 	// 1. Read in the message header
 	// 2. Check that the header is valid
 	//		- if it is not send a bgpHeaderErr event
-	fmt.Println("Reading raw message header")
 	rawHeader := f.read(messageHeaderLength)
-	fmt.Println("Creating a new buffer")
 	buf := bytes.NewBuffer(rawHeader)
 
 	var marker [markerLength]byte
-	fmt.Println("Reading marker")
 	copy(marker[:], buf.Next(markerLength)) // Note: We expect this to be all 1's
-	fmt.Println("Reading length")
 	length := readUint16(buf)
-	fmt.Println("Reading message type")
 	messageType := readByte(buf)
-	fmt.Println("Got message type", messageType)
 
 	header := messageHeader{
 		marker:      marker,
 		length:      length,
 		messageType: messageType,
 	}
-	fmt.Println("Reading in raw message")
 	message := f.read(int(header.length))
-	fmt.Println("Returning header and raw message", header, message)
 	return header, message
 }
 
@@ -2117,17 +2099,14 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	open.version = readByte(buf)
 	if open.version != version {
 		// NOTIFICATION - openMessageError, unsupportedVersionNumber
-		fmt.Println("NOTIFICATION - openMessageError, unsupportedVersionNumber")
 	}
 	open.myAS = readUint16(buf)
 	if open.myAS != f.peer.remoteAS {
 		// NOTIFICATION - openMessageError, badPeerAS
-		fmt.Println("NOTIFICATION - openMessageError, badPeerAS")
 	}
 	open.holdTime = readUint16(buf)
 	if open.holdTime > 0 && open.holdTime < 3 {
 		// NOTIFICATION - openMessageError, unacceptableHoldTime
-		fmt.Println("NOTIFICATION - openMessageError, badPeerAS")
 	}
 	open.bgpIdentifier = readUint32(buf)
 	// TODO: What is an unacceptable bgp identifier?
@@ -2142,7 +2121,6 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	// 5. Check if the peer is delaying sending a BGP open message
 	//		- if so, send BGPOpenWithDelayOpenTimerRunning event
 	// 6. Otherwise send a BGPOpen event
-	fmt.Println("Open message:", open)
 	return open
 }
 

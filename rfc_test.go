@@ -2,7 +2,6 @@ package kbgp
 
 import (
 	"bytes"
-	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -153,15 +152,11 @@ func TestReadMessage(t *testing.T) {
 		0x00, 0x00, // Length
 		0x01, // Type
 	}
-	fmt.Println("Creating a new FSM")
 	f := new(fsm)
-	fmt.Println("Adding a peer to it")
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
-	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
 	// Add mock net.Conn to fsm
 	// Write raw to it
-	fmt.Println("Reading the message header and the message")
 	header, message := f.readMessage()
 	// Check that the header has the correct marker, and expected length and type
 	if bytes.Compare(header.marker[:], raw[:16]) != 0 {
@@ -188,13 +183,9 @@ func TestReadOpen(t *testing.T) {
 		0x01, 0x02, 0x03, 0x04, // BGP Identifier
 		0x00, // 0 length = no optional parameters
 	}
-	fmt.Println("Creating a new FSM")
 	f := new(fsm)
-	fmt.Println("Adding a peer to it")
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
-	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
-	fmt.Println("Reading the message header and the message")
 	header, message := f.readMessage()
 	if len(message) != 9 {
 		t.Error("Expected message length to be 0 but got", len(message))
@@ -230,13 +221,9 @@ func TestReadKeepalive(t *testing.T) {
 		0x00, 0x00, // Length
 		0x04, // Type (Open)
 	}
-	fmt.Println("Creating a new FSM")
 	f := new(fsm)
-	fmt.Println("Adding a peer to it")
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
-	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
-	fmt.Println("Reading the message header and the message")
 	header, message := f.readMessage()
 	if len(message) != 0 {
 		t.Error("Expected message length to be 0 but got", len(message))
@@ -260,13 +247,9 @@ func TestReadNotification(t *testing.T) {
 		0x02, // Bad Message Length
 		// No data
 	}
-	fmt.Println("Creating a new FSM")
 	f := new(fsm)
-	fmt.Println("Adding a peer to it")
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
-	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
-	fmt.Println("Reading the message header and the message")
 	header, message := f.readMessage()
 	if len(message) != 2 {
 		t.Error("Expected message length to be 2 but got", len(message))
@@ -288,13 +271,9 @@ func TestReadNotification(t *testing.T) {
 		0x11,                   // Malformed AS_PATH
 		0x12, 0x34, 0x56, 0x7a, // Some random data
 	}
-	fmt.Println("Creating a new FSM")
 	f = new(fsm)
-	fmt.Println("Adding a peer to it")
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
-	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
-	fmt.Println("Reading the message header and the message")
 	header, message = f.readMessage()
 	if len(message) != 6 {
 		t.Error("Expected message length to be 6 but got", len(message))
@@ -316,13 +295,9 @@ func TestReadUpdate(t *testing.T) {
 		0x02, // Type (Update)
 		// Update with no data? whhhaaa :D
 	}
-	fmt.Println("Creating a new FSM")
 	f := new(fsm)
-	fmt.Println("Adding a peer to it")
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
-	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
-	fmt.Println("Reading the message header and the message")
 	header, message := f.readMessage()
 	if len(message) != 4 {
 		t.Error("Expected message length to be 4 but got", len(message))
@@ -348,14 +323,11 @@ type conn struct {
 }
 
 func newConn(bs []byte) *conn {
-	fmt.Printf("Creating a new connection with %d bytes of data\n", len(bs))
-	fmt.Println("The data is", bs)
 	return &conn{bs: bs}
 }
 
 func (c *conn) Read(b []byte) (n int, err error) {
 	count := copy(b, c.bs)
-	fmt.Println("Read copied", count, "bytes")
 	// Remove those bytes from our mock connection's buffer
 	c.bs = c.bs[count:]
 	return len(b), nil
