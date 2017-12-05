@@ -2107,6 +2107,10 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	return open
 }
 
+func (f *fsm) readOptionalParameters(params []byte) []*parameter {
+	return nil
+}
+
 func (f *fsm) readUpdate(message []byte) *updateMessage {
 	//       +-----------------------------------------------------+
 	//       |   Withdrawn Routes Length (2 octets)                |
@@ -2127,6 +2131,18 @@ func (f *fsm) readUpdate(message []byte) *updateMessage {
 	// TODO: Add reading path attributes
 	// TODO: Add reading NLRIs
 	return update
+}
+
+func (f *fsm) readWithdrawnRoutes(routes []byte) []*withdrawnRoute {
+	return nil
+}
+
+func (f *fsm) readPathAttributes(attributes []byte) []*pathAttribute {
+	return nil
+}
+
+func (f *fsm) readNLRI(nlri []byte) []*nlri {
+	return nil
 }
 
 func (f *fsm) readNotification(message []byte) *notificationMessage {

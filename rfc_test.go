@@ -214,6 +214,9 @@ func TestReadOpen(t *testing.T) {
 	}
 }
 
+func TestReadOptionalParameters(t *testing.T) {
+}
+
 func TestReadKeepalive(t *testing.T) {
 	raw := []byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -315,6 +318,15 @@ func TestReadUpdate(t *testing.T) {
 	if k.pathAttributesLength != 0 {
 		t.Errorf("Expected path attributes length to be 0 but got", k.pathAttributesLength)
 	}
+}
+
+func TestReadWithdrawnRoutes(t *testing.T) {
+}
+
+func TestReadPathAttributes(t *testing.T) {
+}
+
+func TestReadNLRI(t *testing.T) {
 }
 
 // TODO: Mock net.Conn
