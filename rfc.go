@@ -829,7 +829,7 @@ type withdrawnRoute struct {
 	//             the minimum number of trailing bits needed to make the end
 	//             of the field fall on an octet boundary.  Note that the value
 	//             of trailing bits is irrelevant.
-	prefixes []byte
+	prefix []byte
 }
 
 //       Total Path Attribute Length:
@@ -1133,13 +1133,13 @@ type notificationMessage struct {
 	data    []byte
 }
 
-func newNotificationMessage(code int, subcode int, data []byte) notificationMessage {
+func newNotificationMessage(code int, subcode int, data []byte) *notificationMessage {
 	n := notificationMessage{
 		code:    byte(code),
 		subcode: byte(subcode),
 		data:    data,
 	}
-	return n
+	return &n
 }
 
 //       Error Code:
@@ -2067,7 +2067,7 @@ func readUint32(buf *bytes.Buffer) uint32 {
 	return binary.BigEndian.Uint32(readBytes(4, buf))
 }
 
-func (f *fsm) readOpen(message []byte) *openMessage {
+func (f *fsm) readOpen(message []byte) (*openMessage, *notificationMessage) {
 	//        0                   1                   2                   3
 	//        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	//        +-+-+-+-+-+-+-+-+
@@ -2089,29 +2089,34 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	open := new(openMessage)
 	open.version = readByte(buf)
 	if open.version != version {
-		// NOTIFICATION - openMessageError, unsupportedVersionNumber
+		return nil, newNotificationMessage(openMessageError, unsupportedVersionNumber, nil)
 	}
 	open.myAS = readUint16(buf)
 	if open.myAS != f.peer.remoteAS {
-		// NOTIFICATION - openMessageError, badPeerAS
+		return nil, newNotificationMessage(openMessageError, badPeerAS, nil)
 	}
 	open.holdTime = readUint16(buf)
 	if open.holdTime > 0 && open.holdTime < 3 {
-		// NOTIFICATION - openMessageError, unacceptableHoldTime
+		return nil, newNotificationMessage(openMessageError, unacceptableHoldTime, nil)
 	}
 	open.bgpIdentifier = readUint32(buf)
 	// TODO: What is an unacceptable bgp identifier?
 	open.optParmLen = readByte(buf)
 	// Note: We should be reading this into a parameters struct
 	open.optParameters = readBytes(int(open.optParmLen), buf)
-	return open
+	return open, nil
 }
 
-func (f *fsm) readOptionalParameters(params []byte) []*parameter {
-	return nil
+func (f *fsm) readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
+	//          0                   1
+	//          0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+	//          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
+	//          |  Parm. Type   | Parm. Length  |  Parameter Value (variable)
+	//          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...
+	return nil, nil
 }
 
-func (f *fsm) readUpdate(message []byte) *updateMessage {
+func (f *fsm) readUpdate(message []byte) (*updateMessage, error) {
 	//       +-----------------------------------------------------+
 	//       |   Withdrawn Routes Length (2 octets)                |
 	//       +-----------------------------------------------------+
@@ -2126,23 +2131,99 @@ func (f *fsm) readUpdate(message []byte) *updateMessage {
 	buf := bytes.NewBuffer(message)
 	update := new(updateMessage)
 	update.withdrawnRoutesLength = readUint16(buf)
-	// TODO: Add reading withdrawn routes
+	update.withdrawnRoutes, _ = f.readWithdrawnRoutes(
+		int(update.withdrawnRoutesLength),
+		readBytes(int(update.withdrawnRoutesLength), buf),
+	)
 	update.pathAttributesLength = readUint16(buf)
+	update.readPathAttributes, _ = f.readPathAttributes(
+		int(update.pathAttributesLength),
+		readBytes(int(update.pathAttributesLength), buf),
+	)
 	// TODO: Add reading path attributes
 	// TODO: Add reading NLRIs
-	return update
+	return update, nil
 }
 
-func (f *fsm) readWithdrawnRoutes(routes []byte) []*withdrawnRoute {
-	return nil
+func (f *fsm) readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *notificationMessage) {
+	count := 0
+	routes := []withdrawnRoute{}
+	for count != length {
+		wr, notif := f.readWithdrawnRoute(bs)
+		if notif != nil {
+			return nil, notif
+		}
+		routes = append(routes, *wr)
+		// Remove what we just read into a withdrawn route
+		bs = bs[wr.length:]
+		count += int(wr.length)
+	}
+	return routes, nil
 }
 
-func (f *fsm) readPathAttributes(attributes []byte) []*pathAttribute {
-	return nil
+func (f *fsm) readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessage) {
+	//                   +---------------------------+
+	//                   |   Length (1 octet)        |
+	//                   +---------------------------+
+	//                   |   Prefix (variable)       |
+	//                   +---------------------------+
+	buf := bytes.NewBuffer(bs)
+	route := new(withdrawnRoute)
+	route.length = readByte(buf)
+	route.prefix = readBytes(int(route.length), buf)
+	return route, nil
 }
 
-func (f *fsm) readNLRI(nlri []byte) []*nlri {
-	return nil
+func (f *fsm) readPathAttributes(length int, bs []byte) ([]pathAttribute, *notificationMessage) {
+	count := 0
+	attributes := []pathAttribute{}
+	for count != length {
+		pa, notif := f.readPathAttribute(bs)
+		if notif != nil {
+			return nil, notif
+		}
+		attributes = append(attributes, pa)
+		// Remove what we just read
+		bs = bs[pa.attributeLength:]
+		count += int(pa.attributeLength)
+	}
+	return attributes, nil
+}
+
+func (f *fsm) readPathAttribute(bs []byte) (pathAttribute, *notificationMessage) {
+	//       Path Attributes:
+	//          A variable-length sequence of path attributes is present in
+	//          every UPDATE message, except for an UPDATE message that carries
+	//          only the withdrawn routes.  Each path attribute is a triple
+	//          <attribute type, attribute length, attribute value> of variable
+	//          length.
+	//          Attribute Type is a two-octet field that consists of the
+	//          Attribute Flags octet, followed by the Attribute Type Code
+	//          octet.
+	//                0                   1
+	//                0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+	//                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//                |  Attr. Flags  |Attr. Type Code|
+	//                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	//buf := bytes.NewBuffer(bs)
+	//attribute := new(pathAttribute)
+	//attribute.attributeType.flags = readByte(buf)
+	//attribute.attributeType.code = readByte(buf)
+	//attribute.attributeLength = read
+	return pathAttribute{}, nil
+}
+
+func (f *fsm) readNLRI(bs []byte) ([]*nlri, *notificationMessage) {
+	//                   +---------------------------+
+	//                   |   Length (1 octet)        |
+	//                   +---------------------------+
+	//                   |   Prefix (variable)       |
+	//                   +---------------------------+
+	buf := bytes.NewBuffer(bs)
+	nlri := new(nlri)
+	nlri.length = readByte(buf)
+	nlri.prefix = readBytes(nlri.length, buf)
+	return nlri, nil
 }
 
 func (f *fsm) readNotification(message []byte) *notificationMessage {
@@ -2173,15 +2254,14 @@ func (f *fsm) readNotification(message []byte) *notificationMessage {
 	return n
 }
 
-func (f *fsm) readKeepalive(message []byte) *keepaliveMessage {
+func (f *fsm) readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
 	// Related events
 	if len(message) != 0 {
 		// Send a notification
-		_ = newNotificationMessage(messageHeaderError, badMessageLength, nil)
-		return nil
+		return nil, newNotificationMessage(messageHeaderError, badMessageLength, nil)
 	}
 	f.sendEvent(keepAliveMsg)
-	return &keepaliveMessage{}
+	return &keepaliveMessage{}, nil
 }
 
 func (f *fsm) open() {
