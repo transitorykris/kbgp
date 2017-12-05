@@ -67,3 +67,7 @@ forwarding paradigm.
 ### TCP
 
 * [TRANSMISSION CONTROL PROTOCOL](https://tools.ietf.org/html/rfc793)
+
+## License
+
+See the accompanying LICENSE file.
