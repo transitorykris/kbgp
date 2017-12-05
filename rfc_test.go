@@ -250,6 +250,36 @@ func TestReadKeepalive(t *testing.T) {
 	}
 }
 
+func TestReadNotification(t *testing.T) {
+	raw := []byte{
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
+		0x00, 0x02, // Length
+		0x03, // Type (Open)
+		0x01, // OPEN Message Error
+		0x02, // Bad Message Length
+		// No data
+	}
+	fmt.Println("Creating a new FSM")
+	f := new(fsm)
+	fmt.Println("Adding a peer to it")
+	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
+	fmt.Println("Creating a mock connection")
+	f.peer.conn = newConn(raw)
+	fmt.Println("Reading the message header and the message")
+	header, message := f.readMessage()
+	if len(message) != 2 {
+		t.Error("Expected message length to be 2 but got", len(message))
+	}
+	if header.messageType != notification {
+		t.Errorf("Expected the message type to be %d but got %d", notification, header.messageType)
+	}
+	k := f.readNotification(message)
+	if k == nil {
+		t.Errorf("Did not expect keepalive to be nil")
+	}
+}
+
 // TODO: Mock net.Conn
 type conn struct {
 	bs []byte

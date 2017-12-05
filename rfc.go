@@ -2166,7 +2166,7 @@ func (f *fsm) readUpdate(message []byte) {
 	// 4. Otherwise send an UpdateMsg event
 }
 
-func (f *fsm) readNotification(message []byte) {
+func (f *fsm) readNotification(message []byte) *notificationMessage {
 	//       0                   1                   2                   3
 	//       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -2174,23 +2174,28 @@ func (f *fsm) readNotification(message []byte) {
 	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// 1. Read in the message
 	buf := bytes.NewBuffer(message)
-	code, _ := buf.ReadByte()
-	subcode, _ := buf.ReadByte()
+	code := readByte(buf)
+	subcode := readByte(buf)
 	var data []byte
 	buf.Read(data)
 
-	n := newNotificationMessage(int(code), int(subcode), data)
+	n := &notificationMessage{
+		code:    code,
+		subcode: subcode,
+		data:    data,
+	}
 	// 2. Check that the header is valid
 	//		- If it is not send a BGPHeaderErr event
 	// 3. If it is a version error send a NotifMsgVerErr event
 	if n.code == openMessageError && n.code == unsupportedVersionNumber {
 		f.sendEvent(notifMsgVerErr)
-		return
+		return nil
 	}
 	// 4. Otherwise send a NotifMsg event
 	f.sendEvent(notifMsg)
 
 	// TODO: How and where do we make the notification data available?
+	return n
 }
 
 func (f *fsm) readKeepalive(message []byte) *keepaliveMessage {
