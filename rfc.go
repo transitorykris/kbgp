@@ -2146,7 +2146,7 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	return open
 }
 
-func (f *fsm) readUpdate(message []byte) {
+func (f *fsm) readUpdate(message []byte) *updateMessage {
 	//       +-----------------------------------------------------+
 	//       |   Withdrawn Routes Length (2 octets)                |
 	//       +-----------------------------------------------------+
@@ -2164,6 +2164,14 @@ func (f *fsm) readUpdate(message []byte) {
 	// 3. Check that the message is valid
 	//		- if it is not send an UpdateMsgErr event
 	// 4. Otherwise send an UpdateMsg event
+	buf := bytes.NewBuffer(message)
+	update := new(updateMessage)
+	update.withdrawnRoutesLength = readUint16(buf)
+	// TODO: Add reading withdrawn routes
+	update.pathAttributesLength = readUint16(buf)
+	// TODO: Add reading path attributes
+	// TODO: Add reading NLRIs
+	return update
 }
 
 func (f *fsm) readNotification(message []byte) *notificationMessage {

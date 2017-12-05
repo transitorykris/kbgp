@@ -255,7 +255,7 @@ func TestReadNotification(t *testing.T) {
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
 		0x00, 0x02, // Length
-		0x03, // Type (Open)
+		0x03, // Type (Notification)
 		0x01, // OPEN Message Error
 		0x02, // Bad Message Length
 		// No data
@@ -277,6 +277,68 @@ func TestReadNotification(t *testing.T) {
 	k := f.readNotification(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
+	}
+
+	raw = []byte{
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
+		0x00, 0x06, // Length
+		0x03,                   // Type (Notification)
+		0x03,                   // UPDATE Message Error
+		0x11,                   // Malformed AS_PATH
+		0x12, 0x34, 0x56, 0x7a, // Some random data
+	}
+	fmt.Println("Creating a new FSM")
+	f = new(fsm)
+	fmt.Println("Adding a peer to it")
+	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
+	fmt.Println("Creating a mock connection")
+	f.peer.conn = newConn(raw)
+	fmt.Println("Reading the message header and the message")
+	header, message = f.readMessage()
+	if len(message) != 6 {
+		t.Error("Expected message length to be 6 but got", len(message))
+	}
+	if header.messageType != notification {
+		t.Errorf("Expected the message type to be %d but got %d", notification, header.messageType)
+	}
+	k = f.readNotification(message)
+	if k == nil {
+		t.Errorf("Did not expect keepalive to be nil")
+	}
+}
+
+func TestReadUpdate(t *testing.T) {
+	raw := []byte{
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
+		0x00, 0x04, // Length
+		0x02, // Type (Update)
+		// Update with no data? whhhaaa :D
+	}
+	fmt.Println("Creating a new FSM")
+	f := new(fsm)
+	fmt.Println("Adding a peer to it")
+	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
+	fmt.Println("Creating a mock connection")
+	f.peer.conn = newConn(raw)
+	fmt.Println("Reading the message header and the message")
+	header, message := f.readMessage()
+	if len(message) != 4 {
+		t.Error("Expected message length to be 4 but got", len(message))
+	}
+	if header.messageType != update {
+		t.Errorf("Expected the message type to be %d but got %d", update, header.messageType)
+	}
+	k := f.readUpdate(message)
+	if k == nil {
+		t.Errorf("Did not expect keepalive to be nil")
+	}
+	if k.withdrawnRoutesLength != 0 {
+		t.Errorf("Expected withdrawn routes length to be 0 but got", k.withdrawnRoutesLength)
+	}
+	if k.pathAttributesLength != 0 {
+		t.Errorf("Expected path attributes length to be 0 but got", k.pathAttributesLength)
 	}
 }
 
