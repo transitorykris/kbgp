@@ -1,6 +1,8 @@
 # kbgp
 
-A silly exploration of BGP in Go. My plan is to follow the RFC closely, but split away from it as necessary to write idiomatic Go.
+A silly exploration of BGP in Go. My plan is to follow RFC 4271 closely, but split away from it as necessary to write idiomatic Go.
+
+Note: This code is incomplete and not intended for production.
 
 Comments will be liberally taken from the RFCs.
 
