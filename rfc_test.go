@@ -193,7 +193,7 @@ func TestReadOpen(t *testing.T) {
 	if header.messageType != 0x01 {
 		t.Errorf("Expected the message type to be %v but got %d", raw[18], header.messageType)
 	}
-	open := f.readOpen(message)
+	open, _ := f.readOpen(message)
 	if open.version != 4 {
 		t.Error("Expected BGP version to be 4 but got", open.version)
 	}
@@ -234,7 +234,7 @@ func TestReadKeepalive(t *testing.T) {
 	if header.messageType != keepalive {
 		t.Errorf("Expected the message type to be %d but got %d", keepalive, header.messageType)
 	}
-	k := f.readKeepalive(message)
+	k, _ := f.readKeepalive(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
 	}
@@ -308,7 +308,7 @@ func TestReadUpdate(t *testing.T) {
 	if header.messageType != update {
 		t.Errorf("Expected the message type to be %d but got %d", update, header.messageType)
 	}
-	k := f.readUpdate(message)
+	k, _ := f.readUpdate(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
 	}
