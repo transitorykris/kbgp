@@ -2136,7 +2136,7 @@ func (f *fsm) readUpdate(message []byte) (*updateMessage, error) {
 		readBytes(int(update.withdrawnRoutesLength), buf),
 	)
 	update.pathAttributesLength = readUint16(buf)
-	update.readPathAttributes, _ = f.readPathAttributes(
+	update.pathAttributes, _ = f.readPathAttributes(
 		int(update.pathAttributesLength),
 		readBytes(int(update.pathAttributesLength), buf),
 	)
@@ -2182,7 +2182,7 @@ func (f *fsm) readPathAttributes(length int, bs []byte) ([]pathAttribute, *notif
 		if notif != nil {
 			return nil, notif
 		}
-		attributes = append(attributes, pa)
+		attributes = append(attributes, *pa)
 		// Remove what we just read
 		bs = bs[pa.attributeLength:]
 		count += int(pa.attributeLength)
@@ -2207,7 +2207,7 @@ func (f *fsm) readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage
 	bs = bs[2:]
 	buf := bytes.NewBuffer(bs)
 	attribute.attributeLength = readUint16(buf)
-	attribute.attributeValue = readBytes(int(attribute.attributeLength))
+	attribute.attributeValue = readBytes(int(attribute.attributeLength), buf)
 	return attribute, nil
 }
 
