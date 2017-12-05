@@ -871,14 +871,32 @@ type attributeType struct {
 //          Optional bit.  It defines whether the attribute is optional (if
 //          set to 1) or well-known (if set to 0).
 const optional = 1 << 7
-const wellknown = 0
+const wellKnown = 0
+const optionalMask = 1 << 7
+
+func (a *attributeType) optional() bool {
+	return a.flags&optionalMask == optional
+}
+
+func (a *attributeType) wellKnown() bool {
+	return a.flags&optionalMask == wellKnown
+}
 
 //          The second high-order bit (bit 1) of the Attribute Flags octet
 //          is the Transitive bit.  It defines whether an optional
 //          attribute is transitive (if set to 1) or non-transitive (if set
 //          to 0).
 const transitive = 1 << 6
-const nontransitive = 0
+const nonTransitive = 0
+const transitiveMask = 1 << 6
+
+func (a *attributeType) transitive() bool {
+	return a.flags&transitiveMask == transitive
+}
+
+func (a *attributeType) nonTransitive() bool {
+	return a.flags&transitiveMask == nonTransitive
+}
 
 //          For well-known attributes, the Transitive bit MUST be set to 1.
 //          (See Section 5 for a discussion of transitive attributes.)
@@ -891,12 +909,30 @@ const nontransitive = 0
 //          MUST be set to 0.
 const partial = 1 << 5
 const complete = 0
+const partialMask = 1 << 5
+
+func (a *attributeType) partial() bool {
+	return a.flags&partialMask == partial
+}
+
+func (a *attributeType) complete() bool {
+	return a.flags&partialMask == complete
+}
 
 //          The fourth high-order bit (bit 3) of the Attribute Flags octet
 //          is the Extended Length bit.  It defines whether the Attribute
 //          Length is one octet (if set to 0) or two octets (if set to 1).
 const extendedLength = 1 << 4
-const notextendedLength = 0
+const notExtendedLength = 0
+const extendedLengthMask = 1 << 4
+
+func (a *attributeType) extendedLength() bool {
+	return a.flags&extendedLengthMask == extendedLength
+}
+
+func (a *attributeType) nonextendedLength() bool {
+	return a.flags&extendedLengthMask == notExtendedLength
+}
 
 //          The lower-order four bits of the Attribute Flags octet are
 //          unused.  They MUST be zero when sent and MUST be ignored when

@@ -326,6 +326,150 @@ func TestReadWithdrawnRoutes(t *testing.T) {
 func TestReadPathAttributes(t *testing.T) {
 }
 
+func TestOptionalAttribute(t *testing.T) {
+	a := attributeType{flags: optional}
+	if !a.optional() {
+		t.Error("Expected attribute to be optional")
+	}
+	if a.wellKnown() {
+		t.Error("Did not expect attribute to be well-known")
+	}
+
+	a = attributeType{flags: optional | transitive | partial | extendedLength}
+	if !a.optional() {
+		t.Error("Expected attribute to be optional")
+	}
+	if a.wellKnown() {
+		t.Error("Did not expect attribute to be well-known")
+	}
+}
+
+func TestWellKnownAttribute(t *testing.T) {
+	a := attributeType{flags: wellKnown}
+	if !a.wellKnown() {
+		t.Error("Expected attribute to be well-known")
+	}
+	if a.optional() {
+		t.Error("Did not expect attribute to be optional")
+	}
+
+	a = attributeType{flags: wellKnown | transitive | partial | extendedLength}
+	if !a.wellKnown() {
+		t.Error("Expected attribute to be well-known")
+	}
+	if a.optional() {
+		t.Error("Did not expect attribute to be optional")
+	}
+}
+
+func TestTransitiveAttribute(t *testing.T) {
+	a := attributeType{flags: transitive}
+	if !a.transitive() {
+		t.Error("Expected attribute to be transitive")
+	}
+	if a.nonTransitive() {
+		t.Error("Did not expect attribute to be non-transitive")
+	}
+
+	a = attributeType{flags: optional | transitive | partial | extendedLength}
+	if !a.transitive() {
+		t.Error("Expected attribute to be transitive")
+	}
+	if a.nonTransitive() {
+		t.Error("Did not expect attribute to be non-transitive")
+	}
+}
+
+func TestNonTransitiveAttribute(t *testing.T) {
+	a := attributeType{flags: nonTransitive}
+	if !a.nonTransitive() {
+		t.Error("Expected attribute to be non-transitive")
+	}
+	if a.transitive() {
+		t.Error("Did not expect attribute to be transitive")
+	}
+
+	a = attributeType{flags: optional | nonTransitive | partial | extendedLength}
+	if !a.nonTransitive() {
+		t.Error("Expected attribute to be transitive")
+	}
+	if a.transitive() {
+		t.Error("Did not expect attribute to be transitive")
+	}
+}
+
+func TestPartialAttribute(t *testing.T) {
+	a := attributeType{flags: partial}
+	if !a.partial() {
+		t.Error("Expected attribute to be partial")
+	}
+	if a.complete() {
+		t.Error("Did not expect attribute to be complete")
+	}
+
+	a = attributeType{flags: optional | transitive | partial | extendedLength}
+	if !a.partial() {
+		t.Error("Expected attribute to be partial")
+	}
+	if a.complete() {
+		t.Error("Did not expect attribute to be complete")
+	}
+}
+
+func TestCompleteAttribute(t *testing.T) {
+	a := attributeType{flags: complete}
+	if !a.complete() {
+		t.Error("Expected attribute to be complete")
+	}
+	if a.partial() {
+		t.Error("Did not expect attribute to be partial")
+	}
+
+	a = attributeType{flags: optional | transitive | complete | extendedLength}
+	if !a.complete() {
+		t.Error("Expected attribute to be complete")
+	}
+	if a.partial() {
+		t.Error("Did not expect attribute to be partial")
+	}
+}
+
+func TestExtendedLengthAttribute(t *testing.T) {
+	a := attributeType{flags: extendedLength}
+	if !a.complete() {
+		t.Error("Expected attribute to be extended length")
+	}
+	if a.partial() {
+		t.Error("Did not expect attribute to be not extended length")
+	}
+
+	a = attributeType{flags: optional | transitive | complete | extendedLength}
+	if !a.complete() {
+		t.Error("Expected attribute to be extended length")
+	}
+	if a.partial() {
+		t.Error("Did not expect attribute to be not extended length")
+	}
+}
+
+func TestNotExtendedLengthAttribute(t *testing.T) {
+	a := attributeType{flags: notExtendedLength}
+	if !a.complete() {
+		t.Error("Expected attribute to be not extended length")
+	}
+	if a.partial() {
+		t.Error("Did not expect attribute to be  extended length")
+	}
+
+	a = attributeType{flags: optional | transitive | complete | notExtendedLength}
+	if !a.complete() {
+		t.Error("Expected attribute to be not extended length")
+	}
+	if a.partial() {
+		t.Error("Did not expect attribute to be extended length")
+	}
+}
+
 func TestReadNLRI(t *testing.T) {
 }
 
