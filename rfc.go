@@ -2006,9 +2006,8 @@ func (f *fsm) read(count int) []byte {
 		return nil
 	}
 	for {
-		n, err := f.peer.conn.Read(b) // Does this do what I think it does?
+		n, err := f.peer.conn.Read(b)
 		if err != nil {
-			// Fail... shut it down
 			f.sendEvent(tcpConnectionFails) // This should not be here
 		}
 		if n < count {
@@ -2033,9 +2032,6 @@ func (f *fsm) readMessage() (messageHeader, []byte) {
 	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	//       |          Length               |      Type     |
 	//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	// 1. Read in the message header
-	// 2. Check that the header is valid
-	//		- if it is not send a bgpHeaderErr event
 	rawHeader := f.read(messageHeaderLength)
 	buf := bytes.NewBuffer(rawHeader)
 
@@ -2091,10 +2087,7 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	//        |             Optional Parameters (variable)                    |
 	//        |                                                               |
 	//        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	// 1. Read in the message
 	buf := bytes.NewBuffer(message)
-	// 2. Check that the header is valid
-	//		- if it is not send a BGPHeaderErr event
 	open := new(openMessage)
 	open.version = readByte(buf)
 	if open.version != version {
@@ -2113,14 +2106,6 @@ func (f *fsm) readOpen(message []byte) *openMessage {
 	open.optParmLen = readByte(buf)
 	// Note: We should be reading this into a parameters struct
 	open.optParameters = readBytes(int(open.optParmLen), buf)
-	// 3. Check that the message is valid
-	//		- if it is not send a BGPOpenMsgErr event
-	// 4. Check to see if there is a collision and this connection
-	//    has been selected to be disconnected
-	//		- if it is to be disconnected send an OpenCollisionDump event
-	// 5. Check if the peer is delaying sending a BGP open message
-	//		- if so, send BGPOpenWithDelayOpenTimerRunning event
-	// 6. Otherwise send a BGPOpen event
 	return open
 }
 
@@ -2136,12 +2121,6 @@ func (f *fsm) readUpdate(message []byte) *updateMessage {
 	//       +-----------------------------------------------------+
 	//       |   Network Layer Reachability Information (variable) |
 	//       +-----------------------------------------------------+
-	// 1. Read in the message
-	// 2. Check that the header is valid
-	//		- If it is not send a BGPHeaderErr event
-	// 3. Check that the message is valid
-	//		- if it is not send an UpdateMsgErr event
-	// 4. Otherwise send an UpdateMsg event
 	buf := bytes.NewBuffer(message)
 	update := new(updateMessage)
 	update.withdrawnRoutesLength = readUint16(buf)
@@ -2170,14 +2149,10 @@ func (f *fsm) readNotification(message []byte) *notificationMessage {
 		subcode: subcode,
 		data:    data,
 	}
-	// 2. Check that the header is valid
-	//		- If it is not send a BGPHeaderErr event
-	// 3. If it is a version error send a NotifMsgVerErr event
 	if n.code == openMessageError && n.code == unsupportedVersionNumber {
 		f.sendEvent(notifMsgVerErr)
 		return nil
 	}
-	// 4. Otherwise send a NotifMsg event
 	f.sendEvent(notifMsg)
 
 	// TODO: How and where do we make the notification data available?
