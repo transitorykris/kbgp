@@ -1998,9 +1998,7 @@ func (f *fsm) reader() {
 }
 
 func (f *fsm) read(count int) []byte {
-	//b := make([]byte, minMessageLength, maxMessageLength)
 	b := make([]byte, count, count)
-
 	// Read enough bytes for the message header
 	if count == 0 {
 		return nil
