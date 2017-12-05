@@ -194,15 +194,8 @@ func TestReadOpen(t *testing.T) {
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	fmt.Println("Creating a mock connection")
 	f.peer.conn = newConn(raw)
-	// Add mock net.Conn to fsm
-	// Write raw to it
 	fmt.Println("Reading the message header and the message")
 	header, message := f.readMessage()
-	// Check that the header has the correct marker, and expected length and type
-	if bytes.Compare(header.marker[:], raw[:16]) != 0 {
-		t.Errorf("Header marker should be %v but got %v", raw[:16], header.marker)
-	}
-	// Check that the message length is equal to the expected length
 	if len(message) != 9 {
 		t.Error("Expected message length to be 0 but got", len(message))
 	}
@@ -227,6 +220,33 @@ func TestReadOpen(t *testing.T) {
 	}
 	if len(open.optParameters) != 0 {
 		t.Error("Expected no optional parameters but got", open.optParameters)
+	}
+}
+
+func TestReadKeepalive(t *testing.T) {
+	raw := []byte{
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Marker
+		0x00, 0x00, // Length
+		0x04, // Type (Open)
+	}
+	fmt.Println("Creating a new FSM")
+	f := new(fsm)
+	fmt.Println("Adding a peer to it")
+	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
+	fmt.Println("Creating a mock connection")
+	f.peer.conn = newConn(raw)
+	fmt.Println("Reading the message header and the message")
+	header, message := f.readMessage()
+	if len(message) != 0 {
+		t.Error("Expected message length to be 0 but got", len(message))
+	}
+	if header.messageType != keepalive {
+		t.Errorf("Expected the message type to be %d but got %d", keepalive, header.messageType)
+	}
+	k := f.readKeepalive(message)
+	if k == nil {
+		t.Errorf("Did not expect keepalive to be nil")
 	}
 }
 

@@ -2193,14 +2193,15 @@ func (f *fsm) readNotification(message []byte) {
 	// TODO: How and where do we make the notification data available?
 }
 
-func (f *fsm) readKeepalive(message []byte) {
+func (f *fsm) readKeepalive(message []byte) *keepaliveMessage {
 	// Related events
 	if len(message) != 0 {
 		// Send a notification
 		_ = newNotificationMessage(messageHeaderError, badMessageLength, nil)
-		return
+		return nil
 	}
 	f.sendEvent(keepAliveMsg)
+	return &keepaliveMessage{}
 }
 
 func (f *fsm) open() {
