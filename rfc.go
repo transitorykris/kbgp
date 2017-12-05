@@ -850,7 +850,7 @@ type withdrawnRoute struct {
 //          length.
 type pathAttribute struct {
 	attributeType   attributeType
-	attributeLength byte
+	attributeLength uint16
 	attributeValue  []byte
 }
 
@@ -2190,13 +2190,28 @@ func (f *fsm) readPathAttributes(length int, bs []byte) ([]pathAttribute, *notif
 	return attributes, nil
 }
 
-func (f *fsm) readPathAttribute(bs []byte) (pathAttribute, *notificationMessage) {
+func (f *fsm) readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
 	//       Path Attributes:
 	//          A variable-length sequence of path attributes is present in
 	//          every UPDATE message, except for an UPDATE message that carries
 	//          only the withdrawn routes.  Each path attribute is a triple
 	//          <attribute type, attribute length, attribute value> of variable
 	//          length.
+	attribute := new(pathAttribute)
+	attributeType, notif := f.readAttributeType(bs)
+	if notif != nil {
+		return &pathAttribute{}, notif
+	}
+	attribute.attributeType = attributeType
+	// Remove the 2 byte type from our bytes
+	bs = bs[2:]
+	buf := bytes.NewBuffer(bs)
+	attribute.attributeLength = readUint16(buf)
+	attribute.attributeValue = readBytes(int(attribute.attributeLength))
+	return attribute, nil
+}
+
+func (f *fsm) readAttributeType(bs []byte) (attributeType, *notificationMessage) {
 	//          Attribute Type is a two-octet field that consists of the
 	//          Attribute Flags octet, followed by the Attribute Type Code
 	//          octet.
@@ -2205,12 +2220,11 @@ func (f *fsm) readPathAttribute(bs []byte) (pathAttribute, *notificationMessage)
 	//                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	//                |  Attr. Flags  |Attr. Type Code|
 	//                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	//buf := bytes.NewBuffer(bs)
-	//attribute := new(pathAttribute)
-	//attribute.attributeType.flags = readByte(buf)
-	//attribute.attributeType.code = readByte(buf)
-	//attribute.attributeLength = read
-	return pathAttribute{}, nil
+	attribute := attributeType{
+		flags: bs[0],
+		code:  bs[1],
+	}
+	return attribute, nil
 }
 
 func (f *fsm) readNLRI(bs []byte) ([]*nlri, *notificationMessage) {
