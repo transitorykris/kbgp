@@ -157,7 +157,7 @@ func TestReadMessage(t *testing.T) {
 	f.peer.conn = newConn(raw)
 	// Add mock net.Conn to fsm
 	// Write raw to it
-	header, message := readMessage()
+	header, message := readMessage(f.peer.conn)
 	// Check that the header has the correct marker, and expected length and type
 	if bytes.Compare(header.marker[:], raw[:16]) != 0 {
 		t.Errorf("Header marker should be %v but got %v", raw[:16], header.marker)
@@ -190,7 +190,7 @@ func TestReadOpen(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := readMessage()
+	header, message := readMessage(f.peer.conn)
 	if len(message) != 9 {
 		t.Error("Expected message length to be 0 but got", len(message))
 	}
@@ -253,7 +253,7 @@ func TestReadKeepalive(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := readMessage()
+	header, message := readMessage(f.peer.conn)
 	if len(message) != 0 {
 		t.Error("Expected message length to be 0 but got", len(message))
 	}
@@ -283,7 +283,7 @@ func TestReadNotification(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := readMessage()
+	header, message := readMessage(f.peer.conn)
 	if len(message) != 2 {
 		t.Error("Expected message length to be 2 but got", len(message))
 	}
@@ -307,7 +307,7 @@ func TestReadNotification(t *testing.T) {
 	f = new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message = readMessage()
+	header, message = readMessage(f.peer.conn)
 	if len(message) != 6 {
 		t.Error("Expected message length to be 6 but got", len(message))
 	}
@@ -335,7 +335,7 @@ func TestReadUpdate(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := readMessage()
+	header, message := readMessage(f.peer.conn)
 	if len(message) != 4 {
 		t.Error("Expected message length to be 4 but got", len(message))
 	}

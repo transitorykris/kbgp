@@ -579,8 +579,8 @@ func marker() [markerLength]byte {
 	return m
 }
 
-func readMessage() (messageHeader, []byte) {
-	rawHeader := read(messageHeaderLength)
+func readMessage(conn net.Conn) (messageHeader, []byte) {
+	rawHeader := read(conn, messageHeaderLength)
 	buf := bytes.NewBuffer(rawHeader)
 
 	var marker [markerLength]byte
@@ -593,7 +593,7 @@ func readMessage() (messageHeader, []byte) {
 		length:      length,
 		messageType: messageType,
 	}
-	message := read(int(header.length))
+	message := read(conn, int(header.length))
 	return header, message
 }
 
@@ -2253,7 +2253,7 @@ func (f *fsm) write(v interface{}) {
 
 // read perpetually processes messages and routes them to where they need to go
 func (f *fsm) reader() {
-	header, message := readMessage()
+	header, message := readMessage(f.peer.conn)
 	switch header.messageType {
 	case open:
 		readOpen(message)
@@ -2268,16 +2268,16 @@ func (f *fsm) reader() {
 	}
 }
 
-func read(count int) []byte {
+func read(conn net.Conn, count int) []byte {
 	b := make([]byte, count, count)
 	// Read enough bytes for the message header
 	if count == 0 {
 		return nil
 	}
 	for {
-		n, err := f.peer.conn.Read(b)
+		n, err := conn.Read(b)
 		if err != nil {
-			f.sendEvent(tcpConnectionFails) // This should not be here
+			//f.sendEvent(tcpConnectionFails) // This should not be here
 		}
 		if n < count {
 			continue
