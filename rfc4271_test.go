@@ -225,7 +225,6 @@ func TestOpenBytes(t *testing.T) {
 	}
 	bs := o.bytes()
 	raw := []byte{
-		0x01,       // Type (Open)
 		0x04,       // Version
 		0x00, 0x01, // My Autonomous System,
 		0x00, 0x03, // 0 second Hold time

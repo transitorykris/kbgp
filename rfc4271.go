@@ -706,7 +706,26 @@ func (f *fsm) readOpen(message []byte) (*openMessage, *notificationMessage) {
 }
 
 func (o openMessage) bytes() []byte {
-	return []byte{}
+	buf := bytes.NewBuffer([]byte{})
+
+	buf.WriteByte(o.version)
+
+	myAS := make([]byte, 2)
+	binary.BigEndian.PutUint16(myAS, o.myAS)
+	buf.Write(myAS)
+
+	holdTime := make([]byte, 2)
+	binary.BigEndian.PutUint16(holdTime, o.holdTime)
+	buf.Write(holdTime)
+
+	id := make([]byte, 4)
+	binary.BigEndian.PutUint32(id, o.bgpIdentifier)
+	buf.Write(id)
+
+	buf.WriteByte(byte(len(o.optParameters)))
+	buf.Write(o.optParameters)
+
+	return buf.Bytes()
 }
 
 //       Version:
