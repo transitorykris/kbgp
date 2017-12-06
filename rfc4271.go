@@ -579,7 +579,7 @@ func marker() [markerLength]byte {
 	return m
 }
 
-func (f *fsm) readMessage() (messageHeader, []byte) {
+func readMessage() (messageHeader, []byte) {
 	rawHeader := f.read(messageHeaderLength)
 	buf := bytes.NewBuffer(rawHeader)
 
@@ -687,7 +687,7 @@ type openMessage struct {
 	optParameters []byte
 }
 
-func (f *fsm) readOpen(message []byte) (*openMessage, *notificationMessage) {
+func readOpen(message []byte) (*openMessage, *notificationMessage) {
 	buf := bytes.NewBuffer(message)
 	open := new(openMessage)
 	open.version = readByte(buf)
@@ -825,7 +825,7 @@ func newParameter(t byte, v []byte) (parameter, error) {
 	return parameter{t, length, v}, nil
 }
 
-func (f *fsm) readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
+func readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
 	// TODO: Implement me
 	return nil, nil
 }
@@ -874,7 +874,7 @@ type updateMessage struct {
 	nlris                 []nlri
 }
 
-func (f *fsm) readUpdate(message []byte) (*updateMessage, error) {
+func readUpdate(message []byte) (*updateMessage, error) {
 	buf := bytes.NewBuffer(message)
 	update := new(updateMessage)
 	update.withdrawnRoutesLength = readUint16(buf)
@@ -934,7 +934,7 @@ type withdrawnRoute struct {
 	prefix []byte
 }
 
-func (f *fsm) readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *notificationMessage) {
+func readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *notificationMessage) {
 	count := 0
 	routes := []withdrawnRoute{}
 	for count != length {
@@ -950,7 +950,7 @@ func (f *fsm) readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *not
 	return routes, nil
 }
 
-func (f *fsm) readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessage) {
+func readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessage) {
 	buf := bytes.NewBuffer(bs)
 	route := new(withdrawnRoute)
 	route.length = readByte(buf)
@@ -985,7 +985,7 @@ type pathAttribute struct {
 	attributeValue  []byte
 }
 
-func (f *fsm) readPathAttributes(length int, bs []byte) ([]pathAttribute, *notificationMessage) {
+func readPathAttributes(length int, bs []byte) ([]pathAttribute, *notificationMessage) {
 	count := 0
 	attributes := []pathAttribute{}
 	for count != length {
@@ -1001,7 +1001,7 @@ func (f *fsm) readPathAttributes(length int, bs []byte) ([]pathAttribute, *notif
 	return attributes, nil
 }
 
-func (f *fsm) readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
+func readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
 	attribute := new(pathAttribute)
 	attributeType, notif := f.readAttributeType(bs)
 	if notif != nil {
@@ -1034,7 +1034,7 @@ type attributeType struct {
 	code  byte
 }
 
-func (f *fsm) readAttributeType(bs []byte) (attributeType, *notificationMessage) {
+func readAttributeType(bs []byte) (attributeType, *notificationMessage) {
 	attribute := attributeType{
 		flags: bs[0],
 		code:  bs[1],
@@ -1279,7 +1279,7 @@ func packPrefix(length int, ip net.IP) []byte {
 	return bs[:int(math.Ceil(math.Max(float64(length)/8.0, 1)))]
 }
 
-func (f *fsm) readNLRI(bs []byte) (*nlri, *notificationMessage) {
+func readNLRI(bs []byte) (*nlri, *notificationMessage) {
 	buf := bytes.NewBuffer(bs)
 	nlri := new(nlri)
 	nlri.length = readByte(buf)
@@ -1346,7 +1346,7 @@ func newKeepaliveMessage() keepaliveMessage {
 	return keepaliveMessage{}
 }
 
-func (f *fsm) readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
+func readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
 	// Related events
 	if len(message) != 0 {
 		// Send a notification
@@ -1385,7 +1385,7 @@ func newNotificationMessage(code int, subcode int, data []byte) *notificationMes
 	return &n
 }
 
-func (f *fsm) readNotification(message []byte) *notificationMessage {
+func readNotification(message []byte) *notificationMessage {
 	buf := bytes.NewBuffer(message)
 	code := readByte(buf)
 	subcode := readByte(buf)
@@ -2267,7 +2267,7 @@ func (f *fsm) reader() {
 	}
 }
 
-func (f *fsm) read(count int) []byte {
+func read(count int) []byte {
 	b := make([]byte, count, count)
 	// Read enough bytes for the message header
 	if count == 0 {

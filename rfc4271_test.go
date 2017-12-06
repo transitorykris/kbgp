@@ -157,7 +157,7 @@ func TestReadMessage(t *testing.T) {
 	f.peer.conn = newConn(raw)
 	// Add mock net.Conn to fsm
 	// Write raw to it
-	header, message := f.readMessage()
+	header, message := readMessage()
 	// Check that the header has the correct marker, and expected length and type
 	if bytes.Compare(header.marker[:], raw[:16]) != 0 {
 		t.Errorf("Header marker should be %v but got %v", raw[:16], header.marker)
