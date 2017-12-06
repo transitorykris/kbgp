@@ -190,14 +190,14 @@ func TestReadOpen(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := f.readMessage()
+	header, message := readMessage()
 	if len(message) != 9 {
 		t.Error("Expected message length to be 0 but got", len(message))
 	}
 	if header.messageType != 0x01 {
 		t.Errorf("Expected the message type to be %v but got %d", raw[18], header.messageType)
 	}
-	open, _ := f.readOpen(message)
+	open, _ := readOpen(message)
 	if open.version != 4 {
 		t.Error("Expected BGP version to be 4 but got", open.version)
 	}
@@ -253,14 +253,14 @@ func TestReadKeepalive(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := f.readMessage()
+	header, message := readMessage()
 	if len(message) != 0 {
 		t.Error("Expected message length to be 0 but got", len(message))
 	}
 	if header.messageType != keepalive {
 		t.Errorf("Expected the message type to be %d but got %d", keepalive, header.messageType)
 	}
-	k, _ := f.readKeepalive(message)
+	k, _ := readKeepalive(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
 	}
@@ -283,14 +283,14 @@ func TestReadNotification(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := f.readMessage()
+	header, message := readMessage()
 	if len(message) != 2 {
 		t.Error("Expected message length to be 2 but got", len(message))
 	}
 	if header.messageType != notification {
 		t.Errorf("Expected the message type to be %d but got %d", notification, header.messageType)
 	}
-	k := f.readNotification(message)
+	k := readNotification(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
 	}
@@ -307,14 +307,14 @@ func TestReadNotification(t *testing.T) {
 	f = new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message = f.readMessage()
+	header, message = readMessage()
 	if len(message) != 6 {
 		t.Error("Expected message length to be 6 but got", len(message))
 	}
 	if header.messageType != notification {
 		t.Errorf("Expected the message type to be %d but got %d", notification, header.messageType)
 	}
-	k = f.readNotification(message)
+	k = readNotification(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
 	}
@@ -335,14 +335,14 @@ func TestReadUpdate(t *testing.T) {
 	f := new(fsm)
 	f.peer = newPeer(1, net.ParseIP("1.2.3.4"))
 	f.peer.conn = newConn(raw)
-	header, message := f.readMessage()
+	header, message := readMessage()
 	if len(message) != 4 {
 		t.Error("Expected message length to be 4 but got", len(message))
 	}
 	if header.messageType != update {
 		t.Errorf("Expected the message type to be %d but got %d", update, header.messageType)
 	}
-	k, _ := f.readUpdate(message)
+	k, _ := readUpdate(message)
 	if k == nil {
 		t.Errorf("Did not expect keepalive to be nil")
 	}
