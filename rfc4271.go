@@ -1356,7 +1356,7 @@ func readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
 	return &keepaliveMessage{}, nil
 }
 
-func (k keepalive) bytes() []byte {
+func (k keepaliveMessage) bytes() []byte {
 	return []byte{}
 }
 
@@ -1407,7 +1407,7 @@ func readNotification(message []byte) *notificationMessage {
 	return n
 }
 
-func (n notification) bytes() []byte {
+func (n notificationMessage) bytes() []byte {
 	// TODO: Implement me
 	return []byte{}
 }
