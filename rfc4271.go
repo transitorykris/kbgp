@@ -894,7 +894,7 @@ func readUpdate(message []byte) (*updateMessage, error) {
 
 func (u updateMessage) bytes() []byte {
 	// TODO: Implement me
-	return []byte
+	return []byte{}
 }
 
 //       Withdrawn Routes Length:
