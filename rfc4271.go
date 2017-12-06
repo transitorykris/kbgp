@@ -597,6 +597,11 @@ func (f *fsm) readMessage() (messageHeader, []byte) {
 	return header, message
 }
 
+func (m messageHeader) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
+}
+
 //       Type:
 //          This 1-octet unsigned integer indicates the type code of the
 //          message.  This document defines the following type codes:
@@ -812,13 +817,6 @@ type parameter struct {
 	parmValue  []byte
 }
 
-func (f *fsm) readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
-	// TODO: Implement me
-	return nil, nil
-}
-
-//          [RFC3392] defines the Capabilities Optional Parameter.
-
 func newParameter(t byte, v []byte) (parameter, error) {
 	if len(v) > maxParameterLength {
 		return parameter{}, fmt.Errorf("Parameter exceeds maximum length of %d", maxParameterLength)
@@ -826,6 +824,18 @@ func newParameter(t byte, v []byte) (parameter, error) {
 	length := byte(len(v))
 	return parameter{t, length, v}, nil
 }
+
+func (f *fsm) readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
+	// TODO: Implement me
+	return nil, nil
+}
+
+func (p parameter) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
+}
+
+//          [RFC3392] defines the Capabilities Optional Parameter.
 
 //    The minimum length of the OPEN message is 29 octets (including the
 //    message header).
@@ -880,6 +890,11 @@ func (f *fsm) readUpdate(message []byte) (*updateMessage, error) {
 	// TODO: Add reading path attributes
 	// TODO: Add reading NLRIs
 	return update, nil
+}
+
+func (u updateMessage) bytes() []byte {
+	// TODO: Implement me
+	return []byte
 }
 
 //       Withdrawn Routes Length:
@@ -943,6 +958,11 @@ func (f *fsm) readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessa
 	return route, nil
 }
 
+func (w withdrawnRoute) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
+}
+
 //       Total Path Attribute Length:
 //          This 2-octet unsigned integer indicates the total length of the
 //          Path Attributes field in octets.  Its value allows the length
@@ -996,6 +1016,11 @@ func (f *fsm) readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage
 	return attribute, nil
 }
 
+func (p pathAttribute) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
+}
+
 //          Attribute Type is a two-octet field that consists of the
 //          Attribute Flags octet, followed by the Attribute Type Code
 //          octet.
@@ -1015,6 +1040,11 @@ func (f *fsm) readAttributeType(bs []byte) (attributeType, *notificationMessage)
 		code:  bs[1],
 	}
 	return attribute, nil
+}
+
+func (a attributeType) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
 }
 
 //          The high-order bit (bit 0) of the Attribute Flags octet is the
@@ -1257,6 +1287,11 @@ func (f *fsm) readNLRI(bs []byte) (*nlri, *notificationMessage) {
 	return nlri, nil
 }
 
+func (n nlri) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
+}
+
 //    The minimum length of the UPDATE message is 23 octets -- 19 octets
 //    for the fixed header + 2 octets for the Withdrawn Routes Length + 2
 //    octets for the Total Path Attribute Length (the value of Withdrawn
@@ -1321,6 +1356,10 @@ func (f *fsm) readKeepalive(message []byte) (*keepaliveMessage, *notificationMes
 	return &keepaliveMessage{}, nil
 }
 
+func (k keepalive) bytes() []byte {
+	return []byte{}
+}
+
 // 4.5.  NOTIFICATION Message Format
 //    A NOTIFICATION message is sent when an error condition is detected.
 //    The BGP connection is closed immediately after it is sent.
@@ -1366,6 +1405,11 @@ func (f *fsm) readNotification(message []byte) *notificationMessage {
 
 	// TODO: How and where do we make the notification data available?
 	return n
+}
+
+func (n notification) bytes() []byte {
+	// TODO: Implement me
+	return []byte{}
 }
 
 //       Error Code:

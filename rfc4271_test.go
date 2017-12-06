@@ -171,6 +171,10 @@ func TestReadMessage(t *testing.T) {
 	}
 }
 
+func TestMessageHeaderBytes(t *testing.T) {
+
+}
+
 func TestReadOpen(t *testing.T) {
 	raw := []byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -262,6 +266,10 @@ func TestReadKeepalive(t *testing.T) {
 	}
 }
 
+func TestKeepaliveBytes(t *testing.T) {
+
+}
+
 func TestReadNotification(t *testing.T) {
 	raw := []byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -312,6 +320,10 @@ func TestReadNotification(t *testing.T) {
 	}
 }
 
+func TestNotificationBytes(t *testing.T) {
+
+}
+
 func TestReadUpdate(t *testing.T) {
 	raw := []byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -342,10 +354,22 @@ func TestReadUpdate(t *testing.T) {
 	}
 }
 
+func TestUpdateBytes(t *testing.T) {
+
+}
+
 func TestReadWithdrawnRoutes(t *testing.T) {
 }
 
+func TestWithdrawnRouteBytes(t *testing.T) {
+
+}
+
 func TestReadPathAttributes(t *testing.T) {
+}
+
+func TestPathAttributeBytes(t *testing.T) {
+
 }
 
 func TestOptionalAttribute(t *testing.T) {
@@ -493,6 +517,10 @@ func TestNotExtendedLengthAttribute(t *testing.T) {
 }
 
 func TestReadNLRI(t *testing.T) {
+}
+
+func TestNLRIBytes(t *testing.T) {
+
 }
 
 // TODO: Mock net.Conn
