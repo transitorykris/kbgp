@@ -580,7 +580,7 @@ func marker() [markerLength]byte {
 }
 
 func readMessage() (messageHeader, []byte) {
-	rawHeader := f.read(messageHeaderLength)
+	rawHeader := read(messageHeaderLength)
 	buf := bytes.NewBuffer(rawHeader)
 
 	var marker [markerLength]byte
@@ -593,7 +593,7 @@ func readMessage() (messageHeader, []byte) {
 		length:      length,
 		messageType: messageType,
 	}
-	message := f.read(int(header.length))
+	message := read(int(header.length))
 	return header, message
 }
 
@@ -878,12 +878,12 @@ func readUpdate(message []byte) (*updateMessage, error) {
 	buf := bytes.NewBuffer(message)
 	update := new(updateMessage)
 	update.withdrawnRoutesLength = readUint16(buf)
-	update.withdrawnRoutes, _ = f.readWithdrawnRoutes(
+	update.withdrawnRoutes, _ = readWithdrawnRoutes(
 		int(update.withdrawnRoutesLength),
 		readBytes(int(update.withdrawnRoutesLength), buf),
 	)
 	update.pathAttributesLength = readUint16(buf)
-	update.pathAttributes, _ = f.readPathAttributes(
+	update.pathAttributes, _ = readPathAttributes(
 		int(update.pathAttributesLength),
 		readBytes(int(update.pathAttributesLength), buf),
 	)
@@ -938,7 +938,7 @@ func readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *notification
 	count := 0
 	routes := []withdrawnRoute{}
 	for count != length {
-		wr, notif := f.readWithdrawnRoute(bs)
+		wr, notif := readWithdrawnRoute(bs)
 		if notif != nil {
 			return nil, notif
 		}
@@ -989,7 +989,7 @@ func readPathAttributes(length int, bs []byte) ([]pathAttribute, *notificationMe
 	count := 0
 	attributes := []pathAttribute{}
 	for count != length {
-		pa, notif := f.readPathAttribute(bs)
+		pa, notif := readPathAttribute(bs)
 		if notif != nil {
 			return nil, notif
 		}
@@ -1003,7 +1003,7 @@ func readPathAttributes(length int, bs []byte) ([]pathAttribute, *notificationMe
 
 func readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
 	attribute := new(pathAttribute)
-	attributeType, notif := f.readAttributeType(bs)
+	attributeType, notif := readAttributeType(bs)
 	if notif != nil {
 		return &pathAttribute{}, notif
 	}
@@ -2252,16 +2252,16 @@ func (f *fsm) write(v interface{}) {
 
 // read perpetually processes messages and routes them to where they need to go
 func (f *fsm) reader() {
-	header, message := f.readMessage()
+	header, message := readMessage()
 	switch header.messageType {
 	case open:
-		f.readOpen(message)
+		readOpen(message)
 	case update:
-		f.readUpdate(message)
+		readUpdate(message)
 	case notification:
-		f.readKeepalive(message)
+		readKeepalive(message)
 	case keepalive:
-		f.readKeepalive(message)
+		readKeepalive(message)
 	default:
 		// NOTIFICATION - messageHeaderError, badMessageType
 	}
