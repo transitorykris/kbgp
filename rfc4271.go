@@ -695,13 +695,13 @@ func readOpen(message []byte) (*openMessage, *notificationMessage) {
 		return nil, newNotificationMessage(openMessageError, unsupportedVersionNumber, nil)
 	}
 	open.myAS = readUint16(buf)
-	if open.myAS != f.peer.remoteAS {
-		return nil, newNotificationMessage(openMessageError, badPeerAS, nil)
-	}
+	//if open.myAS != f.peer.remoteAS {
+	//	return nil, newNotificationMessage(openMessageError, badPeerAS, nil)
+	//}
 	open.holdTime = readUint16(buf)
-	if open.holdTime > 0 && open.holdTime < 3 {
-		return nil, newNotificationMessage(openMessageError, unacceptableHoldTime, nil)
-	}
+	//if open.holdTime > 0 && open.holdTime < 3 {
+	//	return nil, newNotificationMessage(openMessageError, unacceptableHoldTime, nil)
+	//}
 	open.bgpIdentifier = readUint32(buf)
 	// TODO: What is an unacceptable bgp identifier?
 	open.optParmLen = readByte(buf)
@@ -1352,7 +1352,8 @@ func readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
 		// Send a notification
 		return nil, newNotificationMessage(messageHeaderError, badMessageLength, nil)
 	}
-	f.sendEvent(keepAliveMsg)
+	// Note: this should occur elsewhere
+	//f.sendEvent(keepAliveMsg)
 	return &keepaliveMessage{}, nil
 }
 
@@ -1397,11 +1398,11 @@ func readNotification(message []byte) *notificationMessage {
 		subcode: subcode,
 		data:    data,
 	}
-	if n.code == openMessageError && n.code == unsupportedVersionNumber {
-		f.sendEvent(notifMsgVerErr)
-		return nil
-	}
-	f.sendEvent(notifMsg)
+	//if n.code == openMessageError && n.code == unsupportedVersionNumber {
+	//	f.sendEvent(notifMsgVerErr)
+	//	return nil
+	//}
+	//f.sendEvent(notifMsg)
 
 	// TODO: How and where do we make the notification data available?
 	return n
