@@ -597,6 +597,14 @@ func readMessage(conn net.Conn) (messageHeader, []byte) {
 	return header, message
 }
 
+func (m messageHeader) valid() (*notificationMessage, bool) {
+	if bytes.Compare(m.marker[:], bytes.Repeat([]byte{0xFF}, 16)) != 0 {
+		return newNotificationMessage(messageHeaderError, noErrorSubcode, nil), false
+	}
+	// TODO: Check if we can process this message type?
+	return nil, true
+}
+
 func (m messageHeader) bytes() []byte {
 	// TODO: Implement me
 	return []byte{}
@@ -689,25 +697,30 @@ type openMessage struct {
 
 func readOpen(message []byte) (*openMessage, *notificationMessage) {
 	buf := bytes.NewBuffer(message)
-	open := new(openMessage)
-	open.version = readByte(buf)
-	if open.version != version {
-		return nil, newNotificationMessage(openMessageError, unsupportedVersionNumber, nil)
+	om := &openMessage{
+		version:       readByte(buf),
+		myAS:          readUint16(buf),
+		holdTime:      readUint16(buf),
+		bgpIdentifier: readUint32(buf),
+		optParmLen:    readByte(buf),
+		// Note: We should be reading this into a parameters struct
 	}
-	open.myAS = readUint16(buf)
-	//if open.myAS != f.peer.remoteAS {
-	//	return nil, newNotificationMessage(openMessageError, badPeerAS, nil)
-	//}
-	open.holdTime = readUint16(buf)
-	//if open.holdTime > 0 && open.holdTime < 3 {
-	//	return nil, newNotificationMessage(openMessageError, unacceptableHoldTime, nil)
-	//}
-	open.bgpIdentifier = readUint32(buf)
+	om.optParameters = readBytes(int(om.optParmLen), buf)
+	return om, nil
+}
+
+func (o openMessage) valid(remoteAS uint16, holdTime uint16) (*notificationMessage, bool) {
+	if o.version != version {
+		return newNotificationMessage(openMessageError, unsupportedVersionNumber, nil), false
+	}
+	if o.myAS != remoteAS {
+		return newNotificationMessage(openMessageError, badPeerAS, nil), false
+	}
+	if o.holdTime > 0 && holdTime < 3 {
+		return newNotificationMessage(openMessageError, unacceptableHoldTime, nil), false
+	}
 	// TODO: What is an unacceptable bgp identifier?
-	open.optParmLen = readByte(buf)
-	// Note: We should be reading this into a parameters struct
-	open.optParameters = readBytes(int(open.optParmLen), buf)
-	return open, nil
+	return nil, true
 }
 
 func (o openMessage) bytes() []byte {
