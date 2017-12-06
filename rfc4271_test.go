@@ -214,6 +214,29 @@ func TestReadOpen(t *testing.T) {
 	}
 }
 
+func TestOpenBytes(t *testing.T) {
+	o := openMessage{
+		version:       version,
+		myAS:          1,
+		holdTime:      3,
+		bgpIdentifier: 16909060,
+		optParmLen:    0,
+		optParameters: []byte{},
+	}
+	bs := o.bytes()
+	raw := []byte{
+		0x01,       // Type (Open)
+		0x04,       // Version
+		0x00, 0x01, // My Autonomous System,
+		0x00, 0x03, // 0 second Hold time
+		0x01, 0x02, 0x03, 0x04, // BGP Identifier
+		0x00, // 0 length = no optional parameters
+	}
+	if bytes.Compare(bs, raw) != 0 {
+		t.Errorf("Expected open message %v but got %v", raw, bs)
+	}
+}
+
 func TestReadOptionalParameters(t *testing.T) {
 }
 

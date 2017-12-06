@@ -705,6 +705,10 @@ func (f *fsm) readOpen(message []byte) (*openMessage, *notificationMessage) {
 	return open, nil
 }
 
+func (o openMessage) bytes() []byte {
+	return []byte{}
+}
+
 //       Version:
 //          This 1-octet unsigned integer indicates the protocol version
 //          number of the message.  The current BGP version number is 4.
@@ -910,6 +914,14 @@ func (f *fsm) readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *not
 		count += int(wr.length)
 	}
 	return routes, nil
+}
+
+func (f *fsm) readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessage) {
+	buf := bytes.NewBuffer(bs)
+	route := new(withdrawnRoute)
+	route.length = readByte(buf)
+	route.prefix = readBytes(int(route.length), buf)
+	return route, nil
 }
 
 //       Total Path Attribute Length:
