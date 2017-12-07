@@ -10,6 +10,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/transitorykris/kbgp/stream"
 	"github.com/transitorykris/kbgp/timer"
 )
 
@@ -580,20 +581,20 @@ func marker() [markerLength]byte {
 }
 
 func readMessage(conn net.Conn) (messageHeader, []byte) {
-	rawHeader := read(conn, messageHeaderLength)
+	rawHeader := stream.Read(conn, messageHeaderLength)
 	buf := bytes.NewBuffer(rawHeader)
 
 	var marker [markerLength]byte
 	copy(marker[:], buf.Next(markerLength)) // Note: We expect this to be all 1's
-	length := readUint16(buf)
-	messageType := readByte(buf)
+	length := stream.ReadUint16(buf)
+	messageType := stream.ReadByte(buf)
 
 	header := messageHeader{
 		marker:      marker,
 		length:      length,
 		messageType: messageType,
 	}
-	message := read(conn, int(header.length))
+	message := stream.Read(conn, int(header.length))
 	return header, message
 }
 
@@ -698,14 +699,14 @@ type openMessage struct {
 func readOpen(message []byte) (*openMessage, *notificationMessage) {
 	buf := bytes.NewBuffer(message)
 	om := &openMessage{
-		version:       readByte(buf),
-		myAS:          readUint16(buf),
-		holdTime:      readUint16(buf),
-		bgpIdentifier: readUint32(buf),
-		optParmLen:    readByte(buf),
+		version:       stream.ReadByte(buf),
+		myAS:          stream.ReadUint16(buf),
+		holdTime:      stream.ReadUint16(buf),
+		bgpIdentifier: stream.ReadUint32(buf),
+		optParmLen:    stream.ReadByte(buf),
 		// Note: We should be reading this into a parameters struct
 	}
-	om.optParameters = readBytes(int(om.optParmLen), buf)
+	om.optParameters = stream.ReadBytes(int(om.optParmLen), buf)
 	return om, nil
 }
 
@@ -897,15 +898,15 @@ type updateMessage struct {
 func readUpdate(message []byte) (*updateMessage, error) {
 	buf := bytes.NewBuffer(message)
 	update := new(updateMessage)
-	update.withdrawnRoutesLength = readUint16(buf)
+	update.withdrawnRoutesLength = stream.ReadUint16(buf)
 	update.withdrawnRoutes, _ = readWithdrawnRoutes(
 		int(update.withdrawnRoutesLength),
-		readBytes(int(update.withdrawnRoutesLength), buf),
+		stream.ReadBytes(int(update.withdrawnRoutesLength), buf),
 	)
-	update.pathAttributesLength = readUint16(buf)
+	update.pathAttributesLength = stream.ReadUint16(buf)
 	update.pathAttributes, _ = readPathAttributes(
 		int(update.pathAttributesLength),
-		readBytes(int(update.pathAttributesLength), buf),
+		stream.ReadBytes(int(update.pathAttributesLength), buf),
 	)
 	// TODO: Add reading path attributes
 	// TODO: Add reading NLRIs
@@ -988,8 +989,8 @@ func readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *notification
 func readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessage) {
 	buf := bytes.NewBuffer(bs)
 	route := new(withdrawnRoute)
-	route.length = readByte(buf)
-	route.prefix = readBytes(int(route.length), buf)
+	route.length = stream.ReadByte(buf)
+	route.prefix = stream.ReadBytes(int(route.length), buf)
 	return route, nil
 }
 
@@ -1046,8 +1047,8 @@ func readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
 	// Remove the 2 byte type from our bytes
 	bs = bs[2:]
 	buf := bytes.NewBuffer(bs)
-	attribute.attributeLength = readUint16(buf)
-	attribute.attributeValue = readBytes(int(attribute.attributeLength), buf)
+	attribute.attributeLength = stream.ReadUint16(buf)
+	attribute.attributeValue = stream.ReadBytes(int(attribute.attributeLength), buf)
 	return attribute, nil
 }
 
@@ -1329,8 +1330,8 @@ func packPrefix(length int, ip net.IP) []byte {
 func readNLRI(bs []byte) (*nlri, *notificationMessage) {
 	buf := bytes.NewBuffer(bs)
 	nlri := new(nlri)
-	nlri.length = readByte(buf)
-	nlri.prefix = readBytes(int(nlri.length), buf)
+	nlri.length = stream.ReadByte(buf)
+	nlri.prefix = stream.ReadBytes(int(nlri.length), buf)
 	return nlri, nil
 }
 
@@ -1444,8 +1445,8 @@ func newNotificationMessage(code int, subcode int, data []byte) *notificationMes
 
 func readNotification(message []byte) *notificationMessage {
 	buf := bytes.NewBuffer(message)
-	code := readByte(buf)
-	subcode := readByte(buf)
+	code := stream.ReadByte(buf)
+	subcode := stream.ReadByte(buf)
 	var data []byte
 	buf.Read(data)
 
@@ -2327,45 +2328,6 @@ func (f *fsm) reader() {
 	default:
 		// NOTIFICATION - messageHeaderError, badMessageType
 	}
-}
-
-func read(conn net.Conn, count int) []byte {
-	b := make([]byte, count, count)
-	// Read enough bytes for the message header
-	if count == 0 {
-		return nil
-	}
-	for {
-		n, err := conn.Read(b)
-		if err != nil {
-			//f.sendEvent(tcpConnectionFails) // This should not be here
-		}
-		if n < count {
-			continue
-		}
-		break
-	}
-	return b[:count]
-}
-
-func readBytes(n int, buf *bytes.Buffer) []byte {
-	bs := make([]byte, n, n)
-	for i := range bs {
-		bs[i], _ = buf.ReadByte()
-	}
-	return bs
-}
-
-func readByte(buf *bytes.Buffer) byte {
-	return readBytes(1, buf)[0]
-}
-
-func readUint16(buf *bytes.Buffer) uint16 {
-	return binary.BigEndian.Uint16(readBytes(2, buf))
-}
-
-func readUint32(buf *bytes.Buffer) uint32 {
-	return binary.BigEndian.Uint32(readBytes(4, buf))
 }
 
 func (f *fsm) open() {
