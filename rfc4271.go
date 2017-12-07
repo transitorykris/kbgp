@@ -696,7 +696,7 @@ type openMessage struct {
 	optParameters []byte
 }
 
-func readOpen(message []byte) (*openMessage, *notificationMessage) {
+func readOpen(message []byte) *openMessage {
 	buf := bytes.NewBuffer(message)
 	om := &openMessage{
 		version:       stream.ReadByte(buf),
@@ -707,7 +707,7 @@ func readOpen(message []byte) (*openMessage, *notificationMessage) {
 		// Note: We should be reading this into a parameters struct
 	}
 	om.optParameters = stream.ReadBytes(int(om.optParmLen), buf)
-	return om, nil
+	return om
 }
 
 func (o openMessage) valid(remoteAS uint16, holdTime uint16) (*notificationMessage, bool) {
@@ -841,10 +841,10 @@ func newParameter(t byte, v []byte) (parameter, error) {
 	return parameter{t, length, v}, nil
 }
 
-func readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
+func readOptionalParameters(params []byte) []*parameter {
 	// TODO: Implement me
 	//optionalAttributeError         // 9 - Optional Attribute Error.
-	return nil, nil
+	return nil
 }
 
 func (p parameter) valid() (*notificationMessage, bool) {
@@ -895,22 +895,22 @@ type updateMessage struct {
 	nlris                 []nlri
 }
 
-func readUpdate(message []byte) (*updateMessage, error) {
+func readUpdate(message []byte) *updateMessage {
 	buf := bytes.NewBuffer(message)
 	update := new(updateMessage)
 	update.withdrawnRoutesLength = stream.ReadUint16(buf)
-	update.withdrawnRoutes, _ = readWithdrawnRoutes(
+	update.withdrawnRoutes = readWithdrawnRoutes(
 		int(update.withdrawnRoutesLength),
 		stream.ReadBytes(int(update.withdrawnRoutesLength), buf),
 	)
 	update.pathAttributesLength = stream.ReadUint16(buf)
-	update.pathAttributes, _ = readPathAttributes(
+	update.pathAttributes = readPathAttributes(
 		int(update.pathAttributesLength),
 		stream.ReadBytes(int(update.pathAttributesLength), buf),
 	)
 	// TODO: Add reading path attributes
 	// TODO: Add reading NLRIs
-	return update, nil
+	return update
 }
 
 func (u updateMessage) valid() (*notificationMessage, bool) {
@@ -970,28 +970,25 @@ type withdrawnRoute struct {
 	prefix []byte
 }
 
-func readWithdrawnRoutes(length int, bs []byte) ([]withdrawnRoute, *notificationMessage) {
+func readWithdrawnRoutes(length int, bs []byte) []withdrawnRoute {
 	count := 0
 	routes := []withdrawnRoute{}
 	for count != length {
-		wr, notif := readWithdrawnRoute(bs)
-		if notif != nil {
-			return nil, notif
-		}
+		wr := readWithdrawnRoute(bs)
 		routes = append(routes, *wr)
 		// Remove what we just read into a withdrawn route
 		bs = bs[wr.length:]
 		count += int(wr.length)
 	}
-	return routes, nil
+	return routes
 }
 
-func readWithdrawnRoute(bs []byte) (*withdrawnRoute, *notificationMessage) {
+func readWithdrawnRoute(bs []byte) *withdrawnRoute {
 	buf := bytes.NewBuffer(bs)
 	route := new(withdrawnRoute)
 	route.length = stream.ReadByte(buf)
 	route.prefix = stream.ReadBytes(int(route.length), buf)
-	return route, nil
+	return route
 }
 
 func (w withdrawnRoute) bytes() []byte {
@@ -1021,35 +1018,28 @@ type pathAttribute struct {
 	attributeValue  []byte
 }
 
-func readPathAttributes(length int, bs []byte) ([]pathAttribute, *notificationMessage) {
+func readPathAttributes(length int, bs []byte) []pathAttribute {
 	count := 0
 	attributes := []pathAttribute{}
 	for count != length {
-		pa, notif := readPathAttribute(bs)
-		if notif != nil {
-			return nil, notif
-		}
+		pa := readPathAttribute(bs)
 		attributes = append(attributes, *pa)
 		// Remove what we just read
 		bs = bs[pa.attributeLength:]
 		count += int(pa.attributeLength)
 	}
-	return attributes, nil
+	return attributes
 }
 
-func readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
+func readPathAttribute(bs []byte) *pathAttribute {
 	attribute := new(pathAttribute)
-	attributeType, notif := readAttributeType(bs)
-	if notif != nil {
-		return &pathAttribute{}, notif
-	}
-	attribute.attributeType = attributeType
+	attribute.attributeType = readAttributeType(bs)
 	// Remove the 2 byte type from our bytes
 	bs = bs[2:]
 	buf := bytes.NewBuffer(bs)
 	attribute.attributeLength = stream.ReadUint16(buf)
 	attribute.attributeValue = stream.ReadBytes(int(attribute.attributeLength), buf)
-	return attribute, nil
+	return attribute
 }
 
 func (p pathAttribute) valid() (*notificationMessage, bool) {
@@ -1076,12 +1066,12 @@ type attributeType struct {
 	code  byte
 }
 
-func readAttributeType(bs []byte) (attributeType, *notificationMessage) {
+func readAttributeType(bs []byte) attributeType {
 	attribute := attributeType{
 		flags: bs[0],
 		code:  bs[1],
 	}
-	return attribute, nil
+	return attribute
 }
 
 func (a attributeType) valid() (*notificationMessage, bool) {
@@ -1327,12 +1317,12 @@ func packPrefix(length int, ip net.IP) []byte {
 	return bs[:int(math.Ceil(math.Max(float64(length)/8.0, 1)))]
 }
 
-func readNLRI(bs []byte) (*nlri, *notificationMessage) {
+func readNLRI(bs []byte) *nlri {
 	buf := bytes.NewBuffer(bs)
 	nlri := new(nlri)
 	nlri.length = stream.ReadByte(buf)
 	nlri.prefix = stream.ReadBytes(int(nlri.length), buf)
-	return nlri, nil
+	return nlri
 }
 
 func (n nlri) valid() (*notificationMessage, bool) {
@@ -1398,15 +1388,15 @@ func newKeepaliveMessage() keepaliveMessage {
 	return keepaliveMessage{}
 }
 
-func readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
+func readKeepalive(message []byte) *keepaliveMessage {
 	// Related events
-	if len(message) != 0 {
-		// Send a notification
-		return nil, newNotificationMessage(messageHeaderError, badMessageLength, nil)
-	}
+	//if len(message) != 0 {
+	// Send a notification
+	//	return nil, newNotificationMessage(messageHeaderError, badMessageLength, nil)
+	//}
 	// Note: this should occur elsewhere
 	//f.sendEvent(keepAliveMsg)
-	return &keepaliveMessage{}, nil
+	return &keepaliveMessage{}
 }
 
 func (k keepaliveMessage) valid() (*notificationMessage, bool) {
