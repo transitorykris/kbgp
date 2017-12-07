@@ -2308,13 +2308,30 @@ func (f *fsm) reader() {
 	header, message := readMessage(f.peer.conn)
 	switch header.messageType {
 	case open:
-		readOpen(message)
+		open := readOpen(message)
+		if notif, ok := open.valid(f.peer.remoteAS, durationToUint16(f.holdTime)); !ok {
+			// TODO: Send the notification
+			log.Println("Sending notification", notif)
+		}
 	case update:
-		readUpdate(message)
+		update := readUpdate(message)
+		if notif, ok := update.valid(); !ok {
+			// TODO: Send the notification
+			log.Println("Sending notification", notif)
+		}
 	case notification:
-		readKeepalive(message)
+		notification := readKeepalive(message)
+		if notif, ok := notification.valid(); !ok {
+			// TODO: Send the notification
+			log.Println("Sending notification", notif)
+		}
 	case keepalive:
 		readKeepalive(message)
+		keepalive := readKeepalive(message)
+		if notif, ok := keepalive.valid(); !ok {
+			// TODO: Send the notification
+			log.Println("Sending notification", notif)
+		}
 	default:
 		// NOTIFICATION - messageHeaderError, badMessageType
 	}
