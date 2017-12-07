@@ -720,6 +720,8 @@ func (o openMessage) valid(remoteAS uint16, holdTime uint16) (*notificationMessa
 		return newNotificationMessage(openMessageError, unacceptableHoldTime, nil), false
 	}
 	// TODO: What is an unacceptable bgp identifier?
+	// badBGPIdentifier             // 3 - Bad BGP Identifier.
+	// unsupportedOptionalParameter // 4 - Unsupported Optional Parameter.
 	return nil, true
 }
 
@@ -840,7 +842,12 @@ func newParameter(t byte, v []byte) (parameter, error) {
 
 func readOptionalParameters(params []byte) ([]*parameter, *notificationMessage) {
 	// TODO: Implement me
+	//optionalAttributeError         // 9 - Optional Attribute Error.
 	return nil, nil
+}
+
+func (p parameter) valid() (*notificationMessage, bool) {
+	return nil, true
 }
 
 func (p parameter) bytes() []byte {
@@ -903,6 +910,21 @@ func readUpdate(message []byte) (*updateMessage, error) {
 	// TODO: Add reading path attributes
 	// TODO: Add reading NLRIs
 	return update, nil
+}
+
+func (u updateMessage) valid() (*notificationMessage, bool) {
+	// updateMessageError
+	// malformedAttributeList         // 1 - Malformed Attribute List.
+	// unrecognizedWellKnownAttribute // 2 - Unrecognized Well-known Attribute.
+	// missingWellKnownAttribute      // 3 - Missing Well-known Attribute.
+	// attributeFlagsError            // 4 - Attribute Flags Error.
+	// attributeLengthError           // 5 - Attribute Length Error.
+	// invalidOriginAttribute         // 6 - Invalid ORIGIN Attribute.
+	// invalidNextHopAttribute        // 8 - Invalid NEXT_HOP Attribute.
+	// optionalAttributeError         // 9 - Optional Attribute Error.
+	// invalidNetworkField            // 10 - Invalid Network Field.
+	// malformedASPath                // 11 - Malformed AS_PATH.
+	return nil, true
 }
 
 func (u updateMessage) bytes() []byte {
@@ -1029,6 +1051,12 @@ func readPathAttribute(bs []byte) (*pathAttribute, *notificationMessage) {
 	return attribute, nil
 }
 
+func (p pathAttribute) valid() (*notificationMessage, bool) {
+	// 	attributeLengthError           // 5 - Attribute Length Error.
+	//invalidNextHopAttribute        // 8 - Invalid NEXT_HOP Attribute.
+	return nil, true
+}
+
 func (p pathAttribute) bytes() []byte {
 	// TODO: Implement me
 	return []byte{}
@@ -1053,6 +1081,12 @@ func readAttributeType(bs []byte) (attributeType, *notificationMessage) {
 		code:  bs[1],
 	}
 	return attribute, nil
+}
+
+func (a attributeType) valid() (*notificationMessage, bool) {
+	// 	attributeFlagsError            // 4 - Attribute Flags Error.
+	// 	invalidOriginAttribute         // 6 - Invalid ORIGIN Attribute.
+	return nil, true
 }
 
 func (a attributeType) bytes() []byte {
@@ -1300,6 +1334,10 @@ func readNLRI(bs []byte) (*nlri, *notificationMessage) {
 	return nlri, nil
 }
 
+func (n nlri) valid() (*notificationMessage, bool) {
+	return nil, true
+}
+
 func (n nlri) bytes() []byte {
 	// TODO: Implement me
 	return []byte{}
@@ -1370,6 +1408,11 @@ func readKeepalive(message []byte) (*keepaliveMessage, *notificationMessage) {
 	return &keepaliveMessage{}, nil
 }
 
+func (k keepaliveMessage) valid() (*notificationMessage, bool) {
+	// TODO: Implement me
+	return nil, true
+}
+
 func (k keepaliveMessage) bytes() []byte {
 	return []byte{}
 }
@@ -1419,6 +1462,11 @@ func readNotification(message []byte) *notificationMessage {
 
 	// TODO: How and where do we make the notification data available?
 	return n
+}
+
+func (n notificationMessage) valid() (*notificationMessage, bool) {
+	// Note: here for completeness
+	return nil, true
 }
 
 func (n notificationMessage) bytes() []byte {
