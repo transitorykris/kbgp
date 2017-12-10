@@ -566,3 +566,90 @@ func (c *conn) SetReadDeadline(t time.Time) error {
 func (c *conn) SetWriteDeadline(t time.Time) error {
 	return nil
 }
+
+func TestNewAdjRIBIn(t *testing.T) {
+	a := newAdjRIBIn()
+	if a == nil {
+		t.Error("Did not expect a new AdjRIBIn to be nil")
+	}
+	if len(a.routes) != 0 {
+		t.Error("Expected 0 routes in the RIB but found", len(a.routes))
+	}
+}
+
+// compareNLRI is a little bit ugly but will do for now
+func compareNLRI(a nlri, b nlri) int {
+	if a.length != b.length {
+		return 1
+	}
+	if bytes.Compare(a.prefix, b.prefix) != 0 {
+		return 2
+	}
+	return 0
+}
+
+func TestAdjRIBInAdd(t *testing.T) {
+	a := newAdjRIBIn()
+	n := newNLRI(24, net.ParseIP("10.1.2.0"))
+	p := []pathAttribute{}
+	a.add(n, p)
+	if compareNLRI(a.routes[0].nlri, n) != 0 {
+		t.Errorf("Expected the first route's nlri to be %v but found %v", n, a.routes[0].nlri)
+	}
+
+	a.add(n, p)
+	if len(a.routes) != 1 {
+		t.Error("Replaced a route but the size of the slice changed to", len(a.routes))
+	}
+}
+
+func TestAdjRIBInRemove(t *testing.T) {
+	a := newAdjRIBIn()
+	n1 := newNLRI(24, net.ParseIP("10.1.2.0"))
+	n2 := newNLRI(24, net.ParseIP("10.1.3.0"))
+	n3 := newNLRI(24, net.ParseIP("10.1.4.0"))
+	p := []pathAttribute{}
+	a.add(n1, p)
+	a.add(n2, p)
+	a.add(n3, p)
+	a.remove(withdrawnRoute{length: n1.length, prefix: n1.prefix})
+	if len(a.routes) != 2 {
+		t.Error("Expected the numnber of routes to be 2 but found", len(a.routes))
+	}
+	if compareNLRI(a.routes[0].nlri, n2) != 0 {
+		t.Errorf("Expected the first prefix to be %v but got %v", n2.prefix, a.routes[0].nlri.prefix)
+	}
+	if compareNLRI(a.routes[1].nlri, n3) != 0 {
+		t.Errorf("Expected the second prefix to be %v but got %v", n2.prefix, a.routes[0].nlri.prefix)
+	}
+
+	a = newAdjRIBIn()
+	a.add(n1, p)
+	a.add(n2, p)
+	a.add(n3, p)
+	a.remove(withdrawnRoute{length: n2.length, prefix: n2.prefix})
+	if len(a.routes) != 2 {
+		t.Error("Expected the numnber of routes to be 2 but found", len(a.routes))
+	}
+	if compareNLRI(a.routes[0].nlri, n1) != 0 {
+		t.Errorf("Expected the first prefix to be %v but got %v", n1.prefix, a.routes[0].nlri.prefix)
+	}
+	if compareNLRI(a.routes[1].nlri, n3) != 0 {
+		t.Errorf("Expected the second prefix to be %v but got %v", n3.prefix, a.routes[0].nlri.prefix)
+	}
+
+	a = newAdjRIBIn()
+	a.add(n1, p)
+	a.add(n2, p)
+	a.add(n3, p)
+	a.remove(withdrawnRoute{length: n3.length, prefix: n3.prefix})
+	if len(a.routes) != 2 {
+		t.Error("Expected the numnber of routes to be 2 but found", len(a.routes))
+	}
+	if compareNLRI(a.routes[0].nlri, n1) != 0 {
+		t.Errorf("Expected the first prefix to be %v but got %v", n1.prefix, a.routes[0].nlri.prefix)
+	}
+	if compareNLRI(a.routes[1].nlri, n2) != 0 {
+		t.Errorf("Expected the second prefix to be %v but got %v", n2.prefix, a.routes[0].nlri.prefix)
+	}
+}

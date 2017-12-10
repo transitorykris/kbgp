@@ -457,10 +457,41 @@ import (
 //          from inbound UPDATE messages that were received from other BGP
 //          speakers.  Their contents represent routes that are available
 //          as input to the Decision Process.
-type adjRIBIn struct{}
+type adjRIBIn struct {
+	// Note: this is a dumb hack until I implement radix tries
+	routes []route
+}
+
+type route struct {
+	nlri       nlri
+	attributes []pathAttribute
+}
 
 func newAdjRIBIn() *adjRIBIn {
 	return &adjRIBIn{}
+}
+
+func (a *adjRIBIn) find(length byte, prefix []byte) (int, bool) {
+	for i, r := range a.routes {
+		if bytes.Compare(r.nlri.prefix, prefix) == 0 && r.nlri.length == length {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+func (a *adjRIBIn) add(n nlri, p []pathAttribute) {
+	if i, found := a.find(n.length, n.prefix); found {
+		a.routes[i].attributes = p
+		return
+	}
+	a.routes = append(a.routes, route{nlri: n, attributes: p})
+}
+
+func (a *adjRIBIn) remove(w withdrawnRoute) {
+	if i, found := a.find(w.length, w.prefix); found {
+		a.routes = append(a.routes[:i], a.routes[i+1:]...)
+	}
 }
 
 //       b) Loc-RIB: The Loc-RIB contains the local routing information the
