@@ -4681,6 +4681,8 @@ func (f *fsm) established(event int) {
 //    selected routes will be stored in the local speaker's Adj-RIBs-Out,
 //    according to policy.
 
+type pib struct{}
+
 //    The BGP Decision Process described here is conceptual, and does not
 //    have to be implemented precisely as described, as long as the
 //    implementations support the described functionality and they exhibit
