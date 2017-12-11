@@ -2422,6 +2422,15 @@ func (f *fsm) reader() {
 			log.Println("Sending notification", notif)
 		}
 	case update:
+		// From section 9
+		//    An UPDATE message may be received only in the Established state.
+		//    Receiving an UPDATE message in any other state is an error.
+		if f.state != established {
+			// notif := newNotificationMessage()
+			// TODO: Send the notification
+			// log.Println("Sending notification", notif)
+			break
+		}
 		update := readUpdate(message)
 		if notif, ok := update.valid(); !ok {
 			// TODO: Send the notification
