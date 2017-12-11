@@ -459,13 +459,15 @@ import (
 //          as input to the Decision Process.
 type adjRIBIn struct {
 	// Note: this is a dumb hack until I implement radix tries
-	routes []route
+	routes routes
 }
 
 type route struct {
 	nlri       nlri
 	attributes []pathAttribute
 }
+
+type routes []route
 
 func newAdjRIBIn() *adjRIBIn {
 	return &adjRIBIn{}
@@ -500,10 +502,85 @@ func (a *adjRIBIn) remove(w withdrawnRoute) {
 //          the routes that will be used by the local BGP speaker.  The
 //          next hop for each of these routes MUST be resolvable via the
 //          local BGP speaker's Routing Table.
-type locRIB struct{}
+type locRIB struct {
+	// We will use a slice of slices of routes. It will be up to the locRIB
+	// to keep these ordered from best to worst.
+	// Note: I don't intend to keep this datastructure as is, but it's easy
+	// enough for now.
+	routes []routes
+
+	// These channels are meant to be used internally by locRIB.
+	incoming chan route
+	withdraw chan route
+}
 
 func newLocRIB() *locRIB {
-	return &locRIB{}
+	l := &locRIB{
+		incoming: make(chan route),
+		withdraw: make(chan route),
+	}
+	return l
+}
+
+// add is meant to be called by the various AdjRibIn
+func (l *locRIB) add(r route) {
+	l.incoming <- r
+}
+
+// remove is meant to be called by the various AdjRibIn
+func (l *locRIB) remove(r route) {
+	l.withdraw <- r
+}
+
+func (l *locRIB) start() {
+	fmt.Println("Starting locRIB")
+	for {
+		select {
+		case r := <-l.incoming:
+			fmt.Println("Incoming route", r)
+			l.processIncoming(r)
+		case r := <-l.withdraw:
+			fmt.Println("Withdrawing route", r)
+			l.processWithdraw(r)
+		}
+	}
+}
+
+func (l *locRIB) processIncoming(r route) {
+	// Find the slice containing routes of this length and prefix
+	// If no slice, create it, then we're done
+	// Otherwise, sort the existing routes
+	// TODO: If there's a change in the best route, we'll want to let
+	// the AdjRibOuts know
+}
+
+// Len implements the sort interface for routes
+func (rs routes) Len() int {
+	return len(rs)
+}
+
+// prefer returns true if we prefer a over b
+func prefer(a route, b route) bool {
+	// TODO: Implement me, this is the best route selection process
+	return false
+}
+
+// Less implements the sort interface for routes
+func (rs routes) Less(i, j int) bool {
+	return prefer(rs[i], rs[j])
+}
+
+// Swap implements the sort interface for routes
+func (rs routes) Swap(i, j int) {
+	rs[i], rs[j] = rs[j], rs[i]
+}
+
+func (l *locRIB) processWithdraw(r route) {
+	// Find the slice containing routes of this length and prefix
+	// If no slice, then, wtf
+	// Remove it from the slice
+	// If it was the best route, tell the AdjRibOuts about the new
+	// best route, or if there is none, to just withdraw this route
 }
 
 //       c) Adj-RIBs-Out: The Adj-RIBs-Out stores information the local BGP
