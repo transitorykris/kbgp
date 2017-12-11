@@ -1,39 +1,59 @@
 package kbgp
 
+import "fmt"
+
 // 9.  UPDATE Message Handling
 
-//    An UPDATE message may be received only in the Established state.
-//    Receiving an UPDATE message in any other state is an error.  When an
-//    UPDATE message is received, each field is checked for validity, as
-//    specified in Section 6.3.
+func (f *fsm) handleUpdate(u *updateMessage) (*notificationMessage, error) {
+	//    An UPDATE message may be received only in the Established state.
+	//    Receiving an UPDATE message in any other state is an error.  When an
+	//    UPDATE message is received, each field is checked for validity, as
+	//    specified in Section 6.3.
+	if f.state != established {
+		return nil, fmt.Errorf("UPDATE received in %s state", stateName[f.state])
+	}
 
-//    If an optional non-transitive attribute is unrecognized, it is
-//    quietly ignored.  If an optional transitive attribute is
-//    unrecognized, the Partial bit (the third high-order bit) in the
-//    attribute flags octet is set to 1, and the attribute is retained for
-//    propagation to other BGP speakers.
+	if notif, ok := u.valid(); !ok {
+		return notif, fmt.Errorf("UPDATE message is not valid")
+	}
 
-//    If an optional attribute is recognized and has a valid value, then,
-//    depending on the type of the optional attribute, it is processed
-//    locally, retained, and updated, if necessary, for possible
-//    propagation to other BGP speakers.
+	for _, a := range u.pathAttributes {
+		//    If an optional non-transitive attribute is unrecognized, it is
+		//    quietly ignored.  If an optional transitive attribute is
+		//    unrecognized, the Partial bit (the third high-order bit) in the
+		//    attribute flags octet is set to 1, and the attribute is retained for
+		//    propagation to other BGP speakers.
+		if a.attributeType.optional() && a.attributeType.nonTransitive() {
+			// TODO: what optional transitive attributes do we recognize?
+		}
 
-//    If the UPDATE message contains a non-empty WITHDRAWN ROUTES field,
-//    the previously advertised routes, whose destinations (expressed as IP
-//    prefixes) are contained in this field, SHALL be removed from the
-//    Adj-RIB-In.  This BGP speaker SHALL run its Decision Process because
-//    the previously advertised route is no longer available for use.
+		//    If an optional attribute is recognized and has a valid value, then,
+		//    depending on the type of the optional attribute, it is processed
+		//    locally, retained, and updated, if necessary, for possible
+		//    propagation to other BGP speakers.
+		if a.attributeType.optional() {
+		}
+	}
 
-//    If the UPDATE message contains a feasible route, the Adj-RIB-In will
-//    be updated with this route as follows: if the NLRI of the new route
-//    is identical to the one the route currently has stored in the Adj-
-//    RIB-In, then the new route SHALL replace the older route in the Adj-
-//    RIB-In, thus implicitly withdrawing the older route from service.
-//    Otherwise, if the Adj-RIB-In has no route with NLRI identical to the
-//    new route, the new route SHALL be placed in the Adj-RIB-In.
+	//    If the UPDATE message contains a non-empty WITHDRAWN ROUTES field,
+	//    the previously advertised routes, whose destinations (expressed as IP
+	//    prefixes) are contained in this field, SHALL be removed from the
+	//    Adj-RIB-In.  This BGP speaker SHALL run its Decision Process because
+	//    the previously advertised route is no longer available for use.
 
-//    Once the BGP speaker updates the Adj-RIB-In, the speaker SHALL run
-//    its Decision Process.
+	//    If the UPDATE message contains a feasible route, the Adj-RIB-In will
+	//    be updated with this route as follows: if the NLRI of the new route
+	//    is identical to the one the route currently has stored in the Adj-
+	//    RIB-In, then the new route SHALL replace the older route in the Adj-
+	//    RIB-In, thus implicitly withdrawing the older route from service.
+	//    Otherwise, if the Adj-RIB-In has no route with NLRI identical to the
+	//    new route, the new route SHALL be placed in the Adj-RIB-In.
+
+	//    Once the BGP speaker updates the Adj-RIB-In, the speaker SHALL run
+	//    its Decision Process.
+
+	return nil, nil
+}
 
 // 9.1.  Decision Process
 
