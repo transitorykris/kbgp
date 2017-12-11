@@ -4778,6 +4778,13 @@ type pib struct{}
 //    installed in the routing table, the BGP route MUST be excluded from
 //    the Phase 2 decision function.
 
+// resolvable returns true if the given IP address is resolvable by the
+// local system
+func resolvable(ip net.IP) bool {
+	// TODO: Implement me
+	return true
+}
+
 //    If the AS_PATH attribute of a BGP route contains an AS loop, the BGP
 //    route should be excluded from the Phase 2 decision function.  AS loop
 //    detection is done by scanning the full AS path (as specified in the
@@ -4785,6 +4792,13 @@ type pib struct{}
 //    the local system does not appear in the AS path.  Operations of a BGP
 //    speaker that is configured to accept routes with its own autonomous
 //    system number in the AS path are outside the scope of this document.
+
+// asPathLoop returns true if the local AS number is found in the as path
+// attribute
+func asPathLoop(aspath []byte) bool {
+	// TODO: Implement me
+	return false
+}
 
 //    It is critical that BGP speakers within an AS do not make conflicting
 //    decisions regarding route selection that would cause forwarding loops
