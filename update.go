@@ -25,6 +25,7 @@ func (f *fsm) handleUpdate(u *updateMessage) (*notificationMessage, error) {
 		//    propagation to other BGP speakers.
 		if a.attributeType.optional() && a.attributeType.nonTransitive() {
 			// TODO: what optional transitive attributes do we recognize?
+			a.setPartial()
 		}
 
 		//    If an optional attribute is recognized and has a valid value, then,
@@ -40,6 +41,12 @@ func (f *fsm) handleUpdate(u *updateMessage) (*notificationMessage, error) {
 	//    prefixes) are contained in this field, SHALL be removed from the
 	//    Adj-RIB-In.  This BGP speaker SHALL run its Decision Process because
 	//    the previously advertised route is no longer available for use.
+	if u.withdrawnRoutesLength != 0 {
+		for _, w := range u.withdrawnRoutes {
+			f.peer.adjRIBIn.remove(w)
+		}
+		// TODO: Run the decision process
+	}
 
 	//    If the UPDATE message contains a feasible route, the Adj-RIB-In will
 	//    be updated with this route as follows: if the NLRI of the new route
@@ -48,9 +55,14 @@ func (f *fsm) handleUpdate(u *updateMessage) (*notificationMessage, error) {
 	//    RIB-In, thus implicitly withdrawing the older route from service.
 	//    Otherwise, if the Adj-RIB-In has no route with NLRI identical to the
 	//    new route, the new route SHALL be placed in the Adj-RIB-In.
-
-	//    Once the BGP speaker updates the Adj-RIB-In, the speaker SHALL run
-	//    its Decision Process.
+	if len(u.nlris) > 0 {
+		for _, n := range u.nlris {
+			f.peer.adjRIBIn.add(n, u.pathAttributes)
+		}
+		//    Once the BGP speaker updates the Adj-RIB-In, the speaker SHALL run
+		//    its Decision Process.
+		// TODO: Run the decision process
+	}
 
 	return nil, nil
 }
