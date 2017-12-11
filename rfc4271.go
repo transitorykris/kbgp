@@ -1204,8 +1204,16 @@ func (a *attributeType) optional() bool {
 	return a.flags&optionalMask == optional
 }
 
+func (a *attributeType) setOptional() {
+	a.flags = a.flags | optional
+}
+
 func (a *attributeType) wellKnown() bool {
 	return a.flags&optionalMask == wellKnown
+}
+
+func (a *attributeType) setWellKnown() {
+	a.flags = a.flags &^ optionalMask
 }
 
 //          The second high-order bit (bit 1) of the Attribute Flags octet
@@ -1220,8 +1228,16 @@ func (a *attributeType) transitive() bool {
 	return a.flags&transitiveMask == transitive
 }
 
+func (a *attributeType) setTransitive() {
+	a.flags = a.flags | transitive
+}
+
 func (a *attributeType) nonTransitive() bool {
 	return a.flags&transitiveMask == nonTransitive
+}
+
+func (a *attributeType) setNonTransitive() {
+	a.flags = a.flags &^ transitiveMask
 }
 
 //          For well-known attributes, the Transitive bit MUST be set to 1.
@@ -1241,8 +1257,16 @@ func (a *attributeType) partial() bool {
 	return a.flags&partialMask == partial
 }
 
+func (a *attributeType) setPartial() {
+	a.flags = a.flags | partial
+}
+
 func (a *attributeType) complete() bool {
 	return a.flags&partialMask == complete
+}
+
+func (a *attributeType) setComplete() {
+	a.flags = a.flags &^ partial
 }
 
 //          The fourth high-order bit (bit 3) of the Attribute Flags octet
@@ -1256,8 +1280,17 @@ func (a *attributeType) extendedLength() bool {
 	return a.flags&extendedLengthMask == extendedLength
 }
 
+func (a *attributeType) setExtendedLength() {
+	a.flags = a.flags | extendedLength
+}
+
+// TODO: Fix this name, it should be notExtendedLength
 func (a *attributeType) nonextendedLength() bool {
 	return a.flags&extendedLengthMask == notExtendedLength
+}
+
+func (a *attributeType) setNotExtendedLength() {
+	a.flags = a.flags &^ extendedLength
 }
 
 //          The lower-order four bits of the Attribute Flags octet are
