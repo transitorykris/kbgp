@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/transitorykris/kbgp/stream"
@@ -460,6 +461,7 @@ import (
 type adjRIBIn struct {
 	// Note: this is a dumb hack until I implement radix tries
 	routes routes
+	sync.Mutex
 }
 
 type route struct {

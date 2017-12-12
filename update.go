@@ -124,303 +124,321 @@ func (f *fsm) handleUpdate(u *updateMessage) (*notificationMessage, error) {
 
 // 9.1.1.  Phase 1: Calculation of Degree of Preference
 
-//    The Phase 1 decision function is invoked whenever the local BGP
-//    speaker receives, from a peer, an UPDATE message that advertises a
-//    new route, a replacement route, or withdrawn routes.
+// Note: this will not be the ultimate implementation, just a way to
+// study this section
+func (f *fsm) phase1(s *Speaker) {
+	//    The Phase 1 decision function is invoked whenever the local BGP
+	//    speaker receives, from a peer, an UPDATE message that advertises a
+	//    new route, a replacement route, or withdrawn routes.
 
-//    The Phase 1 decision function is a separate process,f which completes
-//    when it has no further work to do.
+	//    The Phase 1 decision function is a separate process,f which completes
+	//    when it has no further work to do.
 
-//    The Phase 1 decision function locks an Adj-RIB-In prior to operating
-//    on any route contained within it, and unlocks it after operating on
-//    all new or unfeasible routes contained within it.
+	//    The Phase 1 decision function locks an Adj-RIB-In prior to operating
+	//    on any route contained within it, and unlocks it after operating on
+	//    all new or unfeasible routes contained within it.
+	f.peer.adjRIBIn.Lock()
+	defer f.peer.adjRIBIn.Unlock()
 
-//    For each newly received or replacement feasible route, the local BGP
-//    speaker determines a degree of preference as follows:
+	//    For each newly received or replacement feasible route, the local BGP
+	//    speaker determines a degree of preference as follows:
+	if f.peer.remoteAS == s.myAS {
+		//       If the route is learned from an internal peer, either the value of
+		//       the LOCAL_PREF attribute is taken as the degree of preference, or
+		//       the local system computes the degree of preference of the route
+		//       based on preconfigured policy information.  Note that the latter
+		//       may result in formation of persistent routing loops.
+	} else {
+		//       If the route is learned from an external peer, then the local BGP
+		//       speaker computes the degree of preference based on preconfigured
+		//       policy information.  If the return value indicates the route is
+		//       ineligible, the route MAY NOT serve as an input to the next phase
+		//       of route selection; otherwise, the return value MUST be used as
+		//       the LOCAL_PREF value in any IBGP readvertisement.
+	}
 
-//       If the route is learned from an internal peer, either the value of
-//       the LOCAL_PREF attribute is taken as the degree of preference, or
-//       the local system computes the degree of preference of the route
-//       based on preconfigured policy information.  Note that the latter
-//       may result in formation of persistent routing loops.
-
-//       If the route is learned from an external peer, then the local BGP
-//       speaker computes the degree of preference based on preconfigured
-//       policy information.  If the return value indicates the route is
-//       ineligible, the route MAY NOT serve as an input to the next phase
-//       of route selection; otherwise, the return value MUST be used as
-//       the LOCAL_PREF value in any IBGP readvertisement.
-
-//       The exact nature of this policy information, and the computation
-//       involved, is a local matter.
+	//       The exact nature of this policy information, and the computation
+	//       involved, is a local matter.
+}
 
 // 9.1.2.  Phase 2: Route Selection
 
-//    The Phase 2 decision function is invoked on completion of Phase 1.
-//    The Phase 2 function is a separate process, which completes when it
-//    has no further work to do.  The Phase 2 process considers all routes
-//    that are eligible in the Adj-RIBs-In.
+// Note: this will not be the ultimate implementation, just a way to
+// study this section
+func (s *Speaker) phase2() {
+	//    The Phase 2 decision function is invoked on completion of Phase 1.
+	//    The Phase 2 function is a separate process, which completes when it
+	//    has no further work to do.  The Phase 2 process considers all routes
+	//    that are eligible in the Adj-RIBs-In.
 
-//    The Phase 2 decision function is blocked from running while the Phase
-//    3 decision function is in process.  The Phase 2 function locks all
-//    Adj-RIBs-In prior to commencing its function, and unlocks them on
-//    completion.
+	//    The Phase 2 decision function is blocked from running while the Phase
+	//    3 decision function is in process.  The Phase 2 function locks all
+	//    Adj-RIBs-In prior to commencing its function, and unlocks them on
+	//    completion.
 
-//    If the NEXT_HOP attribute of a BGP route depicts an address that is
-//    not resolvable, or if it would become unresolvable if the route was
-//    installed in the routing table, the BGP route MUST be excluded from
-//    the Phase 2 decision function.
+	s.phase3Mutex.Lock()
+	defer s.phase3Mutex.Unlock()
 
-// resolvable returns true if the given IP address is resolvable by the
-// local system
+	for _, f := range s.fsm {
+		f.peer.adjRIBIn.Lock()
+		defer f.peer.adjRIBIn.Unlock()
+		// Todo: double check this doesn't immediately fall out of scope
+	}
 
-//    If the AS_PATH attribute of a BGP route contains an AS loop, the BGP
-//    route should be excluded from the Phase 2 decision function.  AS loop
-//    detection is done by scanning the full AS path (as specified in the
-//    AS_PATH attribute), and checking that the autonomous system number of
-//    the local system does not appear in the AS path.  Operations of a BGP
-//    speaker that is configured to accept routes with its own autonomous
-//    system number in the AS path are outside the scope of this document.
+	//    If the NEXT_HOP attribute of a BGP route depicts an address that is
+	//    not resolvable, or if it would become unresolvable if the route was
+	//    installed in the routing table, the BGP route MUST be excluded from
+	//    the Phase 2 decision function.
 
-// asPathLoop returns true if the local AS number is found in the as path
-// attribute
+	//    If the AS_PATH attribute of a BGP route contains an AS loop, the BGP
+	//    route should be excluded from the Phase 2 decision function.  AS loop
+	//    detection is done by scanning the full AS path (as specified in the
+	//    AS_PATH attribute), and checking that the autonomous system number of
+	//    the local system does not appear in the AS path.  Operations of a BGP
+	//    speaker that is configured to accept routes with its own autonomous
+	//    system number in the AS path are outside the scope of this document.
 
-//    It is critical that BGP speakers within an AS do not make conflicting
-//    decisions regarding route selection that would cause forwarding loops
-//    to occur.
+	//    It is critical that BGP speakers within an AS do not make conflicting
+	//    decisions regarding route selection that would cause forwarding loops
+	//    to occur.
 
-//    For each set of destinations for which a feasible route exists in the
-//    Adj-RIBs-In, the local BGP speaker identifies the route that has:
+	//    For each set of destinations for which a feasible route exists in the
+	//    Adj-RIBs-In, the local BGP speaker identifies the route that has:
 
-//       a) the highest degree of preference of any route to the same set
-//          of destinations, or
+	//       a) the highest degree of preference of any route to the same set
+	//          of destinations, or
 
-//       b) is the only route to that destination, or
+	//       b) is the only route to that destination, or
 
-//       c) is selected as a result of the Phase 2 tie breaking rules
-//          specified in Section 9.1.2.2.
+	//       c) is selected as a result of the Phase 2 tie breaking rules
+	//          specified in Section 9.1.2.2.
 
-//    The local speaker SHALL then install that route in the Loc-RIB,
-//    replacing any route to the same destination that is currently being
-//    held in the Loc-RIB.  When the new BGP route is installed in the
-//    Routing Table, care must be taken to ensure that existing routes to
-//    the same destination that are now considered invalid are removed from
-//    the Routing Table.  Whether the new BGP route replaces an existing
-//    non-BGP route in the Routing Table depends on the policy configured
-//    on the BGP speaker.
+	//    The local speaker SHALL then install that route in the Loc-RIB,
+	//    replacing any route to the same destination that is currently being
+	//    held in the Loc-RIB.  When the new BGP route is installed in the
+	//    Routing Table, care must be taken to ensure that existing routes to
+	//    the same destination that are now considered invalid are removed from
+	//    the Routing Table.  Whether the new BGP route replaces an existing
+	//    non-BGP route in the Routing Table depends on the policy configured
+	//    on the BGP speaker.
 
-//    The local speaker MUST determine the immediate next-hop address from
-//    the NEXT_HOP attribute of the selected route (see Section 5.1.3).  If
-//    either the immediate next-hop or the IGP cost to the NEXT_HOP (where
-//    the NEXT_HOP is resolved through an IGP route) changes, Phase 2 Route
-//    Selection MUST be performed again.
+	//    The local speaker MUST determine the immediate next-hop address from
+	//    the NEXT_HOP attribute of the selected route (see Section 5.1.3).  If
+	//    either the immediate next-hop or the IGP cost to the NEXT_HOP (where
+	//    the NEXT_HOP is resolved through an IGP route) changes, Phase 2 Route
+	//    Selection MUST be performed again.
 
-//    Notice that even though BGP routes do not have to be installed in the
-//    Routing Table with the immediate next-hop(s), implementations MUST
-//    take care that, before any packets are forwarded along a BGP route,
-//    its associated NEXT_HOP address is resolved to the immediate
-//    (directly connected) next-hop address, and that this address (or
-//    multiple addresses) is finally used for actual packet forwarding.
+	//    Notice that even though BGP routes do not have to be installed in the
+	//    Routing Table with the immediate next-hop(s), implementations MUST
+	//    take care that, before any packets are forwarded along a BGP route,
+	//    its associated NEXT_HOP address is resolved to the immediate
+	//    (directly connected) next-hop address, and that this address (or
+	//    multiple addresses) is finally used for actual packet forwarding.
 
-//    Unresolvable routes SHALL be removed from the Loc-RIB and the routing
-//    table.  However, corresponding unresolvable routes SHOULD be kept in
-//    the Adj-RIBs-In (in case they become resolvable).
+	//    Unresolvable routes SHALL be removed from the Loc-RIB and the routing
+	//    table.  However, corresponding unresolvable routes SHOULD be kept in
+	//    the Adj-RIBs-In (in case they become resolvable).
 
-// 9.1.2.1.  Route Resolvability Condition
+	// 9.1.2.1.  Route Resolvability Condition
 
-//    As indicated in Section 9.1.2, BGP speakers SHOULD exclude
-//    unresolvable routes from the Phase 2 decision.  This ensures that
-//    only valid routes are installed in Loc-RIB and the Routing Table.
+	//    As indicated in Section 9.1.2, BGP speakers SHOULD exclude
+	//    unresolvable routes from the Phase 2 decision.  This ensures that
+	//    only valid routes are installed in Loc-RIB and the Routing Table.
 
-//    The route resolvability condition is defined as follows:
+	//    The route resolvability condition is defined as follows:
 
-//       1) A route Rte1, referencing only the intermediate network
-//          address, is considered resolvable if the Routing Table contains
-//          at least one resolvable route Rte2 that matches Rte1's
-//          intermediate network address and is not recursively resolved
-//          (directly or indirectly) through Rte1.  If multiple matching
-//          routes are available, only the longest matching route SHOULD be
-//          considered.
+	//       1) A route Rte1, referencing only the intermediate network
+	//          address, is considered resolvable if the Routing Table contains
+	//          at least one resolvable route Rte2 that matches Rte1's
+	//          intermediate network address and is not recursively resolved
+	//          (directly or indirectly) through Rte1.  If multiple matching
+	//          routes are available, only the longest matching route SHOULD be
+	//          considered.
 
-//       2) Routes referencing interfaces (with or without intermediate
-//          addresses) are considered resolvable if the state of the
-//          referenced interface is up and if IP processing is enabled on
-//          this interface.
+	//       2) Routes referencing interfaces (with or without intermediate
+	//          addresses) are considered resolvable if the state of the
+	//          referenced interface is up and if IP processing is enabled on
+	//          this interface.
 
-//    BGP routes do not refer to interfaces, but can be resolved through
-//    the routes in the Routing Table that can be of both types (those that
-//    specify interfaces or those that do not).  IGP routes and routes to
-//    directly connected networks are expected to specify the outbound
-//    interface.  Static routes can specify the outbound interface, the
-//    intermediate address, or both.
+	//    BGP routes do not refer to interfaces, but can be resolved through
+	//    the routes in the Routing Table that can be of both types (those that
+	//    specify interfaces or those that do not).  IGP routes and routes to
+	//    directly connected networks are expected to specify the outbound
+	//    interface.  Static routes can specify the outbound interface, the
+	//    intermediate address, or both.
 
-//    Note that a BGP route is considered unresolvable in a situation where
-//    the BGP speaker's Routing Table contains no route matching the BGP
-//    route's NEXT_HOP.  Mutually recursive routes (routes resolving each
-//    other or themselves) also fail the resolvability check.
+	//    Note that a BGP route is considered unresolvable in a situation where
+	//    the BGP speaker's Routing Table contains no route matching the BGP
+	//    route's NEXT_HOP.  Mutually recursive routes (routes resolving each
+	//    other or themselves) also fail the resolvability check.
 
-//    It is also important that implementations do not consider feasible
-//    routes that would become unresolvable if they were installed in the
-//    Routing Table, even if their NEXT_HOPs are resolvable using the
-//    current contents of the Routing Table (an example of such routes
+	//    It is also important that implementations do not consider feasible
+	//    routes that would become unresolvable if they were installed in the
+	//    Routing Table, even if their NEXT_HOPs are resolvable using the
+	//    current contents of the Routing Table (an example of such routes
 
-//    would be mutually recursive routes).  This check ensures that a BGP
-//    speaker does not install routes in the Routing Table that will be
-//    removed and not used by the speaker.  Therefore, in addition to local
-//    Routing Table stability, this check also improves behavior of the
-//    protocol in the network.
+	//    would be mutually recursive routes).  This check ensures that a BGP
+	//    speaker does not install routes in the Routing Table that will be
+	//    removed and not used by the speaker.  Therefore, in addition to local
+	//    Routing Table stability, this check also improves behavior of the
+	//    protocol in the network.
 
-//    Whenever a BGP speaker identifies a route that fails the
-//    resolvability check because of mutual recursion, an error message
-//    SHOULD be logged.
+	//    Whenever a BGP speaker identifies a route that fails the
+	//    resolvability check because of mutual recursion, an error message
+	//    SHOULD be logged.
 
-// 9.1.2.2.  Breaking Ties (Phase 2)
+	// 9.1.2.2.  Breaking Ties (Phase 2)
 
-//    In its Adj-RIBs-In, a BGP speaker may have several routes to the same
-//    destination that have the same degree of preference.  The local
-//    speaker can select only one of these routes for inclusion in the
-//    associated Loc-RIB.  The local speaker considers all routes with the
-//    same degrees of preference, both those received from internal peers,
-//    and those received from external peers.
+	//    In its Adj-RIBs-In, a BGP speaker may have several routes to the same
+	//    destination that have the same degree of preference.  The local
+	//    speaker can select only one of these routes for inclusion in the
+	//    associated Loc-RIB.  The local speaker considers all routes with the
+	//    same degrees of preference, both those received from internal peers,
+	//    and those received from external peers.
 
-//    The following tie-breaking procedure assumes that, for each candidate
-//    route, all the BGP speakers within an autonomous system can ascertain
-//    the cost of a path (interior distance) to the address depicted by the
-//    NEXT_HOP attribute of the route, and follow the same route selection
-//    algorithm.
+	//    The following tie-breaking procedure assumes that, for each candidate
+	//    route, all the BGP speakers within an autonomous system can ascertain
+	//    the cost of a path (interior distance) to the address depicted by the
+	//    NEXT_HOP attribute of the route, and follow the same route selection
+	//    algorithm.
 
-//    The tie-breaking algorithm begins by considering all equally
-//    preferable routes to the same destination, and then selects routes to
-//    be removed from consideration.  The algorithm terminates as soon as
-//    only one route remains in consideration.  The criteria MUST be
-//    applied in the order specified.
+	//    The tie-breaking algorithm begins by considering all equally
+	//    preferable routes to the same destination, and then selects routes to
+	//    be removed from consideration.  The algorithm terminates as soon as
+	//    only one route remains in consideration.  The criteria MUST be
+	//    applied in the order specified.
 
-//    Several of the criteria are described using pseudo-code.  Note that
-//    the pseudo-code shown was chosen for clarity, not efficiency.  It is
-//    not intended to specify any particular implementation.  BGP
-//    implementations MAY use any algorithm that produces the same results
-//    as those described here.
+	//    Several of the criteria are described using pseudo-code.  Note that
+	//    the pseudo-code shown was chosen for clarity, not efficiency.  It is
+	//    not intended to specify any particular implementation.  BGP
+	//    implementations MAY use any algorithm that produces the same results
+	//    as those described here.
 
-//       a) Remove from consideration all routes that are not tied for
-//          having the smallest number of AS numbers present in their
-//          AS_PATH attributes.  Note that when counting this number, an
-//          AS_SET counts as 1, no matter how many ASes are in the set.
+	//       a) Remove from consideration all routes that are not tied for
+	//          having the smallest number of AS numbers present in their
+	//          AS_PATH attributes.  Note that when counting this number, an
+	//          AS_SET counts as 1, no matter how many ASes are in the set.
 
-//       b) Remove from consideration all routes that are not tied for
-//          having the lowest Origin number in their Origin attribute.
+	//       b) Remove from consideration all routes that are not tied for
+	//          having the lowest Origin number in their Origin attribute.
 
-//       c) Remove from consideration routes with less-preferred
-//          MULTI_EXIT_DISC attributes.  MULTI_EXIT_DISC is only comparable
-//          between routes learned from the same neighboring AS (the
-//          neighboring AS is determined from the AS_PATH attribute).
-//          Routes that do not have the MULTI_EXIT_DISC attribute are
-//          considered to have the lowest possible MULTI_EXIT_DISC value.
+	//       c) Remove from consideration routes with less-preferred
+	//          MULTI_EXIT_DISC attributes.  MULTI_EXIT_DISC is only comparable
+	//          between routes learned from the same neighboring AS (the
+	//          neighboring AS is determined from the AS_PATH attribute).
+	//          Routes that do not have the MULTI_EXIT_DISC attribute are
+	//          considered to have the lowest possible MULTI_EXIT_DISC value.
 
-//          This is also described in the following procedure:
+	//          This is also described in the following procedure:
 
-//        for m = all routes still under consideration
-//            for n = all routes still under consideration
-//                if (neighborAS(m) == neighborAS(n)) and (MED(n) < MED(m))
-//                    remove route m from consideration
+	//        for m = all routes still under consideration
+	//            for n = all routes still under consideration
+	//                if (neighborAS(m) == neighborAS(n)) and (MED(n) < MED(m))
+	//                    remove route m from consideration
 
-//          In the pseudo-code above, MED(n) is a function that returns the
-//          value of route n's MULTI_EXIT_DISC attribute.  If route n has
-//          no MULTI_EXIT_DISC attribute, the function returns the lowest
-//          possible MULTI_EXIT_DISC value (i.e., 0).
+	//          In the pseudo-code above, MED(n) is a function that returns the
+	//          value of route n's MULTI_EXIT_DISC attribute.  If route n has
+	//          no MULTI_EXIT_DISC attribute, the function returns the lowest
+	//          possible MULTI_EXIT_DISC value (i.e., 0).
 
-//          Similarly, neighborAS(n) is a function that returns the
-//          neighbor AS from which the route was received.  If the route is
-//          learned via IBGP, and the other IBGP speaker didn't originate
-//          the route, it is the neighbor AS from which the other IBGP
-//          speaker learned the route.  If the route is learned via IBGP,
-//          and the other IBGP speaker either (a) originated the route, or
-//          (b) created the route by aggregation and the AS_PATH attribute
-//          of the aggregate route is either empty or begins with an
-//          AS_SET, it is the local AS.
+	//          Similarly, neighborAS(n) is a function that returns the
+	//          neighbor AS from which the route was received.  If the route is
+	//          learned via IBGP, and the other IBGP speaker didn't originate
+	//          the route, it is the neighbor AS from which the other IBGP
+	//          speaker learned the route.  If the route is learned via IBGP,
+	//          and the other IBGP speaker either (a) originated the route, or
+	//          (b) created the route by aggregation and the AS_PATH attribute
+	//          of the aggregate route is either empty or begins with an
+	//          AS_SET, it is the local AS.
 
-//          If a MULTI_EXIT_DISC attribute is removed before re-advertising
-//          a route into IBGP, then comparison based on the received EBGP
-//          MULTI_EXIT_DISC attribute MAY still be performed.  If an
-//          implementation chooses to remove MULTI_EXIT_DISC, then the
-//          optional comparison on MULTI_EXIT_DISC, if performed, MUST be
-//          performed only among EBGP-learned routes.  The best EBGP-
-//          learned route may then be compared with IBGP-learned routes
-//          after the removal of the MULTI_EXIT_DISC attribute.  If
-//          MULTI_EXIT_DISC is removed from a subset of EBGP-learned
-//          routes, and the selected "best" EBGP-learned route will not
-//          have MULTI_EXIT_DISC removed, then the MULTI_EXIT_DISC must be
-//          used in the comparison with IBGP-learned routes.  For IBGP-
-//          learned routes, the MULTI_EXIT_DISC MUST be used in route
-//          comparisons that reach this step in the Decision Process.
-//          Including the MULTI_EXIT_DISC of an EBGP-learned route in the
-//          comparison with an IBGP-learned route, then removing the
-//          MULTI_EXIT_DISC attribute, and advertising the route has been
-//          proven to cause route loops.
+	//          If a MULTI_EXIT_DISC attribute is removed before re-advertising
+	//          a route into IBGP, then comparison based on the received EBGP
+	//          MULTI_EXIT_DISC attribute MAY still be performed.  If an
+	//          implementation chooses to remove MULTI_EXIT_DISC, then the
+	//          optional comparison on MULTI_EXIT_DISC, if performed, MUST be
+	//          performed only among EBGP-learned routes.  The best EBGP-
+	//          learned route may then be compared with IBGP-learned routes
+	//          after the removal of the MULTI_EXIT_DISC attribute.  If
+	//          MULTI_EXIT_DISC is removed from a subset of EBGP-learned
+	//          routes, and the selected "best" EBGP-learned route will not
+	//          have MULTI_EXIT_DISC removed, then the MULTI_EXIT_DISC must be
+	//          used in the comparison with IBGP-learned routes.  For IBGP-
+	//          learned routes, the MULTI_EXIT_DISC MUST be used in route
+	//          comparisons that reach this step in the Decision Process.
+	//          Including the MULTI_EXIT_DISC of an EBGP-learned route in the
+	//          comparison with an IBGP-learned route, then removing the
+	//          MULTI_EXIT_DISC attribute, and advertising the route has been
+	//          proven to cause route loops.
 
-//       d) If at least one of the candidate routes was received via EBGP,
-//          remove from consideration all routes that were received via
-//          IBGP.
+	//       d) If at least one of the candidate routes was received via EBGP,
+	//          remove from consideration all routes that were received via
+	//          IBGP.
 
-//       e) Remove from consideration any routes with less-preferred
-//          interior cost.  The interior cost of a route is determined by
-//          calculating the metric to the NEXT_HOP for the route using the
-//          Routing Table.  If the NEXT_HOP hop for a route is reachable,
-//          but no cost can be determined, then this step should be skipped
-//          (equivalently, consider all routes to have equal costs).
+	//       e) Remove from consideration any routes with less-preferred
+	//          interior cost.  The interior cost of a route is determined by
+	//          calculating the metric to the NEXT_HOP for the route using the
+	//          Routing Table.  If the NEXT_HOP hop for a route is reachable,
+	//          but no cost can be determined, then this step should be skipped
+	//          (equivalently, consider all routes to have equal costs).
 
-//          This is also described in the following procedure.
+	//          This is also described in the following procedure.
 
-//          for m = all routes still under consideration
-//              for n = all routes in still under consideration
-//                  if (cost(n) is lower than cost(m))
-//                      remove m from consideration
+	//          for m = all routes still under consideration
+	//              for n = all routes in still under consideration
+	//                  if (cost(n) is lower than cost(m))
+	//                      remove m from consideration
 
-//          In the pseudo-code above, cost(n) is a function that returns
-//          the cost of the path (interior distance) to the address given
-//          in the NEXT_HOP attribute of the route.
+	//          In the pseudo-code above, cost(n) is a function that returns
+	//          the cost of the path (interior distance) to the address given
+	//          in the NEXT_HOP attribute of the route.
 
-//       f) Remove from consideration all routes other than the route that
-//          was advertised by the BGP speaker with the lowest BGP
-//          Identifier value.
+	//       f) Remove from consideration all routes other than the route that
+	//          was advertised by the BGP speaker with the lowest BGP
+	//          Identifier value.
 
-//       g) Prefer the route received from the lowest peer address.
+	//       g) Prefer the route received from the lowest peer address.
+}
 
 // 9.1.3.  Phase 3: Route Dissemination
 
-//    The Phase 3 decision function is invoked on completion of Phase 2, or
-//    when any of the following events occur:
+// Note: this will not be the ultimate implementation, just a way to
+// study this section
+func (f *fsm) phase3() {
+	//    The Phase 3 decision function is invoked on completion of Phase 2, or
+	//    when any of the following events occur:
 
-//       a) when routes in the Loc-RIB to local destinations have changed
+	//       a) when routes in the Loc-RIB to local destinations have changed
 
-//       b) when locally generated routes learned by means outside of BGP
-//          have changed
+	//       b) when locally generated routes learned by means outside of BGP
+	//          have changed
 
-//       c) when a new BGP speaker connection has been established
+	//       c) when a new BGP speaker connection has been established
 
-//    The Phase 3 function is a separate process that completes when it has
-//    no further work to do.  The Phase 3 Routing Decision function is
-//    blocked from running while the Phase 2 decision function is in
-//    process.
+	//    The Phase 3 function is a separate process that completes when it has
+	//    no further work to do.  The Phase 3 Routing Decision function is
+	//    blocked from running while the Phase 2 decision function is in
+	//    process.
 
-//    All routes in the Loc-RIB are processed into Adj-RIBs-Out according
-//    to configured policy.  This policy MAY exclude a route in the Loc-RIB
-//    from being installed in a particular Adj-RIB-Out.  A route SHALL NOT
+	//    All routes in the Loc-RIB are processed into Adj-RIBs-Out according
+	//    to configured policy.  This policy MAY exclude a route in the Loc-RIB
+	//    from being installed in a particular Adj-RIB-Out.  A route SHALL NOT
 
-//    be installed in the Adj-Rib-Out unless the destination, and NEXT_HOP
-//    described by this route, may be forwarded appropriately by the
-//    Routing Table.  If a route in Loc-RIB is excluded from a particular
-//    Adj-RIB-Out, the previously advertised route in that Adj-RIB-Out MUST
-//    be withdrawn from service by means of an UPDATE message (see 9.2).
+	//    be installed in the Adj-Rib-Out unless the destination, and NEXT_HOP
+	//    described by this route, may be forwarded appropriately by the
+	//    Routing Table.  If a route in Loc-RIB is excluded from a particular
+	//    Adj-RIB-Out, the previously advertised route in that Adj-RIB-Out MUST
+	//    be withdrawn from service by means of an UPDATE message (see 9.2).
 
-//    Route aggregation and information reduction techniques (see Section
-//    9.2.2.1) may optionally be applied.
+	//    Route aggregation and information reduction techniques (see Section
+	//    9.2.2.1) may optionally be applied.
 
-//    Any local policy that results in routes being added to an Adj-RIB-Out
-//    without also being added to the local BGP speaker's forwarding table
-//    is outside the scope of this document.
+	//    Any local policy that results in routes being added to an Adj-RIB-Out
+	//    without also being added to the local BGP speaker's forwarding table
+	//    is outside the scope of this document.
 
-//    When the updating of the Adj-RIBs-Out and the Routing Table is
-//    complete, the local BGP speaker runs the Update-Send process of 9.2.
+	//    When the updating of the Adj-RIBs-Out and the Routing Table is
+	//    complete, the local BGP speaker runs the Update-Send process of 9.2.
+}
 
 // 9.1.4.  Overlapping Routes
 

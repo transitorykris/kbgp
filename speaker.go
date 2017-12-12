@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 )
 
 // Speaker implements BGP4
@@ -13,6 +14,7 @@ type Speaker struct {
 	bgpIdentifier uint32
 	locRIB        *locRIB
 	fsm           []*fsm
+	phase3Mutex   sync.Mutex
 }
 
 // New creates a new BGP speaker
