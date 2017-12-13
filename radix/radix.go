@@ -5,6 +5,14 @@ import (
 	"net"
 )
 
+// Trie is a generic trie for managing IP networks and their
+// associated next hops
+type Trie interface {
+	Insert(net.IPNet, net.IP)
+	Delete(net.IPNet) bool
+	Lookup(net.IPNet) (net.IPNet, net.IP, error)
+}
+
 // Radix is a radix trie implementation specifically for managing
 // IPv4 networks. We'll do this with IP networks as edges, it won't
 // be efficient, but hopefully clear.
