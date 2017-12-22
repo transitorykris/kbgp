@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/transitorykris/kbgp/stream"
@@ -457,10 +458,44 @@ import (
 //          from inbound UPDATE messages that were received from other BGP
 //          speakers.  Their contents represent routes that are available
 //          as input to the Decision Process.
-type adjRIBIn struct{}
+type adjRIBIn struct {
+	// Note: this is a dumb hack until I implement radix tries
+	routes routes
+	sync.Mutex
+}
+
+type route struct {
+	nlri       nlri
+	attributes []pathAttribute
+}
+
+type routes []route
 
 func newAdjRIBIn() *adjRIBIn {
 	return &adjRIBIn{}
+}
+
+func (a *adjRIBIn) find(length byte, prefix []byte) (int, bool) {
+	for i, r := range a.routes {
+		if bytes.Compare(r.nlri.prefix, prefix) == 0 && r.nlri.length == length {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+func (a *adjRIBIn) add(n nlri, p []pathAttribute) {
+	if i, found := a.find(n.length, n.prefix); found {
+		a.routes[i].attributes = p
+		return
+	}
+	a.routes = append(a.routes, route{nlri: n, attributes: p})
+}
+
+func (a *adjRIBIn) remove(w withdrawnRoute) {
+	if i, found := a.find(w.length, w.prefix); found {
+		a.routes = append(a.routes[:i], a.routes[i+1:]...)
+	}
 }
 
 //       b) Loc-RIB: The Loc-RIB contains the local routing information the
@@ -469,10 +504,85 @@ func newAdjRIBIn() *adjRIBIn {
 //          the routes that will be used by the local BGP speaker.  The
 //          next hop for each of these routes MUST be resolvable via the
 //          local BGP speaker's Routing Table.
-type locRIB struct{}
+type locRIB struct {
+	// We will use a slice of slices of routes. It will be up to the locRIB
+	// to keep these ordered from best to worst.
+	// Note: I don't intend to keep this datastructure as is, but it's easy
+	// enough for now.
+	routes []routes
+
+	// These channels are meant to be used internally by locRIB.
+	incoming chan route
+	withdraw chan route
+}
 
 func newLocRIB() *locRIB {
-	return &locRIB{}
+	l := &locRIB{
+		incoming: make(chan route),
+		withdraw: make(chan route),
+	}
+	return l
+}
+
+// add is meant to be called by the various AdjRibIn
+func (l *locRIB) add(r route) {
+	l.incoming <- r
+}
+
+// remove is meant to be called by the various AdjRibIn
+func (l *locRIB) remove(r route) {
+	l.withdraw <- r
+}
+
+func (l *locRIB) start() {
+	fmt.Println("Starting locRIB")
+	for {
+		select {
+		case r := <-l.incoming:
+			fmt.Println("Incoming route", r)
+			l.processIncoming(r)
+		case r := <-l.withdraw:
+			fmt.Println("Withdrawing route", r)
+			l.processWithdraw(r)
+		}
+	}
+}
+
+func (l *locRIB) processIncoming(r route) {
+	// Find the slice containing routes of this length and prefix
+	// If no slice, create it, then we're done
+	// Otherwise, sort the existing routes
+	// TODO: If there's a change in the best route, we'll want to let
+	// the AdjRibOuts know
+}
+
+// Len implements the sort interface for routes
+func (rs routes) Len() int {
+	return len(rs)
+}
+
+// prefer returns true if we prefer a over b
+func prefer(a route, b route) bool {
+	// TODO: Implement me, this is the best route selection process
+	return false
+}
+
+// Less implements the sort interface for routes
+func (rs routes) Less(i, j int) bool {
+	return prefer(rs[i], rs[j])
+}
+
+// Swap implements the sort interface for routes
+func (rs routes) Swap(i, j int) {
+	rs[i], rs[j] = rs[j], rs[i]
+}
+
+func (l *locRIB) processWithdraw(r route) {
+	// Find the slice containing routes of this length and prefix
+	// If no slice, then, wtf
+	// Remove it from the slice
+	// If it was the best route, tell the AdjRibOuts about the new
+	// best route, or if there is none, to just withdraw this route
 }
 
 //       c) Adj-RIBs-Out: The Adj-RIBs-Out stores information the local BGP
@@ -1096,8 +1206,16 @@ func (a *attributeType) optional() bool {
 	return a.flags&optionalMask == optional
 }
 
+func (a *attributeType) setOptional() {
+	a.flags = a.flags | optional
+}
+
 func (a *attributeType) wellKnown() bool {
 	return a.flags&optionalMask == wellKnown
+}
+
+func (a *attributeType) setWellKnown() {
+	a.flags = a.flags &^ optionalMask
 }
 
 //          The second high-order bit (bit 1) of the Attribute Flags octet
@@ -1112,8 +1230,16 @@ func (a *attributeType) transitive() bool {
 	return a.flags&transitiveMask == transitive
 }
 
+func (a *attributeType) setTransitive() {
+	a.flags = a.flags | transitive
+}
+
 func (a *attributeType) nonTransitive() bool {
 	return a.flags&transitiveMask == nonTransitive
+}
+
+func (a *attributeType) setNonTransitive() {
+	a.flags = a.flags &^ transitiveMask
 }
 
 //          For well-known attributes, the Transitive bit MUST be set to 1.
@@ -1133,8 +1259,16 @@ func (a *attributeType) partial() bool {
 	return a.flags&partialMask == partial
 }
 
+func (a *attributeType) setPartial() {
+	a.flags = a.flags | partial
+}
+
 func (a *attributeType) complete() bool {
 	return a.flags&partialMask == complete
+}
+
+func (a *attributeType) setComplete() {
+	a.flags = a.flags &^ partial
 }
 
 //          The fourth high-order bit (bit 3) of the Attribute Flags octet
@@ -1148,8 +1282,17 @@ func (a *attributeType) extendedLength() bool {
 	return a.flags&extendedLengthMask == extendedLength
 }
 
+func (a *attributeType) setExtendedLength() {
+	a.flags = a.flags | extendedLength
+}
+
+// TODO: Fix this name, it should be notExtendedLength
 func (a *attributeType) nonextendedLength() bool {
 	return a.flags&extendedLengthMask == notExtendedLength
+}
+
+func (a *attributeType) setNotExtendedLength() {
+	a.flags = a.flags &^ extendedLength
 }
 
 //          The lower-order four bits of the Attribute Flags octet are
@@ -2314,6 +2457,15 @@ func (f *fsm) reader() {
 			log.Println("Sending notification", notif)
 		}
 	case update:
+		// From section 9
+		//    An UPDATE message may be received only in the Established state.
+		//    Receiving an UPDATE message in any other state is an error.
+		if f.state != established {
+			// notif := newNotificationMessage()
+			// TODO: Send the notification
+			// log.Println("Sending notification", notif)
+			break
+		}
 		update := readUpdate(message)
 		if notif, ok := update.valid(); !ok {
 			// TODO: Send the notification
@@ -4573,6 +4725,8 @@ func (f *fsm) established(event int) {
 //    selected routes will be stored in the local speaker's Adj-RIBs-Out,
 //    according to policy.
 
+type pib struct{}
+
 //    The BGP Decision Process described here is conceptual, and does not
 //    have to be implemented precisely as described, as long as the
 //    implementations support the described functionality and they exhibit
@@ -4668,6 +4822,13 @@ func (f *fsm) established(event int) {
 //    installed in the routing table, the BGP route MUST be excluded from
 //    the Phase 2 decision function.
 
+// resolvable returns true if the given IP address is resolvable by the
+// local system
+func resolvable(ip net.IP) bool {
+	// TODO: Implement me
+	return true
+}
+
 //    If the AS_PATH attribute of a BGP route contains an AS loop, the BGP
 //    route should be excluded from the Phase 2 decision function.  AS loop
 //    detection is done by scanning the full AS path (as specified in the
@@ -4675,6 +4836,13 @@ func (f *fsm) established(event int) {
 //    the local system does not appear in the AS path.  Operations of a BGP
 //    speaker that is configured to accept routes with its own autonomous
 //    system number in the AS path are outside the scope of this document.
+
+// asPathLoop returns true if the local AS number is found in the as path
+// attribute
+func asPathLoop(aspath []byte) bool {
+	// TODO: Implement me
+	return false
+}
 
 //    It is critical that BGP speakers within an AS do not make conflicting
 //    decisions regarding route selection that would cause forwarding loops
