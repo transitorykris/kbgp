@@ -1,19 +1,34 @@
 package speaker
 
 import (
+	"fmt"
 	"net"
 )
 
+const bgpPort = 179
+
 // Speaker is a router that speaks BGP
 type Speaker struct {
-	myAS int16
-
+	asn   int16
 	peers []Peer
+
+	listener net.Listener
+	dialer   net.Dialer
 }
 
 // New creates a new router speaking BGP
 func New(asn int16) *Speaker {
-	return &Speaker{asn, []Peer{}}
+	s := &Speaker{
+		asn:   asn,
+		peers: []Peer{},
+	}
+	// TODO: What is a sane way to restrict which IPs we listen on?
+	l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", bgpPort))
+	if err != nil {
+		panic(err)
+	}
+	s.listener = l
+	return s
 }
 
 // Peer is a remote BGP speaker
@@ -23,6 +38,8 @@ type Peer struct {
 	enabled bool
 	in      Policer
 	out     Policer
+
+	best BestPathSelecter
 }
 
 // Enable starts this peer
@@ -51,6 +68,9 @@ func (s *Speaker) Peer(asn int32, ip string, opts ...PeerOption) *Peer {
 	}
 	if peer.out == nil {
 		peer.out = &DefaultPolicy{}
+	}
+	if peer.best == nil {
+		peer.best = &DefaultBestPathSelection{}
 	}
 	return peer
 }
@@ -90,7 +110,18 @@ func PolicyOutOption(policy Policer) PeerOption {
 // Other possible per-peer options
 // Passive - Do not initiate connections to the peer
 // Timers - Modify default timer values
-// BestPathSelecter - Custom best path selection
+
+type BestPathSelecter interface {
+	// Note: probably return a list of nlri for multipath?
+	Compare(nlris ...NLRI) nlri
+}
+
+type DefaultBestPathSelection struct{}
+
+func (d *DefaultBestPathSelection) Compare(nlris ...NLRI) nlri {
+	// TODO: Implement me
+	return NLRI{}
+}
 
 // Announce the given prefix
 func (s *Speaker) Announce(prefix string) error {
