@@ -44,7 +44,7 @@ func (s *Speaker) Withdraw(prefix string) error {
 type PeerOption func(*Peer) error
 
 // Peer adds a new peer to this speaker
-func (s *Speaker) Peer(asn int32, ip string, opts ...PeerOption) *Peer {
+func (s *Speaker) Peer(asn int16, ip string, opts ...PeerOption) *Peer {
 	peer := &Peer{
 		asn: asn,
 		ip:  net.ParseIP(ip),

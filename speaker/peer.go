@@ -1,16 +1,29 @@
 package speaker
 
-import "net"
+import (
+	"net"
+	"time"
+)
 
 // Peer is a remote BGP speaker
 type Peer struct {
-	asn     int32
+	asn     int16
 	ip      net.IP
 	enabled bool
 	in      Policer
 	out     Policer
 
 	best BestPathSelecter
+
+	// Peer timers
+	holdTime          time.Duration
+	keepAliveInterval time.Duration
+	connectRetryTime  time.Duration
+	initialHoldTime   time.Duration
+
+	// These may be per-speaker or per-peer
+	delayOpenTime time.Duration
+	idleHoldTime  time.Duration
 }
 
 // The Policer interface is implemented by clients to apply policy
