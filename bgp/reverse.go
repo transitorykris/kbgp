@@ -1,4 +1,4 @@
-package kbgp
+package bgp
 
 var eventName = map[int]string{
 	1:  "ManualStart",

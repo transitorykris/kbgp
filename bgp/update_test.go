@@ -1,4 +1,4 @@
-package kbgp
+package bgp
 
 import (
 	"fmt"
