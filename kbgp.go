@@ -22,10 +22,16 @@ type Speaker struct {
 	bgpIdentifier net.IP
 
 	peers []*peer
+
+	// For the first implementation we'll just listen on all IPs
+	// so will just have a single listener. It is up to the client
+	// to close the listener. This is optional, if listener is nil
+	// We'll bind to port 179 on all IPs.
+	listener net.Listener
 }
 
 // New creates a new BGP speaker
-func New(myAS int, bgpIdentifier string) (*Speaker, error) {
+func New(myAS int, bgpIdentifier string, listener net.Listener) (*Speaker, error) {
 	if !validAS(myAS) {
 		return nil, fmt.Errorf("invalid autonomous system number %d", myAS)
 	}
@@ -33,9 +39,17 @@ func New(myAS int, bgpIdentifier string) (*Speaker, error) {
 	if ip == nil {
 		return nil, fmt.Errorf("identifier %s is not a valid IPv4 address", bgpIdentifier)
 	}
+	if listener == nil {
+		var err error
+		listener, err = net.Listen("tcp", "0.0.0.0:179")
+		if err != nil {
+			return nil, err
+		}
+	}
 	s := &Speaker{
 		myAS:          uint16(myAS),
 		bgpIdentifier: ip,
+		listener:      listener,
 	}
 	return s, nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 
 	"github.com/transitorykris/kbgp"
 )
@@ -9,7 +10,13 @@ import (
 func main() {
 	log.Println("Starting kBGP")
 
-	router, err := kbgp.New(1234, "1.2.3.4")
+	listener, err := net.Listen("tcp", "0.0.0.0:8179")
+	if err != nil {
+		panic(err)
+	}
+	defer listener.Close()
+
+	router, err := kbgp.New(1234, "1.2.3.4", listener)
 	if err != nil {
 		log.Fatal(err)
 	}
