@@ -37,6 +37,11 @@ func main() {
 		log.Println(err)
 	}
 
+	if err = router.Peer(4444, "4.4.4.4", kbgp.PassivePeerOption()); err != nil {
+		log.Println(err)
+	}
+	router.EnablePeer(4444, "4.4.4.4")
+
 	go func() {
 		if err := router.Speak(); err != nil {
 			log.Println(err)

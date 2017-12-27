@@ -11,6 +11,9 @@ type peer struct {
 	as       uint16
 	remoteIP net.IP
 	enabled  bool
+
+	// If passive is set, then we will not attempt to dial out
+	passive bool
 }
 
 func newPeer(peerAS int, remoteIP string) (*peer, error) {
@@ -53,7 +56,7 @@ func (p *peer) disable() {
 func (p *peer) dialLoop() {
 	for {
 		// TODO: Replace with a channel
-		if !p.enabled {
+		if !p.enabled || p.passive {
 			time.Sleep(5 * time.Second)
 			continue
 		}

@@ -105,8 +105,19 @@ func (s *Speaker) BGPIdentifier() string {
 	return s.bgpIdentifier.String()
 }
 
+// PeerOption is used to set additional options on a peer at creation time
+type PeerOption func(*peer) error
+
+// PassivePeerOption causes the router to not attempt connections to this peer
+func PassivePeerOption() PeerOption {
+	return func(p *peer) error {
+		p.passive = true
+		return nil
+	}
+}
+
 // Peer creates a new peer for this speaker
-func (s *Speaker) Peer(peerAS int, remoteIP string) error {
+func (s *Speaker) Peer(peerAS int, remoteIP string, opts ...PeerOption) error {
 	p, err := newPeer(peerAS, remoteIP)
 	if err != nil {
 		return err
@@ -114,6 +125,11 @@ func (s *Speaker) Peer(peerAS int, remoteIP string) error {
 	for _, v := range s.peers {
 		if v.remoteIP.Equal(net.ParseIP(remoteIP)) {
 			return fmt.Errorf("Peer with remote IP %s already configured", remoteIP)
+		}
+	}
+	for _, opt := range opts {
+		if err := opt(p); err != nil {
+			return err
 		}
 	}
 	s.peers = append(s.peers, p)
