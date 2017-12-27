@@ -24,3 +24,7 @@ func newPeer(peerAS int, remoteIP string) (*peer, error) {
 	}
 	return p, nil
 }
+
+func (p *peer) Connect(conn net.Conn) {
+	// TODO: Implement me
+}

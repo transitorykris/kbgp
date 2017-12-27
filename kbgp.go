@@ -2,8 +2,8 @@ package kbgp
 
 import (
 	"fmt"
-	"log"
 	"net"
+	"strings"
 )
 
 // Version is always 4 for BGP4
@@ -65,11 +65,31 @@ func (s *Speaker) Speak() error {
 		}
 	}
 	for {
-		_, err := s.listener.Accept()
+		conn, err := s.listener.Accept()
 		if err != nil {
-			log.Println(err)
+			// TODO: How do we pass log messages up so the caller can decide
+			// how to handle them?
+			continue
+		}
+		if !s.assignToPeer(conn) {
+			conn.Close()
 		}
 	}
+}
+
+func (s *Speaker) assignToPeer(conn net.Conn) bool {
+	for _, peer := range s.peers {
+		if peer.remoteIP.Equal(addrToIP(conn.RemoteAddr())) {
+			peer.Connect(conn)
+			return true
+		}
+	}
+	return false
+}
+
+func addrToIP(addr net.Addr) net.IP {
+	ip := strings.Split(addr.String(), ":")[0]
+	return net.ParseIP(ip)
 }
 
 // MyAS returns a string representation of this speakers autonomous system number
