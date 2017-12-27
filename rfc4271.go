@@ -2503,7 +2503,7 @@ func (f *fsm) update() {
 	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
 	//       is zero.
 	if f.holdTime != 0 {
-		f.keepaliveTimer.Reset(defaultKeepaliveTime)
+		f.keepaliveTimer.Reset(DefaultKeepaliveTime)
 	}
 }
 
@@ -2521,7 +2521,7 @@ func (f *fsm) keepalive() {
 	//       restarts its KeepaliveTimer, unless the negotiated HoldTime value
 	//       is zero.
 	if f.holdTime != 0 {
-		f.keepaliveTimer.Reset(defaultKeepaliveTime)
+		f.keepaliveTimer.Reset(DefaultKeepaliveTime)
 	}
 }
 
@@ -2544,7 +2544,7 @@ func (f *fsm) sendEvent(event int) func() {
 }
 
 // Note: This is a guess, RFC4271 does not appear to specify a value
-const defaultDelayOpenTime = 1 * time.Second
+const DefaultDelayOpenTime = 1 * time.Second
 
 // 8.1.  Events for the BGP FSM
 
@@ -3227,7 +3227,7 @@ func newFSM(remoteAS uint16, remoteIP net.IP) *fsm {
 		peer:                               newPeer(remoteAS, remoteIP),
 	}
 	// Initialize timers
-	f.delayOpenTimer = timer.New(defaultDelayOpenTime, f.sendEvent(delayOpenTimerExpires))
+	f.delayOpenTimer = timer.New(DefaultDelayOpenTime, f.sendEvent(delayOpenTimerExpires))
 	f.delayOpenTimer.Stop()
 	return f
 }
@@ -3261,7 +3261,7 @@ func (f *fsm) idle(event int) {
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
+		f.connectRetryTimer = timer.New(DefaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - initiates a TCP connection to the other BGP peer,
 		go f.dial()
 		//         - listens for a connection that may be initiated by the remote
@@ -3281,7 +3281,7 @@ func (f *fsm) idle(event int) {
 		//         - sets ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
+		f.connectRetryTimer = timer.New(DefaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - initiates a TCP connection to the other BGP peer,
 		go f.dial()
 		//         - listens for a connection that may be initiated by the remote
@@ -3306,7 +3306,7 @@ func (f *fsm) idle(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
+		f.connectRetryTimer = timer.New(DefaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		// NOTE: Listening is already happening, but may need a better mechanism
@@ -3325,7 +3325,7 @@ func (f *fsm) idle(event int) {
 		//         - sets the ConnectRetryCounter to zero,
 		f.connectRetryCounter = 0
 		//         - starts the ConnectRetryTimer with the initial value,
-		f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
+		f.connectRetryTimer = timer.New(DefaultConnectRetryTime, f.sendEvent(connectRetryTimerExpires))
 		//         - listens for a connection that may be initiated by the remote
 		//           peer, and
 		// NOTE: Listening is already happening, but may need a better mechanism
@@ -5418,13 +5418,13 @@ func asPathLoop(aspath []byte) bool {
 //    value for the ConnectRetryTimer.  The suggested default value for the
 //    ConnectRetryTime is 120 seconds.
 
-const defaultConnectRetryTime = 120 * time.Second
+const DefaultConnectRetryTime = 120 * time.Second
 
 //    HoldTime is a mandatory FSM attribute that stores the initial value
 //    for the HoldTimer.  The suggested default value for the HoldTime is
 //    90 seconds.
 
-const defaultHoldTime = 90 * time.Second
+const DefaultHoldTime = 90 * time.Second
 
 //    During some portions of the state machine (see Section 8), the
 //    HoldTimer is set to a large value.  The suggested default for this
@@ -5436,7 +5436,7 @@ const defaultLargeHoldTimer = 4 * time.Minute
 //    initial value for the KeepaliveTimer.  The suggested default value
 //    for the KeepaliveTime is 1/3 of the HoldTime.
 
-const defaultKeepaliveTime = defaultHoldTime / 3
+const DefaultKeepaliveTime = DefaultHoldTime / 3
 
 //    The suggested default value for the MinASOriginationIntervalTimer is
 //    15 seconds.
