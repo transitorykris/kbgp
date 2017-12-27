@@ -2,6 +2,7 @@ package kbgp
 
 import (
 	"fmt"
+	"log"
 	"net"
 )
 
@@ -26,7 +27,7 @@ type Speaker struct {
 	// For the first implementation we'll just listen on all IPs
 	// so will just have a single listener. It is up to the client
 	// to close the listener. This is optional, if listener is nil
-	// We'll bind to port 179 on all IPs.
+	// We'll bind to port 179 on all IPs when Speak() is called.
 	listener net.Listener
 }
 
@@ -38,13 +39,6 @@ func New(myAS int, bgpIdentifier string, listener net.Listener) (*Speaker, error
 	ip := net.ParseIP(bgpIdentifier).To4()
 	if ip == nil {
 		return nil, fmt.Errorf("identifier %s is not a valid IPv4 address", bgpIdentifier)
-	}
-	if listener == nil {
-		var err error
-		listener, err = net.Listen("tcp", "0.0.0.0:179")
-		if err != nil {
-			return nil, err
-		}
 	}
 	s := &Speaker{
 		myAS:          uint16(myAS),
@@ -59,6 +53,23 @@ func validAS(as int) bool {
 		return false
 	}
 	return true
+}
+
+// Speak starts our speaker
+func (s *Speaker) Speak() error {
+	if s.listener == nil {
+		var err error
+		s.listener, err = net.Listen("tcp", "0.0.0.0:179")
+		if err != nil {
+			return err
+		}
+	}
+	for {
+		_, err := s.listener.Accept()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }
 
 // MyAS returns a string representation of this speakers autonomous system number

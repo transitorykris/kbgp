@@ -32,5 +32,9 @@ func main() {
 		log.Println(err)
 	}
 
+	if err := router.Speak(); err != nil {
+		log.Println(err)
+	}
+
 	log.Println("Exiting kBGP")
 }
