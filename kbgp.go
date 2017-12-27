@@ -9,6 +9,9 @@ import (
 // Version is always 4 for BGP4
 const Version = 4
 
+// Port is 179 for BGP4
+const Port = 179
+
 // Speaker is a BGP router
 type Speaker struct {
 	// This 2-octet unsigned integer indicates the Autonomous System
@@ -80,7 +83,7 @@ func (s *Speaker) Speak() error {
 func (s *Speaker) assignToPeer(conn net.Conn) bool {
 	for _, peer := range s.peers {
 		if peer.remoteIP.Equal(addrToIP(conn.RemoteAddr())) {
-			peer.Connect(conn)
+			peer.connect(conn)
 			return true
 		}
 	}
@@ -115,4 +118,18 @@ func (s *Speaker) Peer(peerAS int, remoteIP string) error {
 	}
 	s.peers = append(s.peers, p)
 	return nil
+}
+
+// Enable connections for the given peer
+func (s *Speaker) Enable(peerAS int, remoteIP string) error {
+	if !validAS(peerAS) {
+		return fmt.Errorf("AS%d is not valid", peerAS)
+	}
+	for _, p := range s.peers {
+		if p.as == uint16(peerAS) && p.remoteIP.String() == remoteIP {
+			p.enable()
+			break
+		}
+	}
+	return fmt.Errorf("peer AS%d / %s not found", peerAS, remoteIP)
 }

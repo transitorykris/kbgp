@@ -25,9 +25,13 @@ func main() {
 	if err = router.Peer(1111, "1.1.1.1"); err != nil {
 		log.Println(err)
 	}
+
 	if err = router.Peer(2222, "127.0.0.1"); err != nil {
 		log.Println(err)
 	}
+	// TODO: Make this less ugly
+	router.Enable(2222, "127.0.0.1")
+
 	if err = router.Peer(3333, "1.1.1.1"); err != nil {
 		log.Println(err)
 	}
