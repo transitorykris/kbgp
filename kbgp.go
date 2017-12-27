@@ -120,8 +120,8 @@ func (s *Speaker) Peer(peerAS int, remoteIP string) error {
 	return nil
 }
 
-// Enable connections for the given peer
-func (s *Speaker) Enable(peerAS int, remoteIP string) error {
+// EnablePeer connections for the given peer
+func (s *Speaker) EnablePeer(peerAS int, remoteIP string) error {
 	if !validAS(peerAS) {
 		return fmt.Errorf("AS%d is not valid", peerAS)
 	}
@@ -134,8 +134,8 @@ func (s *Speaker) Enable(peerAS int, remoteIP string) error {
 	return fmt.Errorf("peer AS%d / %s not found", peerAS, remoteIP)
 }
 
-// Disable connections for the given peer
-func (s *Speaker) Disable(peerAS int, remoteIP string) error {
+// DisablePeer connections for the given peer
+func (s *Speaker) DisablePeer(peerAS int, remoteIP string) error {
 	if !validAS(peerAS) {
 		return fmt.Errorf("AS%d is not valid", peerAS)
 	}

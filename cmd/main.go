@@ -43,10 +43,10 @@ func main() {
 		}
 	}()
 
-	router.Enable(1111, "1.1.1.1")
+	router.EnablePeer(1111, "1.1.1.1")
 
 	time.Sleep(10 * time.Second)
-	router.Disable(1111, "1.1.1.1")
+	router.DisablePeer(1111, "1.1.1.1")
 
 	select {}
 
