@@ -4,16 +4,28 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 )
 
 type peer struct {
-	as       uint16
+	remoteAS uint16
 	remoteIP net.IP
 	enabled  bool
 
+	// the FSM will set this flag so the speaker will know to route
+	// incoming connections to this peer
+	listening bool
+
 	// If passive is set, then we will not attempt to dial out
 	passive bool
+
+	fsm *fsm
+
+	// The one true connection
+	conn net.Conn
+
+	// Temporary holding place for incoming and outgoing connections
+	incoming net.Conn
+	outgoing net.Conn
 }
 
 func newPeer(peerAS int, remoteIP string) (*peer, error) {
@@ -25,15 +37,15 @@ func newPeer(peerAS int, remoteIP string) (*peer, error) {
 		return nil, fmt.Errorf("remote IP address %s is invalid", remoteIP)
 	}
 	p := &peer{
-		as:       uint16(peerAS),
+		remoteAS: uint16(peerAS),
 		remoteIP: ip,
 	}
-	go p.dialLoop()
+	p.fsm = newFSM(p)
 	return p, nil
 }
 
 func (p *peer) connect(conn net.Conn) {
-	if !p.enabled {
+	if !p.enabled || !p.listening {
 		conn.Close()
 	}
 	// TODO: Implement me
@@ -53,22 +65,24 @@ func (p *peer) disable() {
 	p.enabled = false
 }
 
-func (p *peer) dialLoop() {
-	for {
-		// TODO: Replace with a channel
-		if !p.enabled || p.passive {
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		log.Println("Dialing", p.remoteIP, Port)
-		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", p.remoteIP, Port))
-		if err != nil {
-			// TODO: What's the correct interval here?
-			log.Println(err)
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		p.connect(conn)
-		break
+func (p *peer) listen() {
+	if p.listening {
+		return
 	}
+	p.listening = true
+}
+
+func (p *peer) dialLoop() {
+	if !p.enabled || p.passive {
+		return
+	}
+	log.Println("Dialing", p.remoteIP, Port)
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", p.remoteIP, Port))
+	if err != nil {
+		// TODO: What's the correct interval here?
+		log.Println(err)
+		// TODO: Do we say something to the FSM?
+		return
+	}
+	p.connect(conn)
 }
