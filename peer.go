@@ -43,6 +43,13 @@ func (p *peer) enable() {
 	p.enabled = true
 }
 
+func (p *peer) disable() {
+	if !p.enabled {
+		return
+	}
+	p.enabled = false
+}
+
 func (p *peer) dialLoop() {
 	for {
 		// TODO: Replace with a channel

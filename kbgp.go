@@ -133,3 +133,17 @@ func (s *Speaker) Enable(peerAS int, remoteIP string) error {
 	}
 	return fmt.Errorf("peer AS%d / %s not found", peerAS, remoteIP)
 }
+
+// Disable connections for the given peer
+func (s *Speaker) Disable(peerAS int, remoteIP string) error {
+	if !validAS(peerAS) {
+		return fmt.Errorf("AS%d is not valid", peerAS)
+	}
+	for _, p := range s.peers {
+		if p.as == uint16(peerAS) && p.remoteIP.String() == remoteIP {
+			p.disable()
+			break
+		}
+	}
+	return fmt.Errorf("peer AS%d / %s not found", peerAS, remoteIP)
+}

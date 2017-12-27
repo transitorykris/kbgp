@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/transitorykris/kbgp"
 )
@@ -43,6 +44,9 @@ func main() {
 	}()
 
 	router.Enable(1111, "1.1.1.1")
+
+	time.Sleep(10 * time.Second)
+	router.Disable(1111, "1.1.1.1")
 
 	select {}
 
