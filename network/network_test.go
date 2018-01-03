@@ -1,4 +1,4 @@
-package kbgp
+package network
 
 import (
 	"encoding/binary"
