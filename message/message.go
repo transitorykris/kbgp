@@ -7,55 +7,32 @@ import (
 	"github.com/transitorykris/kbgp/stream"
 )
 
-//    BGP messages are sent over TCP connections.  A message is processed
-//    only after it is entirely received.  The maximum message size is 4096
-//    octets.  All implementations are required to support this maximum
-//    message size.  The smallest message that may be sent consists of a
-//    BGP header without a data portion (19 octets).
+// BGP messages are sent over TCP connections.  A message is processed
+// only after it is entirely received.  The maximum message size is 4096
+// octets.  All implementations are required to support this maximum
+// message size.  The smallest message that may be sent consists of a
+// BGP header without a data portion (19 octets).
 const minMessageLength = 19
 const maxMessageLength = 4096
 
-//    All multi-octet fields are in network byte order.
-
-// 4.1.  Message Header Format
-//    Each message has a fixed-size header.  There may or may not be a data
-//    portion following the header, depending on the message type.  The
-//    layout of these fields is shown below:
-//       0                   1                   2                   3
-//       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//       |                                                               |
-//       +                                                               +
-//       |                                                               |
-//       +                                                               +
-//       |                           Marker                              |
-//       +                                                               +
-//       |                                                               |
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//       |          Length               |      Type     |
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// Each message has a fixed-size header.  There may or may not be a data
+// portion following the header, depending on the message type.
 type messageHeader struct {
-	//       Marker:
-	//          This 16-octet field is included for compatibility; it MUST be
-	//          set to all ones.
+	// This 16-octet field is included for compatibility; it MUST be
+	// set to all ones.
 	marker [markerLength]byte
-
-	//       Length:
-	//          This 2-octet unsigned integer indicates the total length of the
-	//          message, including the header in octets.  Thus, it allows one
-	//          to locate the (Marker field of the) next message in the TCP
-	//          stream.  The value of the Length field MUST always be at least
-	//          19 and no greater than 4096, and MAY be further constrained,
-	//          depending on the message type.  "padding" of extra data after
-	//          the message is not allowed.  Therefore, the Length field MUST
-	//          have the smallest value required, given the rest of the
-	//          message.
+	// This 2-octet unsigned integer indicates the total length of the
+	// message, including the header in octets.  Thus, it allows one
+	// to locate the (Marker field of the) next message in the TCP
+	// stream.  The value of the Length field MUST always be at least
+	// 19 and no greater than 4096, and MAY be further constrained,
+	// depending on the message type.  "padding" of extra data after
+	// the message is not allowed.  Therefore, the Length field MUST
+	// have the smallest value required, given the rest of the
+	// message.
 	length uint16
-
-	//       Type:
-	//          This 1-octet unsigned integer indicates the type code of the
-	//          message.  This document defines the following type codes:
-
+	// This 1-octet unsigned integer indicates the type code of the
+	// message.  This document defines the following type codes:
 	messageType byte
 }
 

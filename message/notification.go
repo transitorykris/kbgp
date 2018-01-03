@@ -6,34 +6,25 @@ import (
 	"github.com/transitorykris/kbgp/stream"
 )
 
-// 4.5.  NOTIFICATION Message Format
-//    A NOTIFICATION message is sent when an error condition is detected.
-//    The BGP connection is closed immediately after it is sent.
-//    In addition to the fixed-size BGP header, the NOTIFICATION message
-//    contains the following fields:
-//       0                   1                   2                   3
-//       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//       | Error code    | Error subcode |   Data (variable)             |
-//       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// A NOTIFICATION message is sent when an error condition is detected.
+// The BGP connection is closed immediately after it is sent.
 type notificationMessage struct {
 	code    byte
 	subcode byte
 	data    []byte
 }
 
-//       Error Code:
-//          This 1-octet unsigned integer indicates the type of
-//          NOTIFICATION.  The following Error Codes have been defined:
-//                           Error Code       Symbolic Name               Reference
+// Error Code:
+// This 1-octet unsigned integer indicates the type of
+// NOTIFICATION.  The following Error Codes have been defined:
 const (
-	_                       = iota
-	messageHeaderError      // 1         Message Header Error             Section 6.1
-	openMessageError        // 2         OPEN Message Error               Section 6.2
-	updateMessageError      // 3         UPDATE Message Error             Section 6.3
-	holdTimerExpired        // 4         Hold Timer Expired               Section 6.5
-	finiteStateMachineError // 5         Finite State Machine Error       Section 6.6
-	cease                   // 6         Cease                            Section 6.7
+	_ = iota
+	messageHeaderError
+	openMessageError
+	updateMessageError
+	holdTimerExpired
+	finiteStateMachineError
+	cease
 )
 
 // Reverse value lookup for error code names
@@ -46,18 +37,18 @@ var errorCodeName = map[int]string{
 	6: "Cease",
 }
 
-//       Error subcode:
-//          This 1-octet unsigned integer provides more specific
-//          information about the nature of the reported error.  Each Error
-//          Code may have one or more Error Subcodes associated with it.
-//          If no appropriate Error Subcode is defined, then a zero
-//          (Unspecific) value is used for the Error Subcode field.
-//       Message Header Error subcodes:
+// Error subcode:
+// This 1-octet unsigned integer provides more specific
+// information about the nature of the reported error.  Each Error
+// Code may have one or more Error Subcodes associated with it.
+// If no appropriate Error Subcode is defined, then a zero
+// (Unspecific) value is used for the Error Subcode field.
+// Message Header Error subcodes:
 const (
-	_                         = iota
-	connectionNotSynchronized // 1 - Connection Not Synchronized.
-	badMessageLength          // 2 - Bad Message Length.
-	badMessageType            // 3 - Bad Message Type.
+	_ = iota
+	connectionNotSynchronized
+	badMessageLength
+	badMessageType
 )
 
 // Reverse value lookup for message header error subcodes
@@ -69,15 +60,15 @@ var messageHeaderErrorSubcodeName = map[int]string{
 
 const noErrorSubcode = 0
 
-//       OPEN Message Error subcodes:
+// OPEN Message Error subcodes:
 const (
-	_                            = iota
-	unsupportedVersionNumber     // 1 - Unsupported Version Number.
-	badPeerAS                    // 2 - Bad Peer AS.
-	badBGPIdentifier             // 3 - Bad BGP Identifier.
-	unsupportedOptionalParameter // 4 - Unsupported Optional Parameter.
-	_                            // 5 - [Deprecated - see Appendix A].
-	unacceptableHoldTime         // 6 - Unacceptable Hold Time.
+	_ = iota
+	unsupportedVersionNumber
+	badPeerAS
+	badBGPIdentifier
+	unsupportedOptionalParameter
+	_
+	unacceptableHoldTime
 )
 
 // Reverse value lookup for open message error subcodes
@@ -90,20 +81,20 @@ var openMessageErrorSubcodeName = map[int]string{
 	6: "Unacceptable Hold Time",
 }
 
-//       UPDATE Message Error subcodes:
+// UPDATE Message Error subcodes:
 const (
-	_                              = iota
-	malformedAttributeList         // 1 - Malformed Attribute List.
-	unrecognizedWellKnownAttribute // 2 - Unrecognized Well-known Attribute.
-	missingWellKnownAttribute      // 3 - Missing Well-known Attribute.
-	attributeFlagsError            // 4 - Attribute Flags Error.
-	attributeLengthError           // 5 - Attribute Length Error.
-	invalidOriginAttribute         // 6 - Invalid ORIGIN Attribute.
-	_                              // 7 - [Deprecated - see Appendix A].
-	invalidNextHopAttribute        // 8 - Invalid NEXT_HOP Attribute.
-	optionalAttributeError         // 9 - Optional Attribute Error.
-	invalidNetworkField            // 10 - Invalid Network Field.
-	malformedASPath                // 11 - Malformed AS_PATH.
+	_ = iota
+	malformedAttributeList
+	unrecognizedWellKnownAttribute
+	missingWellKnownAttribute
+	attributeFlagsError
+	attributeLengthError
+	invalidOriginAttribute
+	_
+	invalidNextHopAttribute
+	optionalAttributeError
+	invalidNetworkField
+	malformedASPath
 )
 
 // Reverse value lookup for update message error subcodes
