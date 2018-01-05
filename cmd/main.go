@@ -4,35 +4,33 @@ import (
 	"log"
 	"net"
 
-	"github.com/transitorykris/kbgp"
+	"github.com/transitorykris/kbgp/bgp"
+	"github.com/transitorykris/kbgp/fsm"
+	"github.com/transitorykris/kbgp/policy"
+	"github.com/transitorykris/kbgp/rib"
+	"github.com/transitorykris/kbgp/session"
 )
+
+const myAS = 1234
+const id = 1234
+const locRIB = rib.New()
 
 func main() {
 	log.Println("Starting kBGP")
 
-	// Config
-	myAS := uint16(1234)
-	id, err := kbgp.FindBGPIdentifier()
-	if err != nil {
-		panic(err)
+	speaker := bgp.New(myAS, id, locRIB)
+	peer1 := &Peer{
+		Session: session.New(1111, net.ParseIP("1.1.1.1")),
+		FSM:     fsm.New(),
 	}
+}
 
-	// Start our router
-	log.Printf("AS: %d ID: %s", myAS, kbgp.Uint32ToIP(id).String())
-	bgp := kbgp.New(myAS, id)
-
-	remoteAS := uint16(1001)
-	remoteIP := net.ParseIP("127.0.0.1")
-	if err := bgp.AddPeer(remoteAS, remoteIP); err != nil {
-		log.Fatal(err)
+func NewPeer() bgp.Peer {
+	p := &Peer{
+		Session:   session.New(1111, net.ParseIP("1.1.1.1")),
+		FSM:       fsm.New(),
+		AdjRIBIn:  policy.DefaultEBGP,
+		AdjRIBOut: policy.DefaultEBGP,
 	}
-
-	bgp.Start()
-
-	select {}
-
-	//time.Sleep(5 * time.Second)
-
-	//bgp.Stop()
-	//log.Println("Exiting")
+	return p
 }

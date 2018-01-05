@@ -1,5 +1,12 @@
 package rib
 
+import (
+	"net"
+
+	"github.com/transitorykris/kbgp/bgp"
+	"github.com/transitorykris/kbgp/radix"
+)
+
 // 3.1.  Routes: Advertisement and Storage
 
 //    For the purpose of this protocol, a route is defined as a unit of
@@ -91,3 +98,40 @@ package rib
 //    specified in this document.  In addition to actual packet forwarding,
 //    the Routing Table is used for resolution of the next-hop addresses
 //    specified in BGP updates (see Section 5.1.3).
+
+// RIB contains a set of routes that can have policy applied to it
+type RIB struct {
+	prePolicy  radix.Trie
+	postPolicy radix.Trie
+	policy     bgp.Policer
+}
+
+// New creates a new RIB
+func New(policy bgp.Policer) *RIB {
+	return &RIB{policy: policy}
+}
+
+// Inject implements bgp.RIB
+func (r *RIB) Inject(route bgp.Route) {
+
+}
+
+// Remove implements bgp.RIB
+func (r *RIB) Remove(nlri bgp.NLRI) {
+
+}
+
+// Lookup implements bgp.RIB
+func (r *RIB) Lookup(net.IPNet) bgp.Route {
+	return bgp.Route{}
+}
+
+// SetPolicy implements bgp.RIB
+func (r *RIB) SetPolicy(policy bgp.Policer) {
+
+}
+
+// Dump implements bgp.RIB
+func (r *RIB) Dump() <-chan bgp.Route {
+	return nil
+}

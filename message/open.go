@@ -14,7 +14,7 @@ import (
 // After a TCP connection is established, the first message sent by each
 // side is an OPEN message.  If the OPEN message is acceptable, a
 // KEEPALIVE message confirming the OPEN is sent back.
-type openMessage struct {
+type OpenMessage struct {
 	// This 1-octet unsigned integer indicates the protocol version
 	// number of the message.  The current BGP version number is 4.
 	version bgp.Version
@@ -51,7 +51,7 @@ type openMessage struct {
 // This field contains a list of optional parameters, in which
 // each parameter is encoded as a <Parameter Type, Parameter
 // Length, Parameter Value> triplet.
-type parameter struct {
+type Parameter struct {
 	// Parameter Type is a one octet field that unambiguously
 	// identifies individual parameters.  Parameter Length is a one
 	// octet field that contains the length of the Parameter Value

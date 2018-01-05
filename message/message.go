@@ -32,7 +32,7 @@ type messageHeader struct {
 	// message.
 	length uint16
 	// This 1-octet unsigned integer indicates the type code of the
-	// message.  This document defines the following type codes:
+	// message.
 	messageType byte
 }
 
@@ -48,9 +48,8 @@ func marker() [markerLength]byte {
 	return m
 }
 
-//       Type:
-//          This 1-octet unsigned integer indicates the type code of the
-//          message.  This document defines the following type codes:
+// This 1-octet unsigned integer indicates the type code of the
+// message.  This document defines the following type codes:
 const (
 	_            = iota
 	open         // 1 - OPEN
