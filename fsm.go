@@ -136,26 +136,26 @@ func (f *fsm) idle(e event) {
 	case ManualStart:
 	case ManualStop:
 	case AutomaticStart:
-	case ManualStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithDampPeerOscillations:
-	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	case AutomaticStop:
+	//case ManualStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithDampPeerOscillations:
+	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//case AutomaticStop:
 	case ConnectRetryTimerExpires:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	case DelayOpenTimerExpires:
-	case IdleHoldTimerExpires:
-	case TCPConnectionValid:
-	case TCPCRInvalid:
+	//case DelayOpenTimerExpires:
+	//case IdleHoldTimerExpires:
+	//case TCPConnectionValid:
+	//case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	case BGPOpenWithDelayOpenTimerRunning:
+	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	case OpenCollisionDump:
+	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
@@ -171,26 +171,26 @@ func (f *fsm) connect(e event) {
 	case ManualStart:
 	case ManualStop:
 	case AutomaticStart:
-	case ManualStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithDampPeerOscillations:
-	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	case AutomaticStop:
+	//case ManualStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithDampPeerOscillations:
+	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//case AutomaticStop:
 	case ConnectRetryTimerExpires:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	case DelayOpenTimerExpires:
-	case IdleHoldTimerExpires:
-	case TCPConnectionValid:
-	case TCPCRInvalid:
+	//case DelayOpenTimerExpires:
+	//case IdleHoldTimerExpires:
+	//case TCPConnectionValid:
+	//case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	case BGPOpenWithDelayOpenTimerRunning:
+	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	case OpenCollisionDump:
+	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
@@ -206,26 +206,26 @@ func (f *fsm) active(e event) {
 	case ManualStart:
 	case ManualStop:
 	case AutomaticStart:
-	case ManualStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithDampPeerOscillations:
-	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	case AutomaticStop:
+	//case ManualStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithDampPeerOscillations:
+	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//case AutomaticStop:
 	case ConnectRetryTimerExpires:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	case DelayOpenTimerExpires:
-	case IdleHoldTimerExpires:
-	case TCPConnectionValid:
-	case TCPCRInvalid:
+	//case DelayOpenTimerExpires:
+	//case IdleHoldTimerExpires:
+	//case TCPConnectionValid:
+	//case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	case BGPOpenWithDelayOpenTimerRunning:
+	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	case OpenCollisionDump:
+	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
@@ -241,26 +241,26 @@ func (f *fsm) openSent(e event) {
 	case ManualStart:
 	case ManualStop:
 	case AutomaticStart:
-	case ManualStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithDampPeerOscillations:
-	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	case AutomaticStop:
+	//case ManualStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithDampPeerOscillations:
+	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//case AutomaticStop:
 	case ConnectRetryTimerExpires:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	case DelayOpenTimerExpires:
-	case IdleHoldTimerExpires:
-	case TCPConnectionValid:
-	case TCPCRInvalid:
+	//case DelayOpenTimerExpires:
+	//case IdleHoldTimerExpires:
+	//case TCPConnectionValid:
+	//case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	case BGPOpenWithDelayOpenTimerRunning:
+	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	case OpenCollisionDump:
+	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
@@ -276,26 +276,26 @@ func (f *fsm) openConfirm(e event) {
 	case ManualStart:
 	case ManualStop:
 	case AutomaticStart:
-	case ManualStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithDampPeerOscillations:
-	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	case AutomaticStop:
+	//case ManualStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithDampPeerOscillations:
+	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//case AutomaticStop:
 	case ConnectRetryTimerExpires:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	case DelayOpenTimerExpires:
-	case IdleHoldTimerExpires:
-	case TCPConnectionValid:
-	case TCPCRInvalid:
+	//case DelayOpenTimerExpires:
+	//case IdleHoldTimerExpires:
+	//case TCPConnectionValid:
+	//case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	case BGPOpenWithDelayOpenTimerRunning:
+	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	case OpenCollisionDump:
+	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
@@ -311,26 +311,26 @@ func (f *fsm) established(e event) {
 	case ManualStart:
 	case ManualStop:
 	case AutomaticStart:
-	case ManualStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithPassiveTCPEstablishment:
-	case AutomaticStartWithDampPeerOscillations:
-	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	case AutomaticStop:
+	//case ManualStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithPassiveTCPEstablishment:
+	//case AutomaticStartWithDampPeerOscillations:
+	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//case AutomaticStop:
 	case ConnectRetryTimerExpires:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	case DelayOpenTimerExpires:
-	case IdleHoldTimerExpires:
-	case TCPConnectionValid:
-	case TCPCRInvalid:
+	//case DelayOpenTimerExpires:
+	//case IdleHoldTimerExpires:
+	//case TCPConnectionValid:
+	//case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	case BGPOpenWithDelayOpenTimerRunning:
+	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	case OpenCollisionDump:
+	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
