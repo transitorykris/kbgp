@@ -3,6 +3,7 @@ package jbgp
 import (
 	"log"
 	"net"
+	"strings"
 )
 
 // Speaker is a BGP speaking router
@@ -35,7 +36,7 @@ func (s *Speaker) Start() {
 
 func (s *Speaker) handleConnection(conn net.Conn) {
 	log.Println("handling connection from", conn.RemoteAddr())
-	header, _, err := readHeader(conn)
+	header, body, err := readHeader(conn)
 	if err != nil {
 		log.Println("header error")
 		writeMessage(conn, notification, newNotification(err))
@@ -48,7 +49,7 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 		conn.Close()
 		return
 	}
-	open, err := readOpen(conn)
+	open, err := readOpen(body)
 	if err != nil {
 		log.Println("bad open message")
 		writeMessage(conn, notification, newNotification(err))
@@ -56,7 +57,8 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 		return
 	}
 	for _, p := range s.peers {
-		if p.remoteAS == open.as && p.remoteIP.String() == conn.RemoteAddr().String() {
+		if p.remoteAS == open.as && p.remoteIP.Equal(addrToIP(conn.RemoteAddr())) {
+			log.Println("found a matching peer")
 			go p.handleConnection(conn, open)
 			return
 		}
@@ -64,6 +66,10 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 	log.Println("no matching peer found for", open.as, conn.RemoteAddr())
 	writeMessage(conn, notification, newNotification(bgpError{0, 0, ""}))
 	conn.Close()
+}
+
+func addrToIP(addr net.Addr) net.IP {
+	return net.ParseIP(strings.Split(addr.String(), ":")[0])
 }
 
 // Peer adds a BGP neighbor to the speaker

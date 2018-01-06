@@ -34,9 +34,10 @@ func (m msgType) String() string {
 	return t
 }
 
+// https://tools.ietf.org/html/rfc4271#section-4.1
 type msgHeader struct {
 	marker  [16]byte
-	length  uint16
+	length  uint16 // Includes the length of the header
 	msgType msgType
 }
 
@@ -73,11 +74,13 @@ func readHeader(r io.Reader) (msgHeader, []byte, error) {
 	log.Println("Got header", header)
 
 	// Read in the message's body
-	body := stream.Read(r, int(header.length))
+	body := stream.Read(r, int(header.length)-messageHeaderLength)
 
+	log.Println("read body")
 	return header, body, nil
 }
 
+// https://tools.ietf.org/html/rfc4271#section-4.2
 type openMsg struct {
 	version       uint8
 	as            asn
@@ -87,11 +90,30 @@ type openMsg struct {
 	optParamaters []parameter
 }
 
+// String implements strings.Stringer
+func (o openMsg) String() string {
+	return fmt.Sprintf("Version: %d AS: %d HoldTime: %d bgpIdentifier: %s",
+		o.version, o.as, o.holdTime, o.bgpIdentifier)
+}
+
+const minOpenMessageLength = 29
+
 type parameter struct{}
 
-func readOpen(w io.Reader) (openMsg, error) {
-	// if openMsg.version != 4 { fmt.Errorf("Invalid BGP version") }
-	return openMsg{version: version, as: 1234}, nil
+func readOpen(msg []byte) (openMsg, error) {
+	log.Println("Reading OPEN message")
+	buf := bytes.NewBuffer(msg)
+	om := openMsg{
+		version:       stream.ReadByte(buf),
+		as:            asn(stream.ReadUint16(buf)),
+		holdTime:      stream.ReadUint16(buf),
+		bgpIdentifier: bgpIdentifier(stream.ReadUint32(buf)),
+		optParmLen:    stream.ReadByte(buf),
+	}
+	log.Println("Got OPEN message:", om)
+	// TODO: Implement optional parameter parsing
+	_ = stream.ReadBytes(int(om.optParmLen), buf)
+	return om, nil
 }
 
 func writeMessage(w io.Writer, msgType msgType, msg []byte) (int, error) {

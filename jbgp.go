@@ -21,4 +21,9 @@ func (e bgpError) Error() string {
 type asn uint16
 type bgpIdentifier uint32
 
+func (b bgpIdentifier) String() string {
+	// TODO: convert to net.IP.String()
+	return fmt.Sprintf("%d", b)
+}
+
 const version = 4
