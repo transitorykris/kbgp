@@ -7,13 +7,14 @@ import (
 
 // Speaker is a BGP speaking router
 type Speaker struct {
+	as    asn
 	addr  string
 	peers []*Peer
 }
 
 // NewSpeaker creates a new BGP speaking router
-func NewSpeaker(addr string) *Speaker {
-	return &Speaker{addr: addr}
+func NewSpeaker(as asn, addr string) *Speaker {
+	return &Speaker{as: as, addr: addr}
 }
 
 // Start the BGP speaker
@@ -68,5 +69,7 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 // Peer adds a BGP neighbor to the speaker
 func (s *Speaker) Peer(p *Peer) {
 	log.Println("adding peer to speaker", p)
+	// Let this peer know who we are
+	p.myAS = s.as
 	s.peers = append(s.peers, p)
 }

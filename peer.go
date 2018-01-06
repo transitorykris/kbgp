@@ -7,21 +7,22 @@ import (
 
 // Peer is a BGP neighbor
 type Peer struct {
-	as      asn
-	ip      net.IP
-	passive bool // Do not initiate connections
-	conn    net.Conn
-	fsm     *fsm
+	myAS     asn
+	remoteAS asn
+	remoteIP net.IP
+	passive  bool // Do not initiate connections
+	conn     net.Conn
+	fsm      *fsm
 }
 
 // NewPeer creates a new BGP neighbor
 func NewPeer(as asn, ip net.IP) *Peer {
 	p := &Peer{
-		as: as,
-		ip: ip,
+		remoteAS: as,
+		remoteIP: ip,
 	}
 	p.fsm = newFSM(p)
-	return &Peer{as: as, ip: ip}
+	return p
 }
 
 func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
