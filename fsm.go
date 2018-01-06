@@ -207,6 +207,11 @@ func (f *fsm) connect(e event) {
 	case ManualStart:
 		// ignore
 	case ManualStop:
+		f.peer.conn.Close()
+		// TODO(?): releases all BGP resources,
+		f.connectRetryCounter.Reset()
+		f.connectRetryTimer.Stop()
+		f.transition(idle)
 	case AutomaticStart:
 		// ignore
 	// case ManualStartWithPassiveTCPEstablishment:
@@ -218,6 +223,7 @@ func (f *fsm) connect(e event) {
 	// case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
 	// 	ignore
 	case ConnectRetryTimerExpires:
+		log.Println("ConnectRetryTimer expired")
 	//case DelayOpenTimerExpires:
 	//case TCPConnectionValid:
 	//case TCPCRInvalid:
