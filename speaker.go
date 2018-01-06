@@ -35,7 +35,7 @@ func (s *Speaker) Start() {
 
 func (s *Speaker) handleConnection(conn net.Conn) {
 	log.Println("handling connection from", conn.RemoteAddr())
-	header, err := readHeader(conn)
+	header, _, err := readHeader(conn)
 	if err != nil {
 		log.Println("header error")
 		writeMessage(conn, notification, newNotification(err))
