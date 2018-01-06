@@ -162,21 +162,35 @@ func (f *fsm) transition(s state) {
 	f.state = s
 }
 
+// In this state, BGP FSM refuses all incoming BGP connections for
+// this peer.  No resources are allocated to the peer.
 func (f *fsm) idle(e event) {
 	switch e {
 	case ManualStart:
-	case ManualStop:
+		f.start()
 	case AutomaticStart:
+		f.start()
 	//case ManualStartWithPassiveTCPEstablishment:
 	//case AutomaticStartWithPassiveTCPEstablishment:
 	//case AutomaticStartWithDampPeerOscillations:
 	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	//case AutomaticStop:
 	//case IdleHoldTimerExpires:
-	//case TCPConnectionValid:
 	default:
 		log.Println("Ignoring event")
 	}
+}
+
+// Handle ManualStart and AutomaticStart in the idle state
+func (f *fsm) start() {
+	// - initializes all BGP resources for the peer connection,
+	// - sets ConnectRetryCounter to zero,
+	f.connectRetryCounter.Reset()
+	// - starts the ConnectRetryTimer with the initial value,
+	// - initiates a TCP connection to the other BGP peer,
+	// - listens for a connection that may be initiated by the remote
+	//   BGP peer, and
+	// - changes its state to Connect.
+	f.transition(connect)
 }
 
 func (f *fsm) connect(e event) {

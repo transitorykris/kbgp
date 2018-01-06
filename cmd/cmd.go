@@ -12,7 +12,9 @@ func main() {
 	speaker := jbgp.NewSpeaker(1234, ":179")
 
 	log.Println("Adding a peer")
-	speaker.Peer(jbgp.NewPeer(1234, net.ParseIP("127.0.0.1")))
+	myPeer := jbgp.NewPeer(1234, net.ParseIP("127.0.0.1"))
+	speaker.Peer(myPeer)
+	myPeer.Up()
 
 	log.Println("Starting the speaker")
 	speaker.Start()

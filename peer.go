@@ -47,6 +47,16 @@ func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
 	p.fsm.event(BGPOpen)
 }
 
+// Up sends a ManualStart event to the FSM
+func (p *Peer) Up() {
+	p.fsm.event(ManualStart)
+}
+
+// Down sends a ManualStop event to the FSM
+func (p *Peer) Down() {
+	p.fsm.event(ManualStop)
+}
+
 func (p *Peer) close() {
 	log.Println("Closing connection to", p)
 	p.conn.Close()
