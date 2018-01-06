@@ -70,9 +70,7 @@ const defaultConnectRetryTime = 120 * time.Second
 
 func newFSM(p *Peer) *fsm {
 	f := &fsm{peer: p}
-	log.Println("Creating the connectRetryTimer")
 	f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.eventWrapper(ConnectRetryTimerExpires))
-	f.connectRetryTimer.Stop()
 	return f
 }
 
