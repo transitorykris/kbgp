@@ -1,6 +1,7 @@
 package jbgp
 
 import (
+	"fmt"
 	"log"
 	"net"
 )
@@ -10,7 +11,6 @@ type Peer struct {
 	myAS     asn
 	remoteAS asn
 	remoteIP net.IP
-	passive  bool // Do not initiate connections
 	conn     net.Conn
 	fsm      *fsm
 }
@@ -23,6 +23,11 @@ func NewPeer(as asn, ip net.IP) *Peer {
 	}
 	p.fsm = newFSM(p)
 	return p
+}
+
+// String implements string.Stringer
+func (p *Peer) String() string {
+	return fmt.Sprintf("AS%d/%s", p.remoteAS, p.remoteIP)
 }
 
 func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
@@ -40,6 +45,11 @@ func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
 		return
 	}
 	p.fsm.event(BGPOpen)
+}
+
+func (p *Peer) close() {
+	log.Println("Closing connection to", p)
+	p.conn.Close()
 }
 
 func (p *Peer) validateOpen(o openMsg) error {
