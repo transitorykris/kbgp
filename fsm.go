@@ -38,11 +38,11 @@ type fsm struct {
 	// https://tools.ietf.org/html/rfc4271#section-8
 	state               state
 	connectRetryCounter counter.Counter
-	connectRetryTimer   timer.Timer
+	connectRetryTimer   *timer.Timer
 	connectRetryTime    time.Duration
-	holdTimer           timer.Timer
+	holdTimer           *timer.Timer
 	holdTime            time.Duration
-	keepaliveTimer      timer.Timer
+	keepaliveTimer      *timer.Timer
 	keepaliveTime       time.Duration
 
 	// Optional session attributes
@@ -65,8 +65,21 @@ type fsm struct {
 	peer *Peer
 }
 
+// https://tools.ietf.org/html/rfc4271#section-10
+const defaultConnectRetryTime = 120 * time.Second
+
 func newFSM(p *Peer) *fsm {
-	return &fsm{peer: p}
+	f := &fsm{peer: p}
+	log.Println("Creating the connectRetryTimer")
+	f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.eventWrapper(ConnectRetryTimerExpires))
+	f.connectRetryTimer.Stop()
+	return f
+}
+
+func (f *fsm) eventWrapper(e event) func() {
+	return func() {
+		f.event(ConnectRetryTimerExpires)
+	}
 }
 
 type event int
@@ -183,13 +196,11 @@ func (f *fsm) idle(e event) {
 // Handle ManualStart and AutomaticStart in the idle state
 func (f *fsm) start() {
 	// - initializes all BGP resources for the peer connection,
-	// - sets ConnectRetryCounter to zero,
 	f.connectRetryCounter.Reset()
-	// - starts the ConnectRetryTimer with the initial value,
+	f.connectRetryTimer.Reset(defaultConnectRetryTime)
 	// - initiates a TCP connection to the other BGP peer,
 	// - listens for a connection that may be initiated by the remote
 	//   BGP peer, and
-	// - changes its state to Connect.
 	f.transition(connect)
 }
 

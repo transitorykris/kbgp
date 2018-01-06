@@ -32,18 +32,20 @@ func (t *Timer) preflight(f func()) func() {
 
 // Reset starts the timer at its initial value
 func (t *Timer) Reset(d time.Duration) {
-	if !t.timer.Stop() {
-		<-t.timer.C
-	}
+	t.drain()
 	t.timer.Reset(d)
 }
 
 // Stop cancels the timer
 func (t *Timer) Stop() {
+	t.drain()
+	t.running = false
+}
+
+func (t *Timer) drain() {
 	if !t.timer.Stop() {
 		<-t.timer.C
 	}
-	t.running = false
 }
 
 // Running returns true if the timer is counting down, false otherwise
