@@ -195,12 +195,10 @@ func (f *fsm) idle(e event) {
 
 // Handle ManualStart and AutomaticStart in the idle state
 func (f *fsm) start() {
-	// - initializes all BGP resources for the peer connection,
+	// TODO: initializes all BGP resources for the peer connection,
 	f.connectRetryCounter.Reset()
 	f.connectRetryTimer.Reset(defaultConnectRetryTime)
-	// - initiates a TCP connection to the other BGP peer,
-	// - listens for a connection that may be initiated by the remote
-	//   BGP peer, and
+	// TODO: initiates a TCP connection to the other BGP peer,
 	f.transition(connect)
 }
 
