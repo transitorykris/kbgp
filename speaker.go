@@ -5,16 +5,19 @@ import (
 	"net"
 )
 
-type speaker struct {
+// Speaker is a BGP speaking router
+type Speaker struct {
 	addr  string
-	peers []*peer
+	peers []*Peer
 }
 
-func newSpeaker(addr string) *speaker {
-	return &speaker{addr: addr}
+// NewSpeaker creates a new BGP speaking router
+func NewSpeaker(addr string) *Speaker {
+	return &Speaker{addr: addr}
 }
 
-func (s *speaker) Start() {
+// Start the BGP speaker
+func (s *Speaker) Start() {
 	ln, err := net.Listen("tcp", ":179")
 	if err != nil {
 		log.Fatal(err)
@@ -29,20 +32,24 @@ func (s *speaker) Start() {
 	}
 }
 
-func (s *speaker) handleConnection(conn net.Conn) {
+func (s *Speaker) handleConnection(conn net.Conn) {
+	log.Println("handling connection from", conn.RemoteAddr())
 	header, err := readHeader(conn)
 	if err != nil {
+		log.Println("header error")
 		writeMessage(conn, notification, newNotification(err))
 		conn.Close()
 		return
 	}
 	if header.msgType != open {
+		log.Println("expected an open message")
 		writeMessage(conn, notification, newNotification(err))
 		conn.Close()
 		return
 	}
 	open, err := readOpen(conn)
 	if err != nil {
+		log.Println("bad open message")
 		writeMessage(conn, notification, newNotification(err))
 		conn.Close()
 		return
@@ -53,11 +60,13 @@ func (s *speaker) handleConnection(conn net.Conn) {
 			return
 		}
 	}
-	// No matching peer was found
+	log.Println("no matching peer found for", open.as, conn.RemoteAddr())
 	writeMessage(conn, notification, newNotification(bgpError{0, 0, ""}))
 	conn.Close()
 }
 
-func (s *speaker) peer(p *peer) {
+// Peer adds a BGP neighbor to the speaker
+func (s *Speaker) Peer(p *Peer) {
+	log.Println("adding peer to speaker", p)
 	s.peers = append(s.peers, p)
 }

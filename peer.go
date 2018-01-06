@@ -1,8 +1,12 @@
 package jbgp
 
-import "net"
+import (
+	"log"
+	"net"
+)
 
-type peer struct {
+// Peer is a BGP neighbor
+type Peer struct {
 	as      asn
 	ip      net.IP
 	passive bool // Do not initiate connections
@@ -10,21 +14,25 @@ type peer struct {
 	fsm     *fsm
 }
 
-func newPeer(as asn, ip net.IP) *peer {
-	p := &peer{
+// NewPeer creates a new BGP neighbor
+func NewPeer(as asn, ip net.IP) *Peer {
+	p := &Peer{
 		as: as,
 		ip: ip,
 	}
 	p.fsm = newFSM(p)
-	return &peer{as: as, ip: ip}
+	return &Peer{as: as, ip: ip}
 }
 
-func (p *peer) handleConnection(conn net.Conn, open openMsg) {
+func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
+	log.Println("handling connection for", open)
 	if p.conn != nil {
+		log.Println("connection collision detected")
 		// We have a connection already! Collision detection time
 	}
 	p.conn = conn
 	if err := p.validateOpen(open); err != nil {
+		log.Println("failed to validate open message", err)
 		p.fsm.event(BGPOpenMsgErr)
 		writeMessage(p.conn, notification, newNotification(err))
 		conn.Close()
@@ -33,7 +41,7 @@ func (p *peer) handleConnection(conn net.Conn, open openMsg) {
 	p.fsm.event(BGPOpen)
 }
 
-func (p *peer) validateOpen(o openMsg) error {
+func (p *Peer) validateOpen(o openMsg) error {
 	if p.fsm.state == idle {
 		return newBGPError(0, 0, "peer is idle")
 	}

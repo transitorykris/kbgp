@@ -17,10 +17,10 @@ type fsm struct {
 	state state
 
 	// reference back to our owner
-	peer *peer
+	peer *Peer
 }
 
-func newFSM(p *peer) *fsm {
+func newFSM(p *Peer) *fsm {
 	return &fsm{peer: p}
 }
 
@@ -61,6 +61,7 @@ const (
 )
 
 func (f *fsm) event(e event) {
+	log.Println("routing event", e, "to state", f.state)
 }
 
 func (f *fsm) idle(e event) {
