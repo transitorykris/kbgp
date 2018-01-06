@@ -223,7 +223,10 @@ func (f *fsm) connect(e event) {
 	// case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
 	// 	ignore
 	case ConnectRetryTimerExpires:
-		log.Println("ConnectRetryTimer expired")
+		f.peer.conn.Close()
+		f.connectRetryTimer.Reset(defaultConnectRetryTime)
+		// TODO: stops the DelayOpenTimer and resets the timer to zero,
+		// TODO: initiates a TCP connection to the other BGP peer,
 	//case DelayOpenTimerExpires:
 	//case TCPConnectionValid:
 	//case TCPCRInvalid:
