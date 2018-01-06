@@ -9,7 +9,7 @@ import (
 
 func main() {
 	log.Println("Creating a new speaker")
-	speaker := jbgp.NewSpeaker(":179")
+	speaker := jbgp.NewSpeaker(1234, ":179")
 
 	log.Println("Adding a peer")
 	speaker.Peer(jbgp.NewPeer(1234, net.ParseIP("1.2.3.4")))
