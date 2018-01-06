@@ -1,6 +1,12 @@
 package jbgp
 
-import "log"
+import (
+	"log"
+	"time"
+
+	"github.com/transitorykris/jbgp/counter"
+	"github.com/transitorykris/jbgp/timer"
+)
 
 type state int
 
@@ -28,7 +34,32 @@ func (s state) String() string {
 }
 
 type fsm struct {
-	state state
+	// Mandatory session attributes
+	// https://tools.ietf.org/html/rfc4271#section-8
+	state               state
+	connectRetryCounter counter.Counter
+	connectRetryTimer   timer.Timer
+	connectRetryTime    time.Duration
+	holdTimer           timer.Timer
+	holdTime            time.Duration
+	keepaliveTimer      timer.Timer
+	keepaliveTime       time.Duration
+
+	// Optional session attributes
+	// https://tools.ietf.org/html/rfc4271#section-8
+	// acceptConnectionsUnconfiguredPeers bool
+	// allowAutomaticStart                bool
+	// allowAutomaticStop                 bool
+	// collisionDetectEstablishedState    bool
+	// dampPeerOscillations               bool
+	// delayOpen                          bool
+	// delayOpenTime                      time.Duration
+	// delayOpenTimer                     timer.Timer
+	// idleHoldTime                       time.Duration
+	// idleHoldTimer                      timer.Timer
+	// passiveTcpEstablishment            bool
+	// sendNOTIFICATIONwithoutOPEN        bool
+	// trackTcpState                      bool
 
 	// reference back to our owner
 	peer *Peer
