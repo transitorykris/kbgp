@@ -133,9 +133,34 @@ func (f *fsm) transition(s state) {
 
 func (f *fsm) idle(e event) {
 	switch e {
+	case ManualStart:
+	case ManualStop:
+	case AutomaticStart:
+	case ManualStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithDampPeerOscillations:
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	case AutomaticStop:
+	case ConnectRetryTimerExpires:
+	case HoldTimerExpires:
+	case KeepaliveTimerExpires:
+	case DelayOpenTimerExpires:
+	case IdleHoldTimerExpires:
+	case TCPConnectionValid:
+	case TCPCRInvalid:
+	case TCPCRAcked:
+	case TCPConnectionConfirmed:
+	case TCPConnectionFails:
 	case BGPOpen:
+	case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
+	case OpenCollisionDump:
+	case NotifMsgVerErr:
+	case NotifMsg:
+	case KeepAliveMsg:
+	case UpdateMsg:
+	case UpdateMsgErr:
 	default:
 		log.Println("Ignoring event")
 	}
@@ -143,9 +168,34 @@ func (f *fsm) idle(e event) {
 
 func (f *fsm) connect(e event) {
 	switch e {
+	case ManualStart:
+	case ManualStop:
+	case AutomaticStart:
+	case ManualStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithDampPeerOscillations:
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	case AutomaticStop:
+	case ConnectRetryTimerExpires:
+	case HoldTimerExpires:
+	case KeepaliveTimerExpires:
+	case DelayOpenTimerExpires:
+	case IdleHoldTimerExpires:
+	case TCPConnectionValid:
+	case TCPCRInvalid:
+	case TCPCRAcked:
+	case TCPConnectionConfirmed:
+	case TCPConnectionFails:
 	case BGPOpen:
+	case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
+	case OpenCollisionDump:
+	case NotifMsgVerErr:
+	case NotifMsg:
+	case KeepAliveMsg:
+	case UpdateMsg:
+	case UpdateMsgErr:
 	default:
 		log.Println("Ignoring event")
 	}
@@ -153,9 +203,34 @@ func (f *fsm) connect(e event) {
 
 func (f *fsm) active(e event) {
 	switch e {
+	case ManualStart:
+	case ManualStop:
+	case AutomaticStart:
+	case ManualStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithDampPeerOscillations:
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	case AutomaticStop:
+	case ConnectRetryTimerExpires:
+	case HoldTimerExpires:
+	case KeepaliveTimerExpires:
+	case DelayOpenTimerExpires:
+	case IdleHoldTimerExpires:
+	case TCPConnectionValid:
+	case TCPCRInvalid:
+	case TCPCRAcked:
+	case TCPConnectionConfirmed:
+	case TCPConnectionFails:
 	case BGPOpen:
+	case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
+	case OpenCollisionDump:
+	case NotifMsgVerErr:
+	case NotifMsg:
+	case KeepAliveMsg:
+	case UpdateMsg:
+	case UpdateMsgErr:
 	default:
 		log.Println("Ignoring event")
 	}
@@ -163,9 +238,34 @@ func (f *fsm) active(e event) {
 
 func (f *fsm) openSent(e event) {
 	switch e {
+	case ManualStart:
+	case ManualStop:
+	case AutomaticStart:
+	case ManualStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithDampPeerOscillations:
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	case AutomaticStop:
+	case ConnectRetryTimerExpires:
+	case HoldTimerExpires:
+	case KeepaliveTimerExpires:
+	case DelayOpenTimerExpires:
+	case IdleHoldTimerExpires:
+	case TCPConnectionValid:
+	case TCPCRInvalid:
+	case TCPCRAcked:
+	case TCPConnectionConfirmed:
+	case TCPConnectionFails:
 	case BGPOpen:
+	case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
+	case OpenCollisionDump:
+	case NotifMsgVerErr:
+	case NotifMsg:
+	case KeepAliveMsg:
+	case UpdateMsg:
+	case UpdateMsgErr:
 	default:
 		log.Println("Ignoring event")
 	}
@@ -173,9 +273,34 @@ func (f *fsm) openSent(e event) {
 
 func (f *fsm) openConfirm(e event) {
 	switch e {
+	case ManualStart:
+	case ManualStop:
+	case AutomaticStart:
+	case ManualStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithDampPeerOscillations:
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	case AutomaticStop:
+	case ConnectRetryTimerExpires:
+	case HoldTimerExpires:
+	case KeepaliveTimerExpires:
+	case DelayOpenTimerExpires:
+	case IdleHoldTimerExpires:
+	case TCPConnectionValid:
+	case TCPCRInvalid:
+	case TCPCRAcked:
+	case TCPConnectionConfirmed:
+	case TCPConnectionFails:
 	case BGPOpen:
+	case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
+	case OpenCollisionDump:
+	case NotifMsgVerErr:
+	case NotifMsg:
+	case KeepAliveMsg:
+	case UpdateMsg:
+	case UpdateMsgErr:
 	default:
 		log.Println("Ignoring event")
 	}
@@ -183,9 +308,34 @@ func (f *fsm) openConfirm(e event) {
 
 func (f *fsm) established(e event) {
 	switch e {
+	case ManualStart:
+	case ManualStop:
+	case AutomaticStart:
+	case ManualStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithPassiveTCPEstablishment:
+	case AutomaticStartWithDampPeerOscillations:
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	case AutomaticStop:
+	case ConnectRetryTimerExpires:
+	case HoldTimerExpires:
+	case KeepaliveTimerExpires:
+	case DelayOpenTimerExpires:
+	case IdleHoldTimerExpires:
+	case TCPConnectionValid:
+	case TCPCRInvalid:
+	case TCPCRAcked:
+	case TCPConnectionConfirmed:
+	case TCPConnectionFails:
 	case BGPOpen:
+	case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
+	case OpenCollisionDump:
+	case NotifMsgVerErr:
+	case NotifMsg:
+	case KeepAliveMsg:
+	case UpdateMsg:
+	case UpdateMsgErr:
 	default:
 		log.Println("Ignoring event")
 	}
