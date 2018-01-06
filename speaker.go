@@ -56,7 +56,7 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 		return
 	}
 	for _, p := range s.peers {
-		if p.as == open.as && p.ip.String() == conn.RemoteAddr().String() {
+		if p.remoteAS == open.as && p.remoteIP.String() == conn.RemoteAddr().String() {
 			go p.handleConnection(conn, open)
 			return
 		}
