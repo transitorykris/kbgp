@@ -78,3 +78,16 @@ func (p *Peer) initializeResources() {
 func (p *Peer) releaseResources() {
 	// TODO: Implement me
 }
+
+// Returns true if the peer is iBGP
+func (p *Peer) internal() bool {
+	if p.remoteAS == p.myAS {
+		return true
+	}
+	return false
+}
+
+// Returns true if the peer is eBGP
+func (p *Peer) external() bool {
+	return !p.internal()
+}
