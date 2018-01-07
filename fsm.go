@@ -347,9 +347,12 @@ func (f *fsm) openSent(e event) {
 		// TODO: (optionally) performs peer oscillation damping if the
 		//   DampPeerOscillations attribute is set to TRUE, and
 		f.transition(idle)
-	//case TCPConnectionValid:
-	//case TCPCRInvalid:
+	case TCPConnectionValid:
+		// TODO: Collision handling!
+	case TCPCRInvalid:
+		// ignore
 	case TCPCRAcked:
+		// TODO: Collision handling!
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
