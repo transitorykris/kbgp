@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 
 	"github.com/transitorykris/kbgp/stream"
 )
@@ -118,11 +119,11 @@ func readOpen(msg []byte) (openMsg, error) {
 
 func newOpen(p *Peer) openMsg {
 	o := openMsg{
-		version: version,
-		as: p.myAS,
-		holdTime: defaultHoldTime, //TODO: make configurable
+		version:       version,
+		as:            p.myAS,
+		holdTime:      uint16(defaultHoldTime.Seconds()),       //TODO: make configurable
 		bgpIdentifier: newIdentifier(net.ParseIP("127.0.0.1")), //TODO: make configurable
-		optParmLen: 0,
+		optParmLen:    0,
 		optParamaters: []parameter{},
 	}
 	return o
