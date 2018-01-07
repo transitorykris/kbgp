@@ -414,7 +414,18 @@ func (f *fsm) openConfirm(e event) {
 	case NotifMsg:
 	case KeepAliveMsg:
 	default:
-		log.Println("Default handling of event")
+		writeMessage(f.peer.conn, notification, newNotification(newBGPError(fsmError, 0, "invalid mesage")))
+		// - sets the ConnectRetryTimer to zero,
+		f.connectRetryTimer.Stop()
+		// - releases all BGP resources,
+
+		// - drops the TCP connection,
+
+		// - increments the ConnectRetryCounter by 1,
+		// - (optionally) performs peer oscillation damping if the
+		// DampPeerOscillations attribute is set to TRUE, and
+
+		// - changes its state to Idle.
 	}
 }
 
