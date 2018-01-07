@@ -23,6 +23,10 @@ func (e bgpError) Error() string {
 type asn uint16
 type bgpIdentifier uint32
 
+func newIdentifier(ip net.IP) bgpIdentifier {
+	return bgpIdentifier(binary.BigEndian.Uint32(ip.To4()))
+}
+
 func (b bgpIdentifier) String() string {
 	return fmt.Sprintf("%s", b.ip())
 }

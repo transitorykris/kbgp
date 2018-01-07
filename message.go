@@ -116,6 +116,18 @@ func readOpen(msg []byte) (openMsg, error) {
 	return om, nil
 }
 
+func newOpen(p *Peer) openMsg {
+	o := openMsg{
+		version: version,
+		as: p.myAS,
+		holdTime: defaultHoldTime, //TODO: make configurable
+		bgpIdentifier: newIdentifier(net.ParseIP("127.0.0.1")), //TODO: make configurable
+		optParmLen: 0,
+		optParamaters: []parameter{},
+	}
+	return o
+}
+
 func writeMessage(w io.Writer, msgType msgType, msg []byte) (int, error) {
 	msg = append(newHeader(len(msg), msgType).bytes(), msg...)
 	n, err := w.Write(msg)
