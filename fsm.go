@@ -58,7 +58,7 @@ type fsm struct {
 	// idleHoldTime                       time.Duration
 	// idleHoldTimer                      timer.Timer
 	// passiveTcpEstablishment            bool
-	// sendNOTIFICATIONwithoutOPEN        bool
+	sendNOTIFICATIONwithoutOPEN bool
 	// trackTcpState                      bool
 
 	// reference back to our owner
@@ -233,6 +233,17 @@ func (f *fsm) connect(e event) {
 	case TCPConnectionFails:
 	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
+		if f.sendNOTIFICATIONwithoutOPEN {
+			// TODO: How do we get the actual error here? Doesn't get passed in with the event
+			writeMessage(f.peer.conn, notification, newNotification(newBGPError(messageHeaderError, 0, "")))
+		}
+		f.connectRetryTimer.Stop()
+		// TODO: releases all BGP resources,
+		f.peer.conn.Close()
+		f.connectRetryCounter.Increment()
+		// TODO: (optionally) performs peer oscillation damping if the
+		// DampPeerOscillations attribute is set to TRUE, and
+		f.transition(idle)
 	case BGPOpenMsgErr:
 	case NotifMsgVerErr:
 	default:
