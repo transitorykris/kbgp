@@ -38,6 +38,9 @@ func (t *Timer) Reset(d time.Duration) {
 
 // Stop cancels the timer
 func (t *Timer) Stop() {
+	if !t.running {
+		return
+	}
 	t.drain()
 	t.running = false
 }
