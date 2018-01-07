@@ -46,8 +46,9 @@ func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
 		return
 	}
 	// TODO: should have a configured hold time, but hardcoding default for now
-	if time.Duration(open.holdTime*time.Second) < defaultHoldTime {
-		p.fsm.holdTime = open.holdTime
+	offeredHoldTime := time.Duration(open.holdTime) * time.Second
+	if offeredHoldTime < defaultHoldTime {
+		p.fsm.holdTime = offeredHoldTime
 	}
 	p.fsm.keepaliveTime = p.fsm.holdTime / 3
 	p.fsm.event(BGPOpen)
