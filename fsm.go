@@ -211,6 +211,10 @@ func (f *fsm) tcpConnect() {
 	f.transition(openSent)
 }
 
+func (f *fsm) ignore(e event) {
+	log.Println("%s state ignoring %s event", f.state, e)
+}
+
 func (f *fsm) fsmErrorToIdle() {
 	writeMessage(f.peer.conn, notification, newNotification(newBGPError(fsmError, 0, "invalid mesage")))
 	f.connectRetryTimer.Stop()
@@ -230,11 +234,11 @@ func (f *fsm) idle(e event) {
 		f.start()
 	case AutomaticStart:
 		f.start()
-	//case ManualStartWithPassiveTCPEstablishment:
-	//case AutomaticStartWithPassiveTCPEstablishment:
-	//case AutomaticStartWithDampPeerOscillations:
-	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	//case IdleHoldTimerExpires:
+	//TODO: case ManualStartWithPassiveTCPEstablishment:
+	//TODO: case AutomaticStartWithPassiveTCPEstablishment:
+	//TODO: case AutomaticStartWithDampPeerOscillations:
+	//TODO: case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+	//TODO: case IdleHoldTimerExpires:
 	default:
 		log.Println("Ignoring event")
 	}
@@ -243,7 +247,7 @@ func (f *fsm) idle(e event) {
 func (f *fsm) connect(e event) {
 	switch e {
 	case ManualStart:
-		// ignore
+		f.ignore(e)
 	case ManualStop:
 		f.peer.conn.Close()
 		f.peer.releaseResources()
@@ -251,29 +255,29 @@ func (f *fsm) connect(e event) {
 		f.connectRetryTimer.Stop()
 		f.transition(idle)
 	case AutomaticStart:
-		// ignore
-	// case ManualStartWithPassiveTCPEstablishment:
-	// ignore
-	// case AutomaticStartWithPassiveTCPEstablishment:
-	// 	ignore
-	// case AutomaticStartWithDampPeerOscillations:
-	// 	ignore
-	// case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	// 	ignore
+		f.ignore(e)
+	case ManualStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillations:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+		f.ignore(e)
 	case ConnectRetryTimerExpires:
 		f.peer.conn.Close()
 		f.connectRetryTimer.Reset(defaultConnectRetryTime)
 		// TODO: stops the DelayOpenTimer and resets the timer to zero,
 		// TODO: initiates a TCP connection to the other BGP peer,
-	//case DelayOpenTimerExpires:
-	//case TCPConnectionValid:
-	//case TCPCRInvalid:
+	//TODO: case DelayOpenTimerExpires:
+	//TODO: case TCPConnectionValid:
+	//TODO: case TCPCRInvalid:
 	case TCPCRAcked:
 		f.tcpConnect()
 	case TCPConnectionConfirmed:
 		f.tcpConnect()
 	case TCPConnectionFails:
-	//case BGPOpenWithDelayOpenTimerRunning:
+	//TODO: case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 		if f.sendNOTIFICATIONwithoutOPEN {
 			// TODO: How do we get the actual error here? Doesn't get passed in with the event
@@ -310,26 +314,26 @@ func (f *fsm) connect(e event) {
 func (f *fsm) active(e event) {
 	switch e {
 	case ManualStart:
-		// ignore
+		f.ignore(e)
 	case ManualStop:
 	case AutomaticStart:
-		// ignore
-	//case ManualStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillations:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	// ignore
+		f.ignore(e)
+	case ManualStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillations:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+		f.ignore(e)
 	case ConnectRetryTimerExpires:
-	//case DelayOpenTimerExpires:
-	//case TCPConnectionValid:
-	//case TCPCRInvalid:
+	//TODO: case DelayOpenTimerExpires:
+	//TODO: case TCPConnectionValid:
+	//TODO: case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
-	//case BGPOpenWithDelayOpenTimerRunning:
+	//TODO: case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
 	case NotifMsgVerErr:
@@ -345,20 +349,20 @@ func (f *fsm) active(e event) {
 func (f *fsm) openSent(e event) {
 	switch e {
 	case ManualStart:
-		// ignore
+		f.ignore(e)
 	case ManualStop:
 		f.stop()
 	case AutomaticStart:
-		// ignore
-	//case ManualStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillations:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStop:
+		f.ignore(e)
+	case ManualStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillations:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStop:
 	case HoldTimerExpires:
 		writeMessage(f.peer.conn, notification, newNotification(newBGPError(holdTimerExpiredError, 0, "hold timer expired")))
 		f.connectRetryTimer.Stop()
@@ -371,7 +375,7 @@ func (f *fsm) openSent(e event) {
 	case TCPConnectionValid:
 		// TODO: Collision handling!
 	case TCPCRInvalid:
-		// ignore
+		f.ignore(e)
 	case TCPCRAcked:
 		// TODO: Collision handling!
 	case TCPConnectionConfirmed:
@@ -387,7 +391,7 @@ func (f *fsm) openSent(e event) {
 		f.transition(openConfirm)
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	//case OpenCollisionDump:
+	//TODO: case OpenCollisionDump:
 	case NotifMsgVerErr:
 	default:
 		f.fsmErrorToIdle()
@@ -397,30 +401,30 @@ func (f *fsm) openSent(e event) {
 func (f *fsm) openConfirm(e event) {
 	switch e {
 	case ManualStart:
-		// ignore
+		f.ignore(e)
 	case ManualStop:
 		f.stop()
 	case AutomaticStart:
-		// ignore
-	//case ManualStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillations:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStop:
+		f.ignore(e)
+	case ManualStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillations:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStop:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	//case TCPConnectionValid:
-	//case TCPCRInvalid:
+	//TODO: case TCPConnectionValid:
+	//TODO: case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
-	//case OpenCollisionDump:
+	//TODO: case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
@@ -432,28 +436,28 @@ func (f *fsm) openConfirm(e event) {
 func (f *fsm) established(e event) {
 	switch e {
 	case ManualStart:
-		// ignore
+		f.ignore(e)
 	case ManualStop:
 	case AutomaticStart:
-		// ignore
-	//case ManualStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillations:
-	// ignore
-	//case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
-	// ignore
-	//case AutomaticStop:
+		f.ignore(e)
+	case ManualStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithPassiveTCPEstablishment:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillations:
+		f.ignore(e)
+	case AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
+		f.ignore(e)
+		//TODO: case AutomaticStop:
 	case HoldTimerExpires:
 	case KeepaliveTimerExpires:
-	//case TCPConnectionValid:
-	//case TCPCRInvalid:
+	//TODO: case TCPConnectionValid:
+	//TODO: case TCPCRInvalid:
 	case TCPCRAcked:
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
-	//case OpenCollisionDump:
+	//TODO: case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
