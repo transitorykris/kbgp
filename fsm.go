@@ -321,6 +321,12 @@ func (f *fsm) openSent(e event) {
 	case ManualStart:
 		// ignore
 	case ManualStop:
+		writeMessage(f.peer.conn, notification, newNotification(newBGPError(cease, 0, "manual stop")))
+		f.connectRetryTimer.Stop()
+		f.peer.releaseResources()
+		f.peer.conn.Close()
+		f.connectRetryCounter.Reset()
+		f.transition(idle)
 	case AutomaticStart:
 		// ignore
 	//case ManualStartWithPassiveTCPEstablishment:
