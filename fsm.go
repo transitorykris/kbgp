@@ -1,11 +1,11 @@
-package jbgp
+package kbgp
 
 import (
 	"log"
 	"time"
 
-	"github.com/transitorykris/jbgp/counter"
-	"github.com/transitorykris/jbgp/timer"
+	"github.com/transitorykris/kbgp/counter"
+	"github.com/transitorykris/kbgp/timer"
 )
 
 type state int

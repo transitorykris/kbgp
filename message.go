@@ -1,4 +1,4 @@
-package jbgp
+package kbgp
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/transitorykris/jbgp/stream"
+	"github.com/transitorykris/kbgp/stream"
 )
 
 type msgType uint8
