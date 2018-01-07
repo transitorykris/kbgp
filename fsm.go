@@ -246,6 +246,11 @@ func (f *fsm) connect(e event) {
 		f.transition(idle)
 	case BGPOpenMsgErr:
 	case NotifMsgVerErr:
+		f.connectRetryTimer.Stop()
+		// TODO: stops and resets the DelayOpenTimer (sets to zero),
+		// TODO: releases all BGP resources,
+		f.peer.conn.Close()
+		f.transition(idle)
 	default:
 		log.Println("Default handling of event")
 		f.connectRetryTimer.Stop()
