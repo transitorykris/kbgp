@@ -339,6 +339,14 @@ func (f *fsm) openSent(e event) {
 	// ignore
 	//case AutomaticStop:
 	case HoldTimerExpires:
+		writeMessage(f.peer.conn, notification, newNotification(newBGPError(holdTimerExpiredError, 0, "hold timer expired")))
+		f.connectRetryTimer.Stop()
+		f.peer.releaseResources()
+		f.peer.conn.Close()
+		f.connectRetryCounter.Increment()
+		// TODO: (optionally) performs peer oscillation damping if the
+		//   DampPeerOscillations attribute is set to TRUE, and
+		f.transition(idle)
 	//case TCPConnectionValid:
 	//case TCPCRInvalid:
 	case TCPCRAcked:
