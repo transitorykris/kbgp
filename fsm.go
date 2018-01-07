@@ -193,7 +193,7 @@ func (f *fsm) idle(e event) {
 
 // Handle ManualStart and AutomaticStart in the idle state
 func (f *fsm) start() {
-	// TODO: initializes all BGP resources for the peer connection,
+	f.peer.initializeResources()
 	f.connectRetryCounter.Reset()
 	f.connectRetryTimer.Reset(defaultConnectRetryTime)
 	// TODO: initiates a TCP connection to the other BGP peer,
@@ -206,7 +206,7 @@ func (f *fsm) connect(e event) {
 		// ignore
 	case ManualStop:
 		f.peer.conn.Close()
-		// TODO(?): releases all BGP resources,
+		f.peer.releaseResources()
 		f.connectRetryCounter.Reset()
 		f.connectRetryTimer.Stop()
 		f.transition(idle)
@@ -238,7 +238,7 @@ func (f *fsm) connect(e event) {
 			writeMessage(f.peer.conn, notification, newNotification(newBGPError(messageHeaderError, 0, "")))
 		}
 		f.connectRetryTimer.Stop()
-		// TODO: releases all BGP resources,
+		f.peer.releaseResources()
 		f.peer.conn.Close()
 		f.connectRetryCounter.Increment()
 		// TODO: (optionally) performs peer oscillation damping if the
@@ -248,7 +248,7 @@ func (f *fsm) connect(e event) {
 	case NotifMsgVerErr:
 		f.connectRetryTimer.Stop()
 		// TODO: stops and resets the DelayOpenTimer (sets to zero),
-		// TODO: releases all BGP resources,
+		f.peer.releaseResources()
 		f.peer.conn.Close()
 		f.transition(idle)
 	default:
@@ -256,7 +256,7 @@ func (f *fsm) connect(e event) {
 		f.connectRetryTimer.Stop()
 		// TODO: if the DelayOpenTimer is running, stops and resets the
 		// DelayOpenTimer (sets to zero),
-		// TODO: releases all BGP resources,
+		f.peer.releaseResources()
 		f.peer.conn.Close()
 		f.connectRetryCounter.Increment()
 		// TODO: performs peer oscillation damping if the DampPeerOscillations

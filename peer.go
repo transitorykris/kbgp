@@ -68,3 +68,13 @@ func (p *Peer) validateOpen(o openMsg) error {
 	}
 	return nil
 }
+
+// initializeResources initializes all BGP resources for this peer
+func (p *Peer) initializeResources() {
+	// TODO: implement me
+}
+
+// releaseResources releases all BGP resources held by this peer
+func (p *Peer) releaseResources() {
+	// TODO: Implement me
+}
