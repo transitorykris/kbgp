@@ -379,8 +379,19 @@ func (f *fsm) openSent(e event) {
 	//case OpenCollisionDump:
 	case NotifMsgVerErr:
 	default:
-		log.Println("Default handling of event")
+		f.fsmErrorToIdle()
 	}
+}
+
+func (f *fsm) fsmErrorToIdle() {
+	writeMessage(f.peer.conn, notification, newNotification(newBGPError(fsmError, 0, "invalid mesage")))
+	f.connectRetryTimer.Stop()
+	f.peer.releaseResources()
+	f.peer.conn.Close()
+	f.connectRetryCounter.Increment()
+	// - (optionally) performs peer oscillation damping if the
+	// DampPeerOscillations attribute is set to TRUE, and
+	f.transition(idle)
 }
 
 func (f *fsm) openConfirm(e event) {
@@ -414,18 +425,7 @@ func (f *fsm) openConfirm(e event) {
 	case NotifMsg:
 	case KeepAliveMsg:
 	default:
-		writeMessage(f.peer.conn, notification, newNotification(newBGPError(fsmError, 0, "invalid mesage")))
-		// - sets the ConnectRetryTimer to zero,
-		f.connectRetryTimer.Stop()
-		// - releases all BGP resources,
-
-		// - drops the TCP connection,
-
-		// - increments the ConnectRetryCounter by 1,
-		// - (optionally) performs peer oscillation damping if the
-		// DampPeerOscillations attribute is set to TRUE, and
-
-		// - changes its state to Idle.
+		f.fsmErrorToIdle()
 	}
 }
 
@@ -460,6 +460,9 @@ func (f *fsm) established(e event) {
 	case UpdateMsg:
 	case UpdateMsgErr:
 	default:
-		log.Println("Ignoring event")
+		// TODO: deletes all routes associated with this connection,
+		// can this just be done as part of releasing resources? RFC says
+		// to do this after writing notification and before the rest.
+		f.fsmErrorToIdle()
 	}
 }
