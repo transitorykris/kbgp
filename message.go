@@ -122,6 +122,71 @@ func writeMessage(w io.Writer, msgType msgType, msg []byte) (int, error) {
 	return n, err
 }
 
+const (
+	_ = iota
+	messageHeaderError
+	openMessageError
+	updateMessageError
+	holdTimerExpiredError
+	fsmError
+	cease
+)
+
+var errorCodeLookup = map[int]string{
+	messageHeaderError:    "Message Header Error",
+	openMessageError:      "OPEN Message Error",
+	updateMessageError:    "UPDATE Message Error",
+	holdTimerExpiredError: "Hold Timer Expired",
+	fsmError:              "Finite State Machine Error",
+	cease:                 "Cease",
+}
+
+const (
+	_ = iota
+	unsupportedVersionNumber
+	badPeerAS
+	badBGPIdentifier
+	unsupportedOptionalParameter
+	_ // 5 is deprecated
+	unacceptableHoldTime
+)
+
+var openMessageErrorLookup = map[int]string{
+	unsupportedVersionNumber:     "Unsupported Version Number",
+	badPeerAS:                    "Bad Peer AS",
+	badBGPIdentifier:             "Bad BGP Identifier",
+	unsupportedOptionalParameter: "Unsupported Optional Parameter",
+	unacceptableHoldTime:         "Unacceptable Hold Time",
+}
+
+const (
+	_ = iota
+	malformedAttributeList
+	unrecognizedWellKnownAttribute
+	missingWellKnownAttribute
+	attributeFlagsError
+	attributeLengthError
+	invalidOriginAttribute
+	_ // 7 is deprecated
+	invalidNextHopAttribute
+	optionalAttributeError
+	invalidNetworkField
+	malformedASPath
+)
+
+var updateMessageErrorLookup = map[int]string{
+	malformedAttributeList:         "Malformed Attribute List",
+	unrecognizedWellKnownAttribute: "Unrecognized Well-known Attribute",
+	missingWellKnownAttribute:      "Missing Well-known Attribute",
+	attributeFlagsError:            "Attribute Flags Error",
+	attributeLengthError:           "Attribute Length Error",
+	invalidOriginAttribute:         "Invalid ORIGIN Attribute",
+	invalidNextHopAttribute:        "Invalid NEXT_HOP Attribute",
+	optionalAttributeError:         "Optional Attribute Erro",
+	invalidNetworkField:            "Invalid Network Field",
+	malformedASPath:                "Malformed AS_PATH",
+}
+
 func newNotification(err error) []byte {
 	return nil
 }
