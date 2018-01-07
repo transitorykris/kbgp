@@ -1,7 +1,9 @@
 package jbgp
 
 import (
+	"encoding/binary"
 	"fmt"
+	"net"
 )
 
 type bgpError struct {
@@ -23,7 +25,13 @@ type bgpIdentifier uint32
 
 func (b bgpIdentifier) String() string {
 	// TODO: convert to net.IP.String()
-	return fmt.Sprintf("%d", b)
+	return fmt.Sprintf("%s", b.ip())
+}
+
+func (b bgpIdentifier) ip() net.IP {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, uint32(b))
+	return ip
 }
 
 const version = 4

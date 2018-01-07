@@ -92,7 +92,7 @@ type openMsg struct {
 
 // String implements strings.Stringer
 func (o openMsg) String() string {
-	return fmt.Sprintf("Version: %d AS: %d HoldTime: %d bgpIdentifier: %s",
+	return fmt.Sprintf("Version:%d AS:%d HoldTime:%d bgpIdentifier:%s",
 		o.version, o.as, o.holdTime, o.bgpIdentifier)
 }
 
