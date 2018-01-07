@@ -33,4 +33,9 @@ func (b bgpIdentifier) ip() net.IP {
 	return ip
 }
 
+// A bgpIdentifier is valid if it represents a valid unicast host IP
+func (b bgpIdentifier) valid() bool {
+	return b.ip().IsGlobalUnicast()
+}
+
 const version = 4

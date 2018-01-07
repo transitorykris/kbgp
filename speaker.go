@@ -65,7 +65,7 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 		}
 	}
 	log.Println("no matching peer found for", open.as, conn.RemoteAddr())
-	writeMessage(conn, notification, newNotification(bgpError{0, 0, ""}))
+	writeMessage(conn, notification, newNotification(newBGPError(openMessageError, badPeerAS, "")))
 	conn.Close()
 }
 

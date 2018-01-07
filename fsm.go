@@ -67,9 +67,15 @@ type fsm struct {
 
 // https://tools.ietf.org/html/rfc4271#section-10
 const defaultConnectRetryTime = 120 * time.Second
+const defaultHoldTime = 90 * time.Second
+const defaultKeepaliveTime = defaultHoldTime / 3
 
 func newFSM(p *Peer) *fsm {
-	f := &fsm{peer: p}
+	f := &fsm{
+		peer:          p,
+		holdTime:      defaultHoldTime,
+		keepaliveTime: defaultKeepaliveTime,
+	}
 	f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.eventWrapper(ConnectRetryTimerExpires))
 	return f
 }
@@ -356,6 +362,14 @@ func (f *fsm) openSent(e event) {
 	case TCPConnectionConfirmed:
 	case TCPConnectionFails:
 	case BGPOpen:
+		f.connectRetryTimer.Stop()
+		writeMessage(f.peer.conn, keepalive, []byte{})
+		if f.holdTime != 0 {
+			// 	TODO: sets a KeepaliveTimer (via the text below)
+			// 	TODO: sets the HoldTimer according to the negotiated value (see
+			// 	Section 4.2),
+		}
+		f.transition(openConfirm)
 	case BGPHeaderErr:
 	case BGPOpenMsgErr:
 	//case OpenCollisionDump:

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 // Peer is a BGP neighbor
@@ -44,6 +45,11 @@ func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
 		conn.Close()
 		return
 	}
+	// TODO: should have a configured hold time, but hardcoding default for now
+	if time.Duration(open.holdTime*time.Second) < defaultHoldTime {
+		p.fsm.holdTime = open.holdTime
+	}
+	p.fsm.keepaliveTime = p.fsm.holdTime / 3
 	p.fsm.event(BGPOpen)
 }
 
@@ -63,9 +69,40 @@ func (p *Peer) close() {
 }
 
 func (p *Peer) validateOpen(o openMsg) error {
+	if o.version != version {
+		// TODO: this should be a 2-octet unsigned int
+		return newBGPError(openMessageError, unsupportedVersionNumber, "4")
+	}
+	// TODO:
+	// If the version number in the Version field of the received OPEN
+	// message is not supported, then the Error Subcode MUST be set to
+	// Unsupported Version Number.  The Data field is a 2-octet unsigned
+	// integer, which indicates the largest, locally-supported version
+	// number less than the version the remote BGP peer bid (as indicated in
+	// the received OPEN message), or if the smallest, locally-supported
+	// version number is greater than the version the remote BGP peer bid,
+	// then the smallest, locally-supported version number.
+
+	if o.holdTime == 1 || o.holdTime == 2 {
+		return newBGPError(openMessageError, unacceptableHoldTime,
+			"hold time must be 0 or greater than 2")
+	}
+	if !o.bgpIdentifier.valid() {
+		return newBGPError(openMessageError, badBGPIdentifier,
+			"BGP identifier must be a unicast IP")
+	}
 	if p.fsm.state == idle {
 		return newBGPError(0, 0, "peer is idle")
 	}
+
+	// TODO:
+	// If one of the Optional Parameters in the OPEN message is not
+	// recognized, then the Error Subcode MUST be set to Unsupported
+	// Optional Parameters.
+	// If one of the Optional Parameters in the OPEN message is recognized,
+	// but is malformed, then the Error Subcode MUST be set to 0
+	// (Unspecific).
+
 	return nil
 }
 
