@@ -322,17 +322,21 @@ func (f *fsm) active(e event) {
 	}
 }
 
+func (f *fsm) stop() {
+	writeMessage(f.peer.conn, notification, newNotification(newBGPError(cease, 0, "manual stop")))
+	f.connectRetryTimer.Stop()
+	f.peer.releaseResources()
+	f.peer.conn.Close()
+	f.connectRetryCounter.Reset()
+	f.transition(idle)
+}
+
 func (f *fsm) openSent(e event) {
 	switch e {
 	case ManualStart:
 		// ignore
 	case ManualStop:
-		writeMessage(f.peer.conn, notification, newNotification(newBGPError(cease, 0, "manual stop")))
-		f.connectRetryTimer.Stop()
-		f.peer.releaseResources()
-		f.peer.conn.Close()
-		f.connectRetryCounter.Reset()
-		f.transition(idle)
+		f.stop()
 	case AutomaticStart:
 		// ignore
 	//case ManualStartWithPassiveTCPEstablishment:
@@ -384,6 +388,7 @@ func (f *fsm) openConfirm(e event) {
 	case ManualStart:
 		// ignore
 	case ManualStop:
+		f.stop()
 	case AutomaticStart:
 		// ignore
 	//case ManualStartWithPassiveTCPEstablishment:
