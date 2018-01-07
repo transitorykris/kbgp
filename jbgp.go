@@ -24,7 +24,6 @@ type asn uint16
 type bgpIdentifier uint32
 
 func (b bgpIdentifier) String() string {
-	// TODO: convert to net.IP.String()
 	return fmt.Sprintf("%s", b.ip())
 }
 
