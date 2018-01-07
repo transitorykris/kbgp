@@ -52,7 +52,7 @@ type fsm struct {
 	// allowAutomaticStop                 bool
 	// collisionDetectEstablishedState    bool
 	// dampPeerOscillations               bool
-	// delayOpen                          bool
+	delayOpen bool
 	// delayOpenTime                      time.Duration
 	// delayOpenTimer                     timer.Timer
 	// idleHoldTime                       time.Duration
@@ -229,7 +229,9 @@ func (f *fsm) connect(e event) {
 	//case TCPConnectionValid:
 	//case TCPCRInvalid:
 	case TCPCRAcked:
+		f.tcpConnect()
 	case TCPConnectionConfirmed:
+		f.tcpConnect()
 	case TCPConnectionFails:
 	//case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr:
@@ -263,6 +265,20 @@ func (f *fsm) connect(e event) {
 		// attribute is set to True, and
 		f.transition(idle)
 	}
+}
+
+func (f *fsm) tcpConnect() {
+	// TODO: Implement when adding the delayOpen option
+	if f.delayOpen {
+		f.connectRetryTimer.Stop()
+		//   - sets the DelayOpenTimer to the initial value, and
+		return
+	}
+	f.connectRetryTimer.Stop()
+	f.peer.initializeResources()
+	// 	TODO: sends an OPEN message to its peer,
+	// 	TODO: sets the HoldTimer to a large value (4 min recommended)
+	f.transition(openSent)
 }
 
 func (f *fsm) active(e event) {

@@ -59,6 +59,7 @@ func (s *Speaker) handleConnection(conn net.Conn) {
 	for _, p := range s.peers {
 		if p.remoteAS == open.as && p.remoteIP.Equal(addrToIP(conn.RemoteAddr())) {
 			log.Println("found a matching peer")
+			p.fsm.event(TCPConnectionConfirmed)
 			go p.handleConnection(conn, open)
 			return
 		}
