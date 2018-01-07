@@ -237,6 +237,15 @@ func (f *fsm) connect(e event) {
 	case NotifMsgVerErr:
 	default:
 		log.Println("Default handling of event")
+		f.connectRetryTimer.Stop()
+		// TODO: if the DelayOpenTimer is running, stops and resets the
+		// DelayOpenTimer (sets to zero),
+		// TODO: releases all BGP resources,
+		f.peer.conn.Close()
+		f.connectRetryCounter.Increment()
+		// TODO: performs peer oscillation damping if the DampPeerOscillations
+		// attribute is set to True, and
+		f.transition(idle)
 	}
 }
 
