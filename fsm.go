@@ -179,6 +179,49 @@ func (f *fsm) transition(s state) {
 	f.state = s
 }
 
+// Handle ManualStart and AutomaticStart in the idle state
+func (f *fsm) start() {
+	f.peer.initializeResources()
+	f.connectRetryCounter.Reset()
+	f.connectRetryTimer.Reset(defaultConnectRetryTime)
+	// TODO: initiates a TCP connection to the other BGP peer,
+	f.transition(connect)
+}
+
+func (f *fsm) stop() {
+	writeMessage(f.peer.conn, notification, newNotification(newBGPError(cease, 0, "manual stop")))
+	f.connectRetryTimer.Stop()
+	f.peer.releaseResources()
+	f.peer.conn.Close()
+	f.connectRetryCounter.Reset()
+	f.transition(idle)
+}
+
+func (f *fsm) tcpConnect() {
+	// TODO: Implement when adding the delayOpen option
+	if f.delayOpen {
+		f.connectRetryTimer.Stop()
+		//   - sets the DelayOpenTimer to the initial value, and
+		return
+	}
+	f.connectRetryTimer.Stop()
+	f.peer.initializeResources()
+	// 	TODO: sends an OPEN message to its peer,
+	// 	TODO: sets the HoldTimer to a large value (4 min recommended)
+	f.transition(openSent)
+}
+
+func (f *fsm) fsmErrorToIdle() {
+	writeMessage(f.peer.conn, notification, newNotification(newBGPError(fsmError, 0, "invalid mesage")))
+	f.connectRetryTimer.Stop()
+	f.peer.releaseResources()
+	f.peer.conn.Close()
+	f.connectRetryCounter.Increment()
+	// - (optionally) performs peer oscillation damping if the
+	// DampPeerOscillations attribute is set to TRUE, and
+	f.transition(idle)
+}
+
 // In this state, BGP FSM refuses all incoming BGP connections for
 // this peer.  No resources are allocated to the peer.
 func (f *fsm) idle(e event) {
@@ -195,15 +238,6 @@ func (f *fsm) idle(e event) {
 	default:
 		log.Println("Ignoring event")
 	}
-}
-
-// Handle ManualStart and AutomaticStart in the idle state
-func (f *fsm) start() {
-	f.peer.initializeResources()
-	f.connectRetryCounter.Reset()
-	f.connectRetryTimer.Reset(defaultConnectRetryTime)
-	// TODO: initiates a TCP connection to the other BGP peer,
-	f.transition(connect)
 }
 
 func (f *fsm) connect(e event) {
@@ -273,20 +307,6 @@ func (f *fsm) connect(e event) {
 	}
 }
 
-func (f *fsm) tcpConnect() {
-	// TODO: Implement when adding the delayOpen option
-	if f.delayOpen {
-		f.connectRetryTimer.Stop()
-		//   - sets the DelayOpenTimer to the initial value, and
-		return
-	}
-	f.connectRetryTimer.Stop()
-	f.peer.initializeResources()
-	// 	TODO: sends an OPEN message to its peer,
-	// 	TODO: sets the HoldTimer to a large value (4 min recommended)
-	f.transition(openSent)
-}
-
 func (f *fsm) active(e event) {
 	switch e {
 	case ManualStart:
@@ -320,15 +340,6 @@ func (f *fsm) active(e event) {
 	default:
 		log.Println("Default handling of event")
 	}
-}
-
-func (f *fsm) stop() {
-	writeMessage(f.peer.conn, notification, newNotification(newBGPError(cease, 0, "manual stop")))
-	f.connectRetryTimer.Stop()
-	f.peer.releaseResources()
-	f.peer.conn.Close()
-	f.connectRetryCounter.Reset()
-	f.transition(idle)
 }
 
 func (f *fsm) openSent(e event) {
@@ -381,17 +392,6 @@ func (f *fsm) openSent(e event) {
 	default:
 		f.fsmErrorToIdle()
 	}
-}
-
-func (f *fsm) fsmErrorToIdle() {
-	writeMessage(f.peer.conn, notification, newNotification(newBGPError(fsmError, 0, "invalid mesage")))
-	f.connectRetryTimer.Stop()
-	f.peer.releaseResources()
-	f.peer.conn.Close()
-	f.connectRetryCounter.Increment()
-	// - (optionally) performs peer oscillation damping if the
-	// DampPeerOscillations attribute is set to TRUE, and
-	f.transition(idle)
 }
 
 func (f *fsm) openConfirm(e event) {
