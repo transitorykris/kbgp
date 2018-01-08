@@ -38,6 +38,7 @@ func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
 		// We have a connection already! Collision detection time
 	}
 	p.conn = conn
+	p.fsm.event(TCPConnectionConfirmed)
 	if err := p.validateOpen(open); err != nil {
 		log.Println("failed to validate open message", err)
 		p.fsm.event(BGPOpenMsgErr)

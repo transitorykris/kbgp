@@ -41,16 +41,16 @@ func (m msgType) String() string {
 
 // https://tools.ietf.org/html/rfc4271#section-4.1
 type msgHeader struct {
-	marker  marker
-	length  uint16 // Includes the length of the header
-	msgType msgType
+	marker    marker
+	msgLength uint16 // Includes the length of the header
+	msgType   msgType
 }
 
 func newHeader(length int, msgType msgType) msgHeader {
 	m := msgHeader{
-		marker:  newMarker(),
-		length:  uint16(length),
-		msgType: msgType,
+		marker:    newMarker(),
+		msgLength: uint16(length),
+		msgType:   msgType,
 	}
 	return m
 }
@@ -63,17 +63,25 @@ func newMarker() marker {
 	return m
 }
 
+// bytes implements byter
 func (m marker) bytes() []byte {
 	return bytes.Repeat([]byte{0x1}, len(m))
 }
 
+// length implements byter
+func (m marker) length() int { return len(m.bytes()) }
+
+// bytes implements byter
 func (h msgHeader) bytes() []byte {
 	buf := bytes.NewBuffer([]byte{})
 	buf.Write(h.marker.bytes())
-	buf.Write(uint16ToBytes(h.length))
+	buf.Write(uint16ToBytes(h.msgLength))
 	buf.Write(h.msgType.bytes())
 	return nil
 }
+
+// length implements byter
+func (h msgHeader) length() int { return len(h.bytes()) }
 
 // String implements strings.Stringer
 func (h msgHeader) String() string {
@@ -94,13 +102,13 @@ func readHeader(r io.Reader) (msgHeader, []byte, error) {
 	header := msgHeader{}
 	copy(header.marker[:], buf.Next(markerLength))
 	// TODO: Check that the marker is all 1s
-	header.length = stream.ReadUint16(buf)
+	header.msgLength = stream.ReadUint16(buf)
 	header.msgType = msgType(stream.ReadByte(buf))
 
 	log.Println("Got header", header)
 
 	// Read in the message's body
-	body := stream.Read(r, int(header.length)-messageHeaderLength)
+	body := stream.Read(r, int(header.msgLength)-messageHeaderLength)
 
 	log.Println("read body")
 	return header, body, nil
@@ -154,6 +162,7 @@ func newOpen(p *Peer) openMsg {
 	return o
 }
 
+// bytes implements byter
 func (o openMsg) bytes() []byte {
 	buf := bytes.NewBuffer([]byte{})
 	buf.WriteByte(o.version)
@@ -166,13 +175,17 @@ func (o openMsg) bytes() []byte {
 	return buf.Bytes()
 }
 
+// length implements byter
+func (o openMsg) length() int { return len(o.bytes()) }
+
 type byter interface {
 	bytes() []byte
+	length() int
 }
 
 func writeMessage(w io.Writer, msgType msgType, msg byter) (int, error) {
-	msg = append(newHeader(len(msg), msgType).bytes(), msg.bytes())
-	n, err := w.Write(msg)
+	m := append(newHeader(msg.length(), msgType).bytes(), msg.bytes()...)
+	n, err := w.Write(m)
 	return n, err
 }
 
@@ -241,6 +254,38 @@ var updateMessageErrorLookup = map[int]string{
 	malformedASPath:                "Malformed AS_PATH",
 }
 
-func newNotification(err error) []byte {
-	return nil
+type notificationMsg struct {
+	code    uint8
+	subcode uint8
+	data    []byte
 }
+
+func newNotification(err error) notificationMsg {
+	return notificationMsg{uint8(err.(bgpError).code), uint8(err.(bgpError).subcode), []byte(err.(bgpError).message)}
+}
+
+// bytes implements byter
+func (n notificationMsg) bytes() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	buf.WriteByte(n.code)
+	buf.WriteByte(n.subcode)
+	buf.Write(n.data)
+	return buf.Bytes()
+}
+
+// length implements byter
+func (n notificationMsg) length() int { return len(n.bytes()) }
+
+type keepaliveMsg struct{}
+
+func newKeepalive() keepaliveMsg {
+	return keepaliveMsg{}
+}
+
+// bytes implements byter
+func (k keepaliveMsg) bytes() []byte {
+	return []byte{}
+}
+
+// length implements byter
+func (k keepaliveMsg) length() int { return len(k.bytes()) }

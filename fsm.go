@@ -382,7 +382,7 @@ func (f *fsm) openSent(e event) {
 	case TCPConnectionFails:
 	case BGPOpen:
 		f.connectRetryTimer.Stop()
-		writeMessage(f.peer.conn, keepalive, []byte{})
+		writeMessage(f.peer.conn, keepalive, newKeepalive())
 		if f.holdTime != 0 {
 			// 	TODO: sets a KeepaliveTimer (via the text below)
 			// 	TODO: sets the HoldTimer according to the negotiated value (see
