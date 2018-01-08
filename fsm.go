@@ -427,7 +427,13 @@ func (f *fsm) openConfirm(e event) {
 	//TODO: case OpenCollisionDump:
 	case NotifMsgVerErr:
 	case NotifMsg:
+		f.connectRetryTimer.Stop()
+		f.peer.releaseResources()
+		f.peer.conn.Close()
+		f.transition(idle)
 	case KeepAliveMsg:
+		//TODO: restarts the HoldTimer and
+		f.transition(established)
 	default:
 		f.fsmErrorToIdle()
 	}
