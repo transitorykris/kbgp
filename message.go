@@ -96,6 +96,7 @@ const messageHeaderLength = markerLength + lengthLength + typeLength
 func readHeader(r io.Reader) (msgHeader, []byte, error) {
 	log.Println("Reading message header")
 	rawHeader := stream.Read(r, messageHeaderLength)
+	log.Println("Got raw header")
 	buf := bytes.NewBuffer(rawHeader)
 
 	// Read in the message header

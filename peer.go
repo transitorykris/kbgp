@@ -53,6 +53,35 @@ func (p *Peer) handleConnection(conn net.Conn, open openMsg) {
 	}
 	p.fsm.keepaliveTime = p.fsm.holdTime / 3
 	p.fsm.event(BGPOpen)
+	// Go into our inbound message processing loop
+	p.processInbound()
+}
+
+func (p *Peer) processInbound() {
+	for {
+		h, body, err := readHeader(p.conn)
+		if err != nil {
+			// Message header notification
+		}
+		switch h.msgType {
+		case open:
+			log.Println("Received an open")
+			_, err := readOpen(body)
+			if err != nil {
+				// Open message notification
+			}
+			//TODO: Implement me
+		case update:
+			log.Println("Received an update")
+			//TODO: Implement me
+		case notification:
+			log.Println("Received a notification")
+			//TODO: Implement me
+		case keepalive:
+			log.Println("Received a keepalive")
+			//TODO: Implement me
+		}
+	}
 }
 
 // Up sends a ManualStart event to the FSM
