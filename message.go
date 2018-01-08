@@ -12,6 +12,10 @@ import (
 
 type msgType uint8
 
+func (m msgType) bytes() []byte {
+	return []byte{byte(m)}
+}
+
 const (
 	_ = iota
 	open
@@ -37,16 +41,37 @@ func (m msgType) String() string {
 
 // https://tools.ietf.org/html/rfc4271#section-4.1
 type msgHeader struct {
-	marker  [16]byte
+	marker  marker
 	length  uint16 // Includes the length of the header
 	msgType msgType
 }
 
 func newHeader(length int, msgType msgType) msgHeader {
-	return msgHeader{}
+	m := msgHeader{
+		marker:  newMarker(),
+		length:  uint16(length),
+		msgType: msgType,
+	}
+	return m
+}
+
+type marker [16]byte
+
+func newMarker() marker {
+	var m marker
+	copy(m[:], bytes.Repeat([]byte{0x1}, len(m)))
+	return m
+}
+
+func (m marker) bytes() []byte {
+	return bytes.Repeat([]byte{0x1}, len(m))
 }
 
 func (h msgHeader) bytes() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	buf.Write(h.marker.bytes())
+	buf.Write(uint16ToBytes(h.length))
+	buf.Write(h.msgType.bytes())
 	return nil
 }
 
@@ -129,8 +154,24 @@ func newOpen(p *Peer) openMsg {
 	return o
 }
 
-func writeMessage(w io.Writer, msgType msgType, msg []byte) (int, error) {
-	msg = append(newHeader(len(msg), msgType).bytes(), msg...)
+func (o openMsg) bytes() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	buf.WriteByte(o.version)
+	buf.Write(o.as.bytes())
+	buf.Write(o.bgpIdentifier.bytes())
+	buf.Write(uint16ToBytes(o.holdTime))
+	buf.Write(o.bgpIdentifier.bytes())
+	buf.WriteByte(0) // TODO: implement parameters
+	// write optParameters []parameter
+	return buf.Bytes()
+}
+
+type byter interface {
+	bytes() []byte
+}
+
+func writeMessage(w io.Writer, msgType msgType, msg byter) (int, error) {
+	msg = append(newHeader(len(msg), msgType).bytes(), msg.bytes())
 	n, err := w.Write(msg)
 	return n, err
 }

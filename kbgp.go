@@ -21,6 +21,11 @@ func (e bgpError) Error() string {
 }
 
 type asn uint16
+
+func (a asn) bytes() []byte {
+	return uint16ToBytes(uint16(a))
+}
+
 type bgpIdentifier uint32
 
 func newIdentifier(ip net.IP) bgpIdentifier {
@@ -32,9 +37,7 @@ func (b bgpIdentifier) String() string {
 }
 
 func (b bgpIdentifier) ip() net.IP {
-	ip := make(net.IP, 4)
-	binary.BigEndian.PutUint32(ip, uint32(b))
-	return ip
+	return uint32ToBytes(uint32(b))
 }
 
 // A bgpIdentifier is valid if it represents a valid unicast host IP
@@ -42,4 +45,20 @@ func (b bgpIdentifier) valid() bool {
 	return b.ip().IsGlobalUnicast()
 }
 
+func (b bgpIdentifier) bytes() []byte {
+	return uint32ToBytes(uint32(b))
+}
+
 const version = 4
+
+func uint16ToBytes(v uint16) []byte {
+	b := make([]byte, 2)
+	binary.BigEndian.PutUint16(b, v)
+	return b
+}
+
+func uint32ToBytes(v uint32) []byte {
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, v)
+	return b
+}
