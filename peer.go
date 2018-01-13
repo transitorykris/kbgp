@@ -78,9 +78,9 @@ func (p *Peer) processInbound() {
 			log.Println("Received a notification")
 			_, err := readNotification(body)
 			if err != nil {
-				//TODO: Handle me
+				log.Println("Unexpected error", err)
 			}
-			//TODO: We're done, shut it down
+			p.fsm.event(NotifMsg)
 		case keepalive:
 			log.Println("Received a keepalive")
 			//TODO: Implement me
