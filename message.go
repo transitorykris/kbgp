@@ -338,3 +338,26 @@ func (n notificationMsg) String() string {
 	return fmt.Sprintf("%s (%d) %s (%d) %s",
 		errorCodeLookup[n.code], n.code, subcode, n.subcode, string(n.data))
 }
+
+type updateMsg struct{}
+
+func newUpdate() updateMsg {
+	//TODO: Implement me
+	return updateMsg{}
+}
+
+func readUpdate(msg []byte) (updateMsg, error) {
+	return updateMsg{}, nil
+}
+
+// bytes implements byter
+func (u updateMsg) bytes() []byte {
+	//TODO: Implement me
+	return nil
+}
+
+// String implements strings.Stringer
+func (u updateMsg) String() string {
+	//TODO: Implement me
+	return ""
+}

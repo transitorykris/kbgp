@@ -73,7 +73,13 @@ func (p *Peer) processInbound() {
 			//TODO: Implement me
 		case update:
 			log.Println("Received an update")
+			_, err := readUpdate(body)
+			if err != nil {
+				//TODO: Implement me
+				p.fsm.event(UpdateMsgErr) //??
+			}
 			//TODO: Implement me
+			p.fsm.event(UpdateMsg)
 		case notification:
 			log.Println("Received a notification")
 			_, err := readNotification(body)
