@@ -76,7 +76,11 @@ func (p *Peer) processInbound() {
 			//TODO: Implement me
 		case notification:
 			log.Println("Received a notification")
-			//TODO: Implement me
+			_, err := readNotification(body)
+			if err != nil {
+				//TODO: Handle me
+			}
+			//TODO: We're done, shut it down
 		case keepalive:
 			log.Println("Received a keepalive")
 			//TODO: Implement me

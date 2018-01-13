@@ -105,7 +105,6 @@ func readHeader(r io.Reader) (msgHeader, []byte, error) {
 	// TODO: Check that the marker is all 1s
 	header.msgLength = stream.ReadUint16(buf)
 	header.msgType = msgType(stream.ReadByte(buf))
-
 	log.Println("Got header", header)
 
 	// Read in the message's body
@@ -200,13 +199,26 @@ const (
 	cease
 )
 
-var errorCodeLookup = map[int]string{
+var errorCodeLookup = map[uint8]string{
 	messageHeaderError:    "Message Header Error",
 	openMessageError:      "OPEN Message Error",
 	updateMessageError:    "UPDATE Message Error",
 	holdTimerExpiredError: "Hold Timer Expired",
 	fsmError:              "Finite State Machine Error",
 	cease:                 "Cease",
+}
+
+const (
+	_ = iota
+	connectionNotSynchronized
+	badMessageLength
+	badMessageType
+)
+
+var messageHeaderErrorLookup = map[uint8]string{
+	connectionNotSynchronized: "Connection Not Synchronized",
+	badMessageLength:          "Bad Message Length",
+	badMessageType:            "Bad Message Type",
 }
 
 const (
@@ -219,7 +231,7 @@ const (
 	unacceptableHoldTime
 )
 
-var openMessageErrorLookup = map[int]string{
+var openMessageErrorLookup = map[uint8]string{
 	unsupportedVersionNumber:     "Unsupported Version Number",
 	badPeerAS:                    "Bad Peer AS",
 	badBGPIdentifier:             "Bad BGP Identifier",
@@ -242,7 +254,7 @@ const (
 	malformedASPath
 )
 
-var updateMessageErrorLookup = map[int]string{
+var updateMessageErrorLookup = map[uint8]string{
 	malformedAttributeList:         "Malformed Attribute List",
 	unrecognizedWellKnownAttribute: "Unrecognized Well-known Attribute",
 	missingWellKnownAttribute:      "Missing Well-known Attribute",
@@ -290,3 +302,32 @@ func (k keepaliveMsg) bytes() []byte {
 
 // length implements byter
 func (k keepaliveMsg) length() int { return len(k.bytes()) }
+
+func readNotification(msg []byte) (notificationMsg, error) {
+	log.Println("Reading NOTIFICATION message")
+	buf := bytes.NewBuffer(msg)
+	nm := notificationMsg{
+		code:    stream.ReadByte(buf),
+		subcode: stream.ReadByte(buf),
+		data:    stream.ReadBytes(len(msg), buf),
+	}
+	log.Println("Got NOTIFICATION message:", nm)
+	return nm, nil
+}
+
+// String implements strings.Stringer
+func (n notificationMsg) String() string {
+	var subcode string
+	switch n.code {
+	case messageHeaderError:
+		subcode = messageHeaderErrorLookup[n.subcode]
+	case openMessageError:
+		subcode = openMessageErrorLookup[n.subcode]
+	case updateMessageError:
+		subcode = updateMessageErrorLookup[n.subcode]
+	default:
+		subcode = "unknown"
+	}
+	return fmt.Sprintf("%s (%d) %s (%d) %s",
+		errorCodeLookup[n.code], n.code, subcode, n.subcode, string(n.data))
+}
