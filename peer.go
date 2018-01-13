@@ -83,7 +83,12 @@ func (p *Peer) processInbound() {
 			p.fsm.event(NotifMsg)
 		case keepalive:
 			log.Println("Received a keepalive")
-			//TODO: Implement me
+			if err := readKeepalive(body); err != nil {
+				// TODO: Send the error
+				p.fsm.event(NotifMsg)
+				return
+			}
+			p.fsm.event(KeepAliveMsg)
 		}
 	}
 }

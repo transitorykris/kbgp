@@ -295,6 +295,13 @@ func newKeepalive() keepaliveMsg {
 	return keepaliveMsg{}
 }
 
+func readKeepalive(msg []byte) error {
+	if len(msg) != 0 {
+		newBGPError(messageHeaderError, badMessageLength, "a keepalive should not come with data")
+	}
+	return nil
+}
+
 // bytes implements byter
 func (k keepaliveMsg) bytes() []byte {
 	return []byte{}
