@@ -352,9 +352,8 @@ func (f *fsm) openSent(e event) {
 		f.connectRetryTimer.Stop()
 		writeMessage(f.peer.conn, keepalive, newKeepalive())
 		if f.holdTime != 0 {
-			// 	TODO: sets a KeepaliveTimer (via the text below)
-			// 	TODO: sets the HoldTimer according to the negotiated value (see
-			// 	Section 4.2),
+			f.keepaliveTimer.Reset(f.keepaliveTime)
+			f.holdTimer.Reset(f.holdTime)
 		}
 		f.transition(openConfirm)
 	case BGPHeaderErr, BGPOpenMsgErr:
@@ -388,7 +387,7 @@ func (f *fsm) openConfirm(e event) {
 		f.peer.conn.Close()
 		f.transition(idle)
 	case KeepAliveMsg:
-		//TODO: restarts the HoldTimer and
+		f.holdTimer.Reset(f.holdTime)
 		f.transition(established)
 	default:
 		f.fsmErrorToIdle()
