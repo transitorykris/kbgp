@@ -206,6 +206,7 @@ func (f *fsm) tcpConnect() {
 	}
 	f.connectRetryTimer.Stop()
 	f.peer.initializeResources()
+	log.Println("Sending OPEN message")
 	writeMessage(f.peer.conn, open, newOpen(f.peer))
 	// 	TODO: sets the HoldTimer to a large value (4 min recommended)
 	f.transition(openSent)

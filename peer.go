@@ -71,6 +71,8 @@ func (p *Peer) processInbound() {
 				// Open message notification
 			}
 			//TODO: Implement me
+			log.Println("Sending open message")
+			writeMessage(p.conn, open, newOpen(p))
 		case update:
 			log.Println("Received an update")
 			_, err := readUpdate(body)
