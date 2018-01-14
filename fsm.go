@@ -245,6 +245,7 @@ func (f *fsm) idle(e event) {
 	}
 }
 
+// In this state, BGP FSM is waiting for the TCP connection to be completed.
 func (f *fsm) connect(e event) {
 	switch e {
 	case ManualStart:
@@ -312,6 +313,8 @@ func (f *fsm) connect(e event) {
 	}
 }
 
+// In this state, BGP FSM is trying to acquire a peer by listening
+// for, and accepting, a TCP connection.
 func (f *fsm) active(e event) {
 	switch e {
 	case ManualStart:
@@ -347,6 +350,7 @@ func (f *fsm) active(e event) {
 	}
 }
 
+// In this state, BGP FSM waits for an OPEN message from its peer.
 func (f *fsm) openSent(e event) {
 	switch e {
 	case ManualStart:
@@ -399,6 +403,7 @@ func (f *fsm) openSent(e event) {
 	}
 }
 
+// In this state, BGP waits for a KEEPALIVE or NOTIFICATION message.
 func (f *fsm) openConfirm(e event) {
 	switch e {
 	case ManualStart:
@@ -440,6 +445,8 @@ func (f *fsm) openConfirm(e event) {
 	}
 }
 
+// In the Established state, the BGP FSM can exchange UPDATE,
+// NOTIFICATION, and KEEPALIVE messages with its peer.
 func (f *fsm) established(e event) {
 	switch e {
 	case ManualStart:
