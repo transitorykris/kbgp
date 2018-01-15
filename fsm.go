@@ -314,6 +314,12 @@ func (f *fsm) active(e event) {
 		AutomaticStartWithDampPeerOscillationsAndPassiveTCPEstablishment:
 		f.ignore(e)
 	case ManualStop:
+		//TODO: handle the case where delay open timer is running
+		f.peer.releaseResources()
+		f.peer.conn.close()
+		f.connectRetryCounter.Reset()
+		f.connectRetryTimer.Stop()
+		f.transition(idle)
 	case ConnectRetryTimerExpires:
 	//TODO: case DelayOpenTimerExpires:
 	//TODO: case TCPConnectionValid:
