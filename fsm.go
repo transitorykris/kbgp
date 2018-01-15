@@ -266,6 +266,12 @@ func (f *fsm) connect(e event) {
 	case TCPCRAcked, TCPConnectionConfirmed:
 		f.tcpConnect()
 	case TCPConnectionFails:
+		//TODO: Handle the case where the delay open timer is running
+		// otherwise:
+		f.connectRetryTimer.Stop()
+		f.peer.conn.Close()
+		f.peer.releaseResources()
+		f.transition(idle)
 	//TODO: case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr, BGPOpenMsgErr:
 		if f.sendNOTIFICATIONwithoutOPEN {
