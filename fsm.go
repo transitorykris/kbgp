@@ -321,6 +321,9 @@ func (f *fsm) active(e event) {
 		f.connectRetryTimer.Stop()
 		f.transition(idle)
 	case ConnectRetryTimerExpires:
+		f.connectRetryTimer.Reset(f.connectRetryTime)
+		//TODO: initiates a TCP connection to the other BGP peer
+		f.transition(connect)
 	//TODO: case DelayOpenTimerExpires:
 	//TODO: case TCPConnectionValid:
 	//TODO: case TCPCRInvalid:
