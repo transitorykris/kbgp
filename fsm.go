@@ -316,7 +316,7 @@ func (f *fsm) active(e event) {
 	case ManualStop:
 		//TODO: handle the case where delay open timer is running
 		f.peer.releaseResources()
-		f.peer.conn.close()
+		f.peer.conn.Close()
 		f.connectRetryCounter.Reset()
 		f.connectRetryTimer.Stop()
 		f.transition(idle)
