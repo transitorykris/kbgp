@@ -337,7 +337,7 @@ func (f *fsm) active(e event) {
 		f.holdTimer.Reset(largeHoldTime)
 		f.transition(openSent)
 	case TCPConnectionFails:
-		f.connectRetryCounter.Reset(defaultConnectRetryTime)
+		f.connectRetryCounter.Reset()
 		//TODO: stops and clears the DelayOpenTimer (sets the value to zero)
 		f.peer.releaseResources()
 		f.connectRetryCounter.Increment()
