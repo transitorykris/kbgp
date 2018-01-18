@@ -183,8 +183,8 @@ func (f *fsm) transition(s state) {
 // Handle ManualStart and AutomaticStart in the idle state
 func (f *fsm) start() {
 	f.peer.initializeResources()
-	f.connectRetryCounter.Reset()
 	f.connectRetryTimer.Reset(defaultConnectRetryTime)
+	f.connectRetryCounter.Reset()
 	// TODO: initiates a TCP connection to the other BGP peer,
 	f.transition(connect)
 }
