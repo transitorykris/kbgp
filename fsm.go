@@ -392,8 +392,8 @@ func (f *fsm) openSent(e event) {
 		f.connectRetryTimer.Stop()
 		writeMessage(f.peer.conn, keepalive, newKeepalive())
 		if f.holdTime != 0 {
-			f.keepaliveTimer.Reset(f.keepaliveTime)
-			f.holdTimer.Reset(f.holdTime)
+			f.keepaliveTimer = timer.New(f.holdTime/3, f.eventWrapper(KeepaliveTimerExpires))
+			f.holdTimer = timer.New(f.holdTime, f.eventWrapper(HoldTimerExpires))
 		}
 		f.transition(openConfirm)
 	case BGPHeaderErr, BGPOpenMsgErr:
