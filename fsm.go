@@ -337,8 +337,25 @@ func (f *fsm) active(e event) {
 		f.holdTimer.Reset(largeHoldTime)
 		f.transition(openSent)
 	case TCPConnectionFails:
+		f.connectRetryCounter.Reset(defaultConnectRetryTime)
+		//TODO: stops and clears the DelayOpenTimer (sets the value to zero)
+		f.peer.releaseResources()
+		f.connectRetryCounter.Increment()
+		//TODO: optionally performs peer oscillation damping if the
+		// DampPeerOscillations attribute is set to TRUE
+		f.transition(idle)
 	//TODO: case BGPOpenWithDelayOpenTimerRunning:
 	case BGPHeaderErr, BGPOpenMsgErr:
+		if f.sendNOTIFICATIONwithoutOPEN {
+			//TODO: Send an approrpriate notification
+		}
+		f.connectRetryTimer.Stop()
+		f.peer.releaseResources()
+		f.peer.conn.Close()
+		f.connectRetryCounter.Increment()
+		//TODO: performs peer oscillation damping if the
+		// DampPeerOscillations attribute is set to TRUE
+		f.transition(idle)
 	case NotifMsgVerErr:
 	case NotifMsg:
 	case KeepAliveMsg:
