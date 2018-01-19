@@ -77,7 +77,6 @@ func newFSM(p *Peer) *fsm {
 		holdTime:      defaultHoldTime,
 		keepaliveTime: defaultKeepaliveTime,
 	}
-	f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.eventWrapper(ConnectRetryTimerExpires))
 	return f
 }
 
@@ -183,7 +182,7 @@ func (f *fsm) transition(s state) {
 // Handle ManualStart and AutomaticStart in the idle state
 func (f *fsm) start() {
 	f.peer.initializeResources()
-	f.connectRetryTimer.Reset(defaultConnectRetryTime)
+	f.connectRetryTimer = timer.New(defaultConnectRetryTime, f.eventWrapper(ConnectRetryTimerExpires))
 	f.connectRetryCounter.Reset()
 	// TODO: initiates a TCP connection to the other BGP peer,
 	f.transition(connect)

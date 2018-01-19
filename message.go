@@ -59,13 +59,13 @@ type marker [16]byte
 
 func newMarker() marker {
 	var m marker
-	copy(m[:], bytes.Repeat([]byte{0x1}, len(m)))
+	copy(m[:], bytes.Repeat([]byte{0xFF}, len(m)))
 	return m
 }
 
 // bytes implements byter
 func (m marker) bytes() []byte {
-	return bytes.Repeat([]byte{0x1}, len(m))
+	return m[:]
 }
 
 // length implements byter
@@ -75,9 +75,9 @@ func (m marker) length() int { return len(m.bytes()) }
 func (h msgHeader) bytes() []byte {
 	buf := bytes.NewBuffer([]byte{})
 	buf.Write(h.marker.bytes())
-	buf.Write(uint16ToBytes(h.msgLength))
+	buf.Write(uint16ToBytes(h.msgLength + 19)) // Ugly ugly, we have to include the length of the header
 	buf.Write(h.msgType.bytes())
-	return nil
+	return buf.Bytes()
 }
 
 // length implements byter
@@ -154,11 +154,12 @@ func newOpen(p *Peer) openMsg {
 	o := openMsg{
 		version:       version,
 		as:            p.myAS,
-		holdTime:      uint16(defaultHoldTime.Seconds()),       //TODO: make configurable
-		bgpIdentifier: newIdentifier(net.ParseIP("127.0.0.1")), //TODO: make configurable
+		holdTime:      uint16(defaultHoldTime.Seconds()),     //TODO: make configurable
+		bgpIdentifier: newIdentifier(net.ParseIP("1.2.3.4")), //TODO: make configurable
 		optParmLen:    0,
 		optParamaters: []parameter{},
 	}
+	log.Println("Open message:", o)
 	return o
 }
 
@@ -167,7 +168,6 @@ func (o openMsg) bytes() []byte {
 	buf := bytes.NewBuffer([]byte{})
 	buf.WriteByte(o.version)
 	buf.Write(o.as.bytes())
-	buf.Write(o.bgpIdentifier.bytes())
 	buf.Write(uint16ToBytes(o.holdTime))
 	buf.Write(o.bgpIdentifier.bytes())
 	buf.WriteByte(0) // TODO: implement parameters
@@ -176,7 +176,11 @@ func (o openMsg) bytes() []byte {
 }
 
 // length implements byter
-func (o openMsg) length() int { return len(o.bytes()) }
+func (o openMsg) length() int {
+	log.Println("LENGTH: got open")
+	log.Println("LENGTH: got bytes", o.bytes())
+	return len(o.bytes())
+}
 
 type byter interface {
 	bytes() []byte
@@ -184,8 +188,11 @@ type byter interface {
 }
 
 func writeMessage(w io.Writer, msgType msgType, msg byter) (int, error) {
-	m := append(newHeader(msg.length(), msgType).bytes(), msg.bytes()...)
+	var m []byte
+	log.Println("Message length", msg.length())
+	m = append(newHeader(msg.length(), msgType).bytes(), msg.bytes()...)
 	n, err := w.Write(m)
+	log.Println("Wrote message", m)
 	return n, err
 }
 
